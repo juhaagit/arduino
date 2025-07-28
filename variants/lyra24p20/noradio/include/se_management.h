@@ -34,7 +34,7 @@
 /// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
@@ -49,6 +49,7 @@
 
 #if defined(SEMAILBOX_PRESENT)
 
+#include "sli_se_manager_mailbox.h"
 #include "sli_se_manager_internal.h"
 
 #ifdef __cplusplus
@@ -84,7 +85,7 @@ __STATIC_INLINE int se_management_release(void)
 #endif /* SEMAILBOX_PRESENT */
 
 /** \} (end addtogroup sl_se_management) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
 
 /// @endcond
 

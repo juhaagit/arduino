@@ -6,7 +6,7 @@
    On startup the sketch will start a BLE advertisement with the configured name, then
    it will accept any incoming connection. When a device is connected and enables indications for the
    health thermometer characteristic, then the device will send it's CPU temperature readings as thermometer data.
-   With the EFR Connect app you can test this functionality by going to the "Demo" tab and selecting "Health Thermometer".
+   With the Simplicity Connect app you can test this functionality by going to the "Demo" tab and selecting "Health Thermometer".
    Alternatively, you can test this example by flashing an other BLE board with the 'ble_health_thermometer_client' demo
    and have the two boards exchange the temperature measurements over BLE.
 
@@ -14,7 +14,7 @@
 
    This example only works with the 'BLE (Silabs)' protocol stack variant.
 
-   You can test the thermometer device with the EFR Connect app:
+   You can test the thermometer device with the Simplicity Connect app:
     - https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo
     - https://apps.apple.com/us/app/efr-connect-ble-mobile-app/id1030932759
 
@@ -295,6 +295,6 @@ static void ble_initialize_gatt_db()
   app_assert_status(sc);
 }
 
-#ifndef BLE_STACK_SILABS
+#ifndef ARDUINO_SILABS_STACK_BLE_SILABS
   #error "This example is only compatible with the Silicon Labs BLE stack. Please select 'BLE (Silabs)' in 'Tools > Protocol stack'."
 #endif

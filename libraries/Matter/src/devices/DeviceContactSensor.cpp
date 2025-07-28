@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ DeviceContactSensor::DeviceContactSensor(const char* device_name) :
   Device(device_name),
   state_value(false)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_ContactSensor);
 }
 
 bool DeviceContactSensor::GetStateValue()
@@ -54,13 +54,13 @@ uint16_t DeviceContactSensor::GetBooleanStateClusterRevision()
   return this->boolean_state_cluster_revision;
 }
 
-EmberAfStatus DeviceContactSensor::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                              chip::AttributeId attributeId,
-                                                              uint8_t* buffer,
-                                                              uint16_t maxReadLength)
+CHIP_ERROR DeviceContactSensor::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                           chip::AttributeId attributeId,
+                                                           uint8_t* buffer,
+                                                           uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::BooleanState::Attributes;
@@ -71,7 +71,7 @@ EmberAfStatus DeviceContactSensor::HandleReadEmberAfAttribute(ClusterId clusterI
   }
 
   if (clusterId != chip::app::Clusters::BooleanState::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == StateValue::Id) && (maxReadLength == 1)) {
@@ -81,10 +81,10 @@ EmberAfStatus DeviceContactSensor::HandleReadEmberAfAttribute(ClusterId clusterI
     uint16_t clusterRevision = this->GetBooleanStateClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceContactSensor::HandleContactSensorDeviceStatusChanged(Changed_t itemChangedMask)

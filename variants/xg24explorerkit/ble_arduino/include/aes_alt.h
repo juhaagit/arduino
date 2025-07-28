@@ -30,13 +30,23 @@
 #ifndef AES_ALT_H
 #define AES_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins Mbed TLS Plugins
+ * \brief These plugins are used to support acceleration on Silicon Labs
+ * Hardware for various algorithms.
+ *
+ * The APIs are not intended to be used directly, but hook into acceleration points
+ * in the relevant Mbed TLS APIs
+ *
+ * The plugins support sharing of cryptography hardware in multi-threaded applications,
+ * as well as a reduced overhead configuration for optimal performance in single-threaded
+ * applications.
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_aes Accelerated AES Block Cipher
+ * \addtogroup sl_mbedtls_plugins_aes Accelerated AES Block Cipher
  * \brief Accelerated AES block cipher for the mbed TLS API using the AES, CRYPTO,
  *        CRYPTOACC or SE peripheral
  *
@@ -75,7 +85,8 @@ typedef struct mbedtls_aes_xts_context{
 
 #endif /* MBEDTLS_AES_ALT */
 
-/** \} (end addtogroup sl_crypto_aes) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_aes) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* AES_ALT_H */

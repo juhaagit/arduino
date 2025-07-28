@@ -1,5 +1,32 @@
-/* include/openthread-config-generic.h.  Generated from openthread-config-generic.h.in by configure.  */
-/* include/openthread-config-generic.h.in.  Generated from configure.ac by autoheader.  */
+/*******************************************************************************
+ * @file
+ * @brief OpenThread generic configuration file.
+ *******************************************************************************
+ * # License
+ * <b>Copyright 2024 Silicon Laboratories Inc. www.silabs.com</b>
+ *******************************************************************************
+ *
+ * SPDX-License-Identifier: Zlib
+ *
+ * The licensor of this software is Silicon Laboratories Inc.
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ *
+ ******************************************************************************/
 
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
@@ -68,7 +95,7 @@
 #define PACKAGE_NAME "SL-OPENTHREAD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "SL-OPENTHREAD/2.4.0.0_GitHub-7074a43e4"
+#define PACKAGE_STRING "SL-OPENTHREAD/2.6.1.0_GitHub-7f6723ffb"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "openthread"
@@ -80,13 +107,13 @@
  * Note: When adding the label below with OpenThread version, please make
  * sure it is a valid GitHub version.  Avoid merge or local commit hashes.
  */
-#define PACKAGE_VERSION "2.4.0.0_GitHub-7074a43e4"
+#define PACKAGE_VERSION "2.6.1.0_GitHub-7f6723ffb"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.4.0.0_GitHub-7074a43e4"
+#define VERSION "2.6.1.0_GitHub-7f6723ffb"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

@@ -94,6 +94,19 @@ void setup()
   WatchdogTimer.detachInterrupt();
   WatchdogTimer.setWatchdogOffWhileSleeping(true);
   WatchdogTimer.end();
+
+  size_t total_heap = getTotalHeapSize();
+  Serial.println(total_heap);
+  size_t used_heap = getUsedHeapSize();
+  Serial.println(used_heap);
+  size_t free_heap = getFreeHeapSize();
+  Serial.println(free_heap);
+  size_t max_heap_usage = getHeapHighWatermark();
+  Serial.println(max_heap_usage);
+  resetHeapHighWatermark();
+
+  Serial.println(getCurrentBoardType());
+  Serial.println(getCurrentRadioStackType());
 }
 
 void loop()

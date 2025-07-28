@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2023 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,12 +34,12 @@ sl_iostream_uart_t* sl_serial_instance_handle = sl_iostream_uart_vcom_handle;
 
 void sl_serial_set_baud_rate(uint32_t baudrate)
 {
-  USART_BaudrateAsyncSet(SL_SERIAL_PERIPHERAL, 0, baudrate, usartOVS16);
+  EUSART_BaudrateSet(SL_SERIAL_PERIPHERAL, 0, baudrate);
 }
 
 void sl_serial_init()
 {
-  sl_iostream_usart_init_vcom();
+  sl_iostream_eusart_init_vcom();
 }
 
 void sl_serial_deinit()
@@ -47,15 +47,15 @@ void sl_serial_deinit()
   sl_iostream_uart_deinit(sl_serial_instance_handle);
 
   // Reset the USART to GPIO peripheral routing to enable the pins to function as GPIO
-  GPIO->USARTROUTE[SL_IOSTREAM_USART_VCOM_PERIPHERAL_NO].ROUTEEN = 0;
-  GPIO->USARTROUTE[SL_IOSTREAM_USART_VCOM_PERIPHERAL_NO].TXROUTE = 0;
-  GPIO->USARTROUTE[SL_IOSTREAM_USART_VCOM_PERIPHERAL_NO].RXROUTE = 0;
-  GPIO->USARTROUTE[SL_IOSTREAM_USART_VCOM_PERIPHERAL_NO].CTSROUTE = 0;
-  GPIO->USARTROUTE[SL_IOSTREAM_USART_VCOM_PERIPHERAL_NO].RTSROUTE = 0;
+  GPIO->EUSARTROUTE[SL_IOSTREAM_EUSART_VCOM_PERIPHERAL_NO].ROUTEEN = 0;
+  GPIO->EUSARTROUTE[SL_IOSTREAM_EUSART_VCOM_PERIPHERAL_NO].TXROUTE = 0;
+  GPIO->EUSARTROUTE[SL_IOSTREAM_EUSART_VCOM_PERIPHERAL_NO].RXROUTE = 0;
+  GPIO->EUSARTROUTE[SL_IOSTREAM_EUSART_VCOM_PERIPHERAL_NO].CTSROUTE = 0;
+  GPIO->EUSARTROUTE[SL_IOSTREAM_EUSART_VCOM_PERIPHERAL_NO].RTSROUTE = 0;
 
   // Set up the pin as floating input
-  GPIO_PinModeSet(SL_IOSTREAM_USART_VCOM_TX_PORT, SL_IOSTREAM_USART_VCOM_TX_PIN, gpioModeInput, 0);
-  GPIO_PinModeSet(SL_IOSTREAM_USART_VCOM_RX_PORT, SL_IOSTREAM_USART_VCOM_RX_PIN, gpioModeInput, 0);
+  GPIO_PinModeSet(SL_IOSTREAM_EUSART_VCOM_TX_PORT, SL_IOSTREAM_EUSART_VCOM_TX_PIN, gpioModeInput, 0);
+  GPIO_PinModeSet(SL_IOSTREAM_EUSART_VCOM_RX_PORT, SL_IOSTREAM_EUSART_VCOM_RX_PIN, gpioModeInput, 0);
 }
 
 sl_iostream_t* sl_serial1_stream_handle = sl_iostream_instance_xg24explorerkit1_info.handle;

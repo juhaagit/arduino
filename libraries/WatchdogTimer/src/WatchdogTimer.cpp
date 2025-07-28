@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 #include "WatchdogTimer.h"
 
 WdogTimerClass::WdogTimerClass() :
+  initialized(false),
   user_on_overflow_cb(nullptr),
   wdog(WDOG0)
 {
@@ -38,6 +39,7 @@ void WdogTimerClass::begin()
   CMU_ClockEnable(cmuClock_WDOG0, true);
   CMU_ClockSelectSet(cmuClock_WDOG0, cmuSelect_ULFRCO); // 1 kHz
   WDOGn_Init(this->wdog, &this->wdog_config);
+  this->initialized = true;
 }
 
 void WdogTimerClass::begin(WatchdogPeriod timeout_period)
@@ -51,10 +53,14 @@ void WdogTimerClass::end()
   this->detachInterrupt();
   WDOGn_Enable(this->wdog, false);
   this->set_default_config();
+  this->initialized = false;
 }
 
 void WdogTimerClass::feed()
 {
+  if (!this->initialized) {
+    return;
+  }
   WDOGn_Feed(this->wdog);
 }
 

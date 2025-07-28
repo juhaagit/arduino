@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,16 +26,10 @@
 
 #include "Arduino.h"
 #include "arduino_variant.h"
-#include "arduino_i2c_config.h"
-#include "arduino_spi_config.h"
-
-extern "C" {
-  #include "sl_system_init.h"
-}
 
 void init_arduino_variant()
 {
-  sl_system_init();
+  ;
 }
 
 // Variant pin mapping - maps Arduino pin numbers to Silabs ports/pins

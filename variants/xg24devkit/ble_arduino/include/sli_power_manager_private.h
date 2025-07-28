@@ -30,6 +30,7 @@
 
 #include "sl_power_manager.h"
 #include "sl_slist.h"
+#include "sl_code_classification.h"
 
 #if defined(SL_COMPONENT_CATALOG_PRESENT)
 #include "sl_component_catalog.h"
@@ -57,6 +58,7 @@ extern "C" {
 
 #define SLI_POWER_MANAGER_EM_TABLE_SIZE  2
 
+#define SLI_POWER_MANAGER_EM4_ENTRY_WAIT_LOOPS 200
 /*******************************************************************************
  *****************************   DATA TYPES   *********************************
  ******************************************************************************/
@@ -73,19 +75,25 @@ typedef struct {
 
 void sli_power_manager_init_hardware(void);
 
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 void sli_power_manager_apply_em(sl_power_manager_em_t em);
 
 void sli_power_manager_debug_init(void);
 
 #if !defined(SL_CATALOG_POWER_MANAGER_NO_DEEPSLEEP_PRESENT)
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 void sli_power_manager_save_states(void);
 
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 void sli_power_manager_handle_pre_deepsleep_operations(void);
 
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 void sli_power_manager_restore_high_freq_accuracy_clk(void);
 
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 bool sli_power_manager_is_high_freq_accuracy_clk_ready(bool wait);
 
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 void sli_power_manager_restore_states(void);
 
 /*******************************************************************************
@@ -101,6 +109,7 @@ uint32_t sli_power_manager_get_default_high_frequency_minimum_offtime(void);
 /*******************************************************************************
  * Restores the Low Frequency clocks according to which LF oscillators are used.
  ******************************************************************************/
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 void sli_power_manager_low_frequency_restore(void);
 
 /***************************************************************************//**
@@ -109,21 +118,16 @@ void sli_power_manager_low_frequency_restore(void);
  *
  * @return true if HFXO is used, else false.
  ******************************************************************************/
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 bool sli_power_manager_is_high_freq_accuracy_clk_used(void);
 #endif
-
-/***************************************************************************//**
- * Enable or disable fast wake-up in EM2 and EM3
- *
- * @note Will also update the wake up time from EM2 to EM0.
- ******************************************************************************/
-void sli_power_manager_em23_voltage_scaling_enable_fast_wakeup(bool enable);
 
 /*******************************************************************************
  * Gets the delay associated the wake-up process from EM23.
  *
  * @return Delay for the complete wake-up process with full restore.
  ******************************************************************************/
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
 uint32_t sli_power_manager_get_wakeup_process_time_overhead(void);
 
 #if !defined(SL_CATALOG_POWER_MANAGER_NO_DEEPSLEEP_PRESENT)
@@ -135,6 +139,24 @@ uint32_t sli_power_manager_get_wakeup_process_time_overhead(void);
  * @note FOR INTERNAL USE ONLY.
  ******************************************************************************/
 bool sli_power_manager_get_clock_restore_status(void);
+#endif
+
+#if defined(SL_CATALOG_POWER_MANAGER_NO_DEEPSLEEP_PRESENT)
+/*******************************************************************************
+ * HAL hook function for pre EM1HCLKDIV sleep.
+ *
+ * @note FOR INTERNAL USE ONLY.
+ ******************************************************************************/
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
+void sli_power_manager_em1hclkdiv_presleep_operations(void);
+
+/*******************************************************************************
+ * HAL hook function for post EM1HCLKDIV sleep.
+ *
+ * @note FOR INTERNAL USE ONLY.
+ ******************************************************************************/
+SL_CODE_CLASSIFY(SL_CODE_COMPONENT_POWER_MANAGER, SL_CODE_CLASS_TIME_CRITICAL)
+void sli_power_manager_em1hclkdiv_postsleep_operations(void);
 #endif
 
 #ifdef __cplusplus

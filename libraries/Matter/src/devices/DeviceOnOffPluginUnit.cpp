@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ DeviceOnOffPluginUnit::DeviceOnOffPluginUnit(const char* device_name) :
   Device(device_name),
   is_on(false)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_OnOffPluginUnit);
 }
 
 bool DeviceOnOffPluginUnit::IsOn()
@@ -65,13 +65,13 @@ uint16_t DeviceOnOffPluginUnit::GetOnoffClusterRevision()
   return this->onoff_cluster_revision;
 }
 
-EmberAfStatus DeviceOnOffPluginUnit::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                                chip::AttributeId attributeId,
-                                                                uint8_t* buffer,
-                                                                uint16_t maxReadLength)
+CHIP_ERROR DeviceOnOffPluginUnit::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                             chip::AttributeId attributeId,
+                                                             uint8_t* buffer,
+                                                             uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters;
@@ -92,19 +92,19 @@ EmberAfStatus DeviceOnOffPluginUnit::HandleReadEmberAfAttribute(ClusterId cluste
       memcpy(buffer, &featureMap, sizeof(featureMap));
     } else {
       ChipLogProgress(DeviceLayer, "HandleReadOnOffPluginUnitAttribute - OnOff: invalid read");
-      return EMBER_ZCL_STATUS_FAILURE;
+      return CHIP_ERROR_INVALID_ARGUMENT;
     }
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus DeviceOnOffPluginUnit::HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                                 chip::AttributeId attributeId,
-                                                                 uint8_t* buffer)
+CHIP_ERROR DeviceOnOffPluginUnit::HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                                              chip::AttributeId attributeId,
+                                                              uint8_t* buffer)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters;
@@ -117,10 +117,10 @@ EmberAfStatus DeviceOnOffPluginUnit::HandleWriteEmberAfAttribute(ClusterId clust
       this->SetOnOff(false);
     }
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceOnOffPluginUnit::HandleDeviceOnOffPluginUnitStatusChanged(Changed_t itemChangedMask)

@@ -46,6 +46,7 @@ component:
     - led0
   - id: gpiointerrupt
   - id: emlib_rmu
+  - id: emlib_wdog
   - id: nvm3_default
   - id: nvm3_default_config
   - id: nvm3_default_flash_backend
@@ -58,6 +59,9 @@ component:
   - id: bluetooth_feature_legacy_advertiser
   - id: bluetooth_feature_legacy_scanner
   - id: bluetooth_feature_periodic_advertiser
+  # Added as a custom Arduino-specific component, missing from SDK
+  - id: bluetooth_hci_reset
+  - id: memory_manager_cpp
 
 source:
   - path: main.c

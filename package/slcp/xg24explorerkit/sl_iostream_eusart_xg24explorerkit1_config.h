@@ -3,7 +3,7 @@
  * @brief IOSTREAM_USART config for the xG24 Explorer Kit
  *******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -48,7 +48,7 @@
 // <usartEvenParity=> Even parity
 // <usartOddParity=> Odd parity
 // <i> Default: usartNoParity
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_PARITY                eusartNoParity
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_PARITY                SL_IOSTREAM_EUSART_UART_NO_PARITY
 
 // <o SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_STOP_BITS> Number of stop bits to use.
 // <usartStopbits0p5=> 0.5 stop bits
@@ -56,7 +56,7 @@
 // <usartStopbits1p5=> 1.5 stop bits
 // <usartStopbits2=> 2 stop bits
 // <i> Default: usartStopbits1
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_STOP_BITS             eusartStopbits1
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_STOP_BITS             SL_IOSTREAM_EUSART_UART_STOP_BITS_1
 
 // <o SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_FLOW_CONTROL_TYPE> Flow control
 // <usartHwFlowControlNone=> None
@@ -65,7 +65,7 @@
 // <usartHwFlowControlCtsAndRts=> CTS/RTS
 // <uartFlowControlSoftware=> Software Flow control (XON/XOFF)
 // <i> Default: usartHwFlowControlNone
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_FLOW_CONTROL_TYPE     eusartHwFlowControlNone
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_FLOW_CONTROL_TYPE     SL_IOSTREAM_EUSART_UART_FLOW_CTRL_NONE
 
 // <o SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_RX_BUFFER_SIZE> Receive buffer size
 // <i> Default: 32
@@ -88,16 +88,16 @@
 // <<< sl:start pin_tool >>>
 // <usart signal=TX,RX,(CTS),(RTS)> SL_IOSTREAM_EUSART_XG24EXPLORERKIT1
 // $[USART_SL_IOSTREAM_EUSART_XG24EXPLORERKIT1]
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_PERIPHERAL        EUSART0
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_PERIPHERAL_NO     0
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_PERIPHERAL        EUSART1
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_PERIPHERAL_NO     1
 
 // USART0 TX on PA05
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_TX_PORT           gpioPortB
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_TX_PIN            1
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_TX_PORT           gpioPortD
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_TX_PIN            4
 
 // USART0 RX on PA06
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_RX_PORT           gpioPortA
-#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_RX_PIN            0
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_RX_PORT           gpioPortD
+#define SL_IOSTREAM_EUSART_XG24EXPLORERKIT1_RX_PIN            5
 
 // [USART_SL_IOSTREAM_EUSART_XG24EXPLORERKIT1]$
 // <<< sl:end pin_tool >>>

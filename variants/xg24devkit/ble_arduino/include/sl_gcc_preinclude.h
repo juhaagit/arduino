@@ -33,8 +33,8 @@
  * objects depend on the build system providing two macros on the
  * commandline called __STACK_SIZE and __HEAP_SIZE.
  *
- * We provide alternative stack and heap symbols in the sl_memory.c
+ * We provide alternative stack and heap symbols in the sl_memory_region.c
  * file which can be configured in a separate config file. Go to
- * sl_memory_config.h to configure the stack and heap size. */
+ * sl_memory_manager_config.h to configure the stack and heap size. */
 #define __STACK_SIZE    0x0
 #define __HEAP_SIZE     0x0

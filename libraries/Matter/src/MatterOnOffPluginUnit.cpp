@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,9 +48,9 @@ DECLARE_DYNAMIC_ATTRIBUTE_LIST_END();                                           
 
 // On/Off Plug-in Unit endpoint cluster list
 DECLARE_DYNAMIC_CLUSTER_LIST_BEGIN(OnOffPluginUnitEndpointClusters)
-DECLARE_DYNAMIC_CLUSTER(OnOff::Id, onOffUnitAttrs, onOffIncomingCommands, nullptr),
-DECLARE_DYNAMIC_CLUSTER(Descriptor::Id, descriptorAttrs, nullptr, nullptr),
-DECLARE_DYNAMIC_CLUSTER(BridgedDeviceBasicInformation::Id, bridgedDeviceBasicAttrs, nullptr, nullptr)
+DECLARE_DYNAMIC_CLUSTER(OnOff::Id, onOffUnitAttrs, ZAP_CLUSTER_MASK(SERVER), onOffIncomingCommands, nullptr),
+DECLARE_DYNAMIC_CLUSTER(Descriptor::Id, descriptorAttrs, ZAP_CLUSTER_MASK(SERVER), nullptr, nullptr),
+DECLARE_DYNAMIC_CLUSTER(BridgedDeviceBasicInformation::Id, bridgedDeviceBasicAttrs, ZAP_CLUSTER_MASK(SERVER), nullptr, nullptr)
 DECLARE_DYNAMIC_CLUSTER_LIST_END;
 
 /***************************************************************************//**

@@ -42,6 +42,8 @@
 
 #define ATTRIBUTE_MASK_WRITABLE_NULLABLE (ATTRIBUTE_MASK_WRITABLE | ATTRIBUTE_MASK_NULLABLE)
 
+using ::chip::CommandId;
+
 extern EmberAfAttributeMetadata bridgedDeviceBasicAttrs[7];
 extern EmberAfAttributeMetadata descriptorAttrs[6];
 extern EmberAfAttributeMetadata identifyAttrs[4];

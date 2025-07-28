@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ DeviceWindowCovering::DeviceWindowCovering(const char* device_name) :
   requested_lift_pos(0u),
   actual_lift_pos(0u)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_WindowCovering);
 }
 
 void DeviceWindowCovering::SetCurrentOperationalStatus(OperationalStatus_t operational_status)
@@ -105,13 +105,13 @@ uint16_t DeviceWindowCovering::GetWindowCoveringClusterRevision()
   return this->window_covering_cluster_revision;
 }
 
-EmberAfStatus DeviceWindowCovering::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                               chip::AttributeId attributeId,
-                                                               uint8_t* buffer,
-                                                               uint16_t maxReadLength)
+CHIP_ERROR DeviceWindowCovering::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                            chip::AttributeId attributeId,
+                                                            uint8_t* buffer,
+                                                            uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::WindowCovering::Attributes;
@@ -122,7 +122,7 @@ EmberAfStatus DeviceWindowCovering::HandleReadEmberAfAttribute(ClusterId cluster
   }
 
   if (clusterId != chip::app::Clusters::WindowCovering::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == Type::Id) && (maxReadLength == 1)) {
@@ -153,10 +153,10 @@ EmberAfStatus DeviceWindowCovering::HandleReadEmberAfAttribute(ClusterId cluster
     uint16_t clusterRevision = this->GetWindowCoveringClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceWindowCovering::HandleWindowCoveringDeviceStatusChanged(Changed_t itemChangedMask)

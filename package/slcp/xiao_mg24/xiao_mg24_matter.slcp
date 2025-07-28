@@ -7,24 +7,29 @@ package: Matter
 
 sdk_extension:
   - id: matter
-    version: "2.2.0"
+    version: "2.5.1"
+  - id: aiml
+    version: 2.0.0
 
 component:
   - id: device_init
+  - id: sl_system
+  - id: clock_manager
+  - id: ot_stack_ftd
   - id: fem_util
   - id: simple_led
     instance: [led0]
 
-  - id: matter_wstk_leds
+  - id: matter_leds
     from: matter
 
   - id: matter
     from: matter
-  - id: matter_platform_efr32
+  - id: matter_platform_mg
     from: matter
   - id: matter_ble
     from: matter
-  - id: matter_thread_ftd
+  - id: matter_thread
     from: matter
   - id: rail_util_pti
   - id: matter_ota_support
@@ -35,13 +40,16 @@ component:
   #  from: matter
   - id: matter_gatt
     from: matter
+  - id: matter_provision_default
+    from: matter
+  - id: matter_log_rtt
+    from: matter
+  #- id: matter_log_uart
+  #  from: matter
 
   - id: matter_lighting
     from: matter
   - id: app_common
-    from: matter
-
-  - id: silabs_factory_data_provider
     from: matter
 
   - id: matter_access_control
@@ -78,7 +86,11 @@ component:
     from: matter
   - id: matter_operational_credentials
     from: matter
+  - id: matter_ota_support
+    from: matter
   - id: matter_ota_requestor
+    from: matter
+  - id: matter_scenes
     from: matter
   - id: matter_software_diagnostics
     from: matter
@@ -106,7 +118,7 @@ component:
   # Override RTT
   - id: matter_segger_rtt
     from: matter
-  # Addtitional stuff required by the Arduino platform
+  # Additional stuff required by the Arduino platform
   - id: app_assert
   - id: udelay
   - id: app_log
@@ -134,6 +146,16 @@ component:
   - id: configuration_over_swo
   - id: psa_crypto_config
   - id: emlib_rmu
+  - id: emlib_wdog
+  - id: memory_manager_cpp
+  - id: bluetooth_feature_dynamic_gattdb
+  # AI/ML components
+  - id: tensorflow_lite_micro
+    from: aiml
+  - id: tensorflow_debug_log_none
+    from: aiml
+  - id: tensorflow_lite_micro_accelerated_kernels
+    from: aiml
 
 requires:
 # On Series 2 LCD and external flash run over USART, VCOM runs over EUSART
@@ -147,7 +169,8 @@ requires:
   - name: brd4187c
 
 config_file:
-  - path: ../../../../examples/lighting-app/silabs/data_model/lighting-app.zap
+  - path: ../../../../third_party/matter_sdk/examples/lighting-app/silabs/data_model/lighting-app.zap
+    file_id: zap_config
     directory: common
   - path: sl_iostream_usart_xiao_mg24_config.h
     override:
@@ -181,23 +204,24 @@ config_file:
       file_id: i2cspm_config
 
 include:
-  - path: ../../../../examples/lighting-app/silabs/include
+  - path: ../../../../third_party/matter_sdk/examples/lighting-app/silabs/include
     file_list:
       - path: AppConfig.h
       - path: AppEvent.h
       - path: AppTask.h
       - path: CHIPProjectConfig.h
       - path: LightingManager.h
+      - path: MatterBLE.h
     directory: include
 
 source:
-  - path: ../../../../examples/lighting-app/silabs/src/AppTask.cpp
+  - path: ../../../../third_party/matter_sdk/examples/lighting-app/silabs/src/AppTask.cpp
     directory: src
-  - path: ../../../../examples/lighting-app/silabs/src/LightingManager.cpp
+  - path: ../../../../third_party/matter_sdk//examples/lighting-app/silabs/src/LightingManager.cpp
     directory: src
-  - path: ../../../../examples/lighting-app/silabs/src/main.cpp
+  - path: ../../../../third_party/matter_sdk/examples/lighting-app/silabs/src/main.cpp
     directory: src
-  - path: ../../../../examples/lighting-app/silabs/src/ZclCallbacks.cpp
+  - path: ../../../../third_party/matter_sdk/examples/lighting-app/silabs/src/ZclCallbacks.cpp
     directory: src
 
 define:
@@ -217,7 +241,13 @@ define:
     value: 0
   - name: configNUM_THREAD_LOCAL_STORAGE_POINTERS
     value: 2
+  - name: TF_LITE_STATIC_MEMORY
+    value: "1"
 configuration:
+  - name: SL_OPENTHREAD_ENABLE_APP_TASK
+    value: 0
+  - name: SL_OPENTHREAD_ENABLE_CLI_TASK
+    value: 0
   - name: OPENTHREAD_CONFIG_LOG_OUTPUT
     value: OPENTHREAD_CONFIG_LOG_OUTPUT_APP
   - name: SL_MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
@@ -235,11 +265,24 @@ configuration:
     value: 1
     condition: [matter_thread_coap_cert_libs]
   - {name: SL_STACK_SIZE, value: '4608'}
+  - {name: SL_BT_RTOS_EVENT_HANDLER_STACK_SIZE, value: '1536'}
+  - name: CIRCULAR_QUEUE_LEN_MAX
+    value: 16
+  - name: OPENTHREAD_CONFIG_LOG_OUTPUT
+    value: OPENTHREAD_CONFIG_LOG_OUTPUT_NONE
+  - name: SL_MBEDTLS_PSA_ASSUME_EXCLUSIVE_BUFFERS
+    value: 1
+  - name: SL_TFLITE_MICRO_ARENA_SIZE
+    value: "8192"
 
 toolchain_settings:
   - option: gcc_c++_compiler_option
     value: -std=gnu++17
 template_contribution:
+  - name: bluetooth_on_event
+    value:
+      include: MatterBLE.h
+      function: matter_ble_on_event
   - name: memory_flash_start
     value: 0x0
     condition: [device_series_1]

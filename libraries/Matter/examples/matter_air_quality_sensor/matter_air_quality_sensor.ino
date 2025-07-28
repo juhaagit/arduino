@@ -1,10 +1,10 @@
 /*
    Matter air quality sensor example
 
-   The example shows how to create a air quality sensor using the Sparkfun SGP40 Air Quality sensor with the Arduino Matter API.
+   The example shows how to create a air quality sensor using the SparkFun SGP40 Air Quality sensor with the Arduino Matter API.
 
-   The example creates a Matter air quality sensor device, read the VOC index from the SGP40 sensor and publishes the air quality value through it.
-   To use the SGP40 sensor, install the SparkFun SGP40 Arduino Library.
+   The example creates a Matter air quality sensor device, reads the VOC index from the SGP40 sensor and publishes the air quality value through Matter.
+   To use the SGP40 sensor, install the 'SparkFun SGP40 Arduino Library'.
    The device has to be commissioned to a Matter hub first.
 
    Compatible boards:
@@ -54,17 +54,18 @@ void setup()
   }
   Serial.println("Matter device is now online");
 
-  // Initialize I2C
-  Wire.begin();
-
   // Initialize sensor
+  Wire.begin();
   Serial.println("SGP40 sensor initializing...");
   if (!sgp40_sensor.begin()) {
-    Serial.println("SGP40 not detected");
+    Serial.println("SGP40 sensor not detected!");
     Serial.println("Check connections and press the reset button to reinitialize");
-    while (1) ; // freezing
+    matter_air_quality_sensor.set_air_quality(MatterAirQuality::AirQuality_t::UNKNOWN);
+    while (1) {
+      yield();
+    }
   }
-  Serial.println("SGP40 sensor initialize done");
+  Serial.println("SGP40 sensor initialized");
 }
 
 void loop()

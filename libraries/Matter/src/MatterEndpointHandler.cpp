@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,11 @@
  */
 
 #include "MatterEndpointHandler.h"
+#include <util/endpoint-config-api.h>
+#include <platform/PlatformManager.h>
+
+using namespace ::chip;
+using namespace chip::DeviceLayer;
 
 EndpointId gCurrentEndpointId;
 EndpointId gFirstDynamicEndpointId;
@@ -48,24 +53,25 @@ int AddDeviceEndpoint(Device* dev, EmberAfEndpointType* ep,
                       const Span<DataVersion> & dataVersionStorage,
                       chip::EndpointId parentEndpointId)
 {
-  uint8_t index = 0;
+  uint8_t index = 0u;
   while (index < CHIP_DEVICE_CONFIG_DYNAMIC_ENDPOINT_COUNT) {
     if (nullptr == gDevices[index]) {
       gDevices[index] = dev;
-      EmberAfStatus ret;
+      CHIP_ERROR err;
       while (true) {
         // Todo: Update this to schedule the work rather than use this lock
         DeviceLayer::StackLock lock;
         dev->SetEndpointId(gCurrentEndpointId);
         dev->SetParentEndpointId(parentEndpointId);
-        ret = emberAfSetDynamicEndpoint(index, gCurrentEndpointId, ep, dataVersionStorage, deviceTypeList, parentEndpointId);
-        if (ret == EMBER_ZCL_STATUS_SUCCESS) {
-          ChipLogProgress(DeviceLayer, "Added device %s to dynamic endpoint %d (index=%d)", dev->GetName(),
-                          gCurrentEndpointId, index);
+        err = emberAfSetDynamicEndpoint(index, gCurrentEndpointId, ep, dataVersionStorage, deviceTypeList, parentEndpointId);
+        if (err == CHIP_NO_ERROR) {
+          ChipLogProgress(DeviceLayer, "Added device %s to dynamic endpoint %d (index=%u)",
+                          dev->GetName(), gCurrentEndpointId, index);
           return index;
         }
-        if (ret != EMBER_ZCL_STATUS_DUPLICATE_EXISTS) {
-          ChipLogProgress(DeviceLayer, "Failed to add dynamic endpoint; err='%d'", ret);
+        if (err != CHIP_ERROR_ENDPOINT_EXISTS) {
+          gDevices[index] = nullptr;
+          ChipLogProgress(DeviceLayer, "Failed to add dynamic endpoint; err='0x%lx'", err.AsInteger());
           return -1;
         }
         // Handle wrap condition
@@ -82,7 +88,7 @@ int AddDeviceEndpoint(Device* dev, EmberAfEndpointType* ep,
 
 int RemoveDeviceEndpoint(Device* dev)
 {
-  uint8_t index = 0;
+  uint8_t index = 0u;
   while (index < CHIP_DEVICE_CONFIG_DYNAMIC_ENDPOINT_COUNT) {
     if (gDevices[index] == dev) {
       // Todo: Update this to schedule the work rather than use this lock
@@ -91,7 +97,7 @@ int RemoveDeviceEndpoint(Device* dev)
       gDevices[index] = nullptr;
       ChipLogProgress(DeviceLayer, "Removed device %s from dynamic endpoint %d (index=%d)", dev->GetName(), ep, index);
       // Silence complaints about unused ep when progress logging is disabled
-      UNUSED_VAR(ep);
+      (void)ep;
       return index;
     }
     index++;

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ DeviceSwitch::DeviceSwitch(const char* device_name) :
   current_position(0),
   multi_press_max(2)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_Switch);
 }
 
 void DeviceSwitch::SetNumberOfPositions(uint8_t number_of_positions)
@@ -92,13 +92,13 @@ uint16_t DeviceSwitch::GetSwitchClusterRevision()
   return this->switch_cluster_revision;
 }
 
-EmberAfStatus DeviceSwitch::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                       chip::AttributeId attributeId,
-                                                       uint8_t* buffer,
-                                                       uint16_t maxReadLength)
+CHIP_ERROR DeviceSwitch::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                    chip::AttributeId attributeId,
+                                                    uint8_t* buffer,
+                                                    uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::Switch::Attributes;
@@ -109,7 +109,7 @@ EmberAfStatus DeviceSwitch::HandleReadEmberAfAttribute(ClusterId clusterId,
   }
 
   if (clusterId != chip::app::Clusters::Switch::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == CurrentPosition::Id) && (maxReadLength == 1)) {
@@ -128,25 +128,25 @@ EmberAfStatus DeviceSwitch::HandleReadEmberAfAttribute(ClusterId clusterId,
     uint16_t clusterRevision = this->GetSwitchClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus DeviceSwitch::HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                        chip::AttributeId attributeId,
-                                                        uint8_t* buffer)
+CHIP_ERROR DeviceSwitch::HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                                     chip::AttributeId attributeId,
+                                                     uint8_t* buffer)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::Switch::Attributes;
   ChipLogProgress(DeviceLayer, "HandleWriteSwitchAttribute: clusterId=%lu attrId=%ld", clusterId, attributeId);
 
   if (clusterId != chip::app::Clusters::Switch::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if (attributeId == CurrentPosition::Id) {
@@ -156,10 +156,10 @@ EmberAfStatus DeviceSwitch::HandleWriteEmberAfAttribute(ClusterId clusterId,
   } else if (attributeId == MultiPressMax::Id) {
     this->SetMultiPressMax(*buffer);
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceSwitch::HandleSwitchDeviceStatusChanged(Changed_t itemChangedMask)

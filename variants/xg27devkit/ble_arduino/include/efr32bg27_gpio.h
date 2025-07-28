@@ -3,7 +3,7 @@
  * @brief EFR32BG27 GPIO register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -38,13 +38,13 @@
 
 #include "efr32bg27_gpio_port.h"
 
-typedef struct {
+typedef struct gpio_acmproute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< ACMP0 pin enable                                   */
   __IOM uint32_t ACMPOUTROUTE;                       /**< ACMPOUT port/pin select                            */
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_ACMPROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_cmuroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< CMU pin enable                                     */
   __IOM uint32_t CLKIN0ROUTE;                        /**< CLKIN0 port/pin select                             */
   __IOM uint32_t CLKOUT0ROUTE;                       /**< CLKOUT0 port/pin select                            */
@@ -53,7 +53,7 @@ typedef struct {
   uint32_t       RESERVED0[2U];                      /**< Reserved for future use                            */
 } GPIO_CMUROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_eusartroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< EUSART0 pin enable                                 */
   __IOM uint32_t CSROUTE;                            /**< CS port/pin select                                 */
   __IOM uint32_t CTSROUTE;                           /**< CTS port/pin select                                */
@@ -64,7 +64,7 @@ typedef struct {
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_EUSARTROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_frcroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< FRC pin enable                                     */
   __IOM uint32_t DCLKROUTE;                          /**< DCLK port/pin select                               */
   __IOM uint32_t DFRAMEROUTE;                        /**< DFRAME port/pin select                             */
@@ -72,21 +72,21 @@ typedef struct {
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_FRCROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_i2croute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< I2C0 pin enable                                    */
   __IOM uint32_t SCLROUTE;                           /**< SCL port/pin select                                */
   __IOM uint32_t SDAROUTE;                           /**< SDA port/pin select                                */
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_I2CROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_letimerroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< LETIMER pin enable                                 */
   __IOM uint32_t OUT0ROUTE;                          /**< OUT0 port/pin select                               */
   __IOM uint32_t OUT1ROUTE;                          /**< OUT1 port/pin select                               */
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_LETIMERROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_modemroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< MODEM pin enable                                   */
   __IOM uint32_t ANT0ROUTE;                          /**< ANT0 port/pin select                               */
   __IOM uint32_t ANT1ROUTE;                          /**< ANT1 port/pin select                               */
@@ -107,7 +107,7 @@ typedef struct {
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_MODEMROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_pdmroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< PDM pin enable                                     */
   __IOM uint32_t CLKROUTE;                           /**< CLK port/pin select                                */
   __IOM uint32_t DAT0ROUTE;                          /**< DAT0 port/pin select                               */
@@ -115,7 +115,7 @@ typedef struct {
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_PDMROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_prsroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< PRS0 pin enable                                    */
   __IOM uint32_t ASYNCH0ROUTE;                       /**< ASYNCH0 port/pin select                            */
   __IOM uint32_t ASYNCH1ROUTE;                       /**< ASYNCH1 port/pin select                            */
@@ -136,7 +136,7 @@ typedef struct {
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_PRSROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_timerroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< TIMER0 pin enable                                  */
   __IOM uint32_t CC0ROUTE;                           /**< CC0 port/pin select                                */
   __IOM uint32_t CC1ROUTE;                           /**< CC1 port/pin select                                */
@@ -147,7 +147,7 @@ typedef struct {
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_TIMERROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_usartroute_typedef{
   __IOM uint32_t ROUTEEN;                            /**< USART0 pin enable                                  */
   __IOM uint32_t CSROUTE;                            /**< CS port/pin select                                 */
   __IOM uint32_t CTSROUTE;                           /**< CTS port/pin select                                */
@@ -158,7 +158,7 @@ typedef struct {
   uint32_t       RESERVED0[1U];                      /**< Reserved for future use                            */
 } GPIO_USARTROUTE_TypeDef;
 
-typedef struct {
+typedef struct gpio_typedef{
   __IM uint32_t             IPVERSION;               /**< main                                               */
   uint32_t                  RESERVED0[11U];          /**< Reserved for future use                            */
   GPIO_PORT_TypeDef         P[4U];                   /**<                                                    */

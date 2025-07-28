@@ -105,6 +105,8 @@ void sl_btctrl_request_hard_reset(void);
 
 void sl_btctrl_hci_parser_init_conn(void);
 
+void sl_btctrl_hci_parser_init_subrate(void);
+
 void sl_btctrl_hci_parser_init_adv(void);
 
 void sl_btctrl_hci_parser_init_phy(void);
@@ -116,6 +118,8 @@ void sl_btctrl_hci_parser_init_privacy(void);
 void sl_btctrl_hci_parser_init_cs(void);
 
 void sl_btctrl_hci_parser_init_default(void);
+
+void sl_btctrl_hci_parser_init_iso(void);
 
 /**
  * Create hardware error event and try to send it to the host.

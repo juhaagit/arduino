@@ -53,6 +53,7 @@ component:
   - id: nvm3_lib
   - id: emlib_rmu
   - id: emlib_wdog
+  - id: memory_manager_cpp
 
 source:
   - path: main.c

@@ -44,7 +44,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 // Validate maximum of task registers
-#if configSDK_THREAD_LOCAL_STORAGE_POINTERS > 255
+#if configNUM_SDK_THREAD_LOCAL_STORAGE_POINTERS > 255
 #error "The task register API currently only supports a maximum of 255 registers"
 #endif
 // Check if the user has overwritten the configNUM_THREAD_LOCAL_STORAGE_POINTERS config

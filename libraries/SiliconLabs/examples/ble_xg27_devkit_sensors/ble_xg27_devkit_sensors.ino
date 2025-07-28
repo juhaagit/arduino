@@ -3,7 +3,7 @@
 
    This example showcases the xG27 Dev Kit's built-in sensors using BLE.
    It collects and processes sensor data from the board and provides graphical
-   feedback via the EFR Connect iOS/Android app.
+   feedback via the Simplicity Connect iOS/Android app.
 
    On startup the sketch will start a BLE advertisement with the configured name, then
    it will accept any incoming connection. The device offers GATT services and characteristics
@@ -21,11 +21,11 @@
    - Silabs Si7210 Hall Effect Sensor
    - SilabsMicrophonePDM
 
-   With the EFR Connect app you can test this example with two different methods:
-   - Method 1: Open the EFR Connect app on your smartphone. Go to Demo tab -> Environment -> Connect to the device
+   With the Simplicity Connect app you can test this example with two different methods:
+   - Method 1: Open the Simplicity Connect app on your smartphone. Go to Demo tab -> Environment -> Connect to the device
      with the name "Dev Kit #xxxxx" -> The demo application automatically requests data from the xG27 Dev Kit and
      displays it on the main dashboard.
-   - Method 2: Open the EFR Connect app on your smartphone. Go to Scan tab -> Find your device in the Bluetooth Browser, advertising
+   - Method 2: Open the Simplicity Connect app on your smartphone. Go to the Scan tab -> Find your device in the Bluetooth Browser, advertising
      as "Dev Kit #xxxxx", and tap Connect. Find the Service at the GATT database. There are four services: Device Information
      Service, Hall Effect Service, IMU Service, and Environmental Sensing Service. Try to read, re-read the characteristics
      and enable notification on this service to get the value from sensors.
@@ -34,7 +34,7 @@
 
    This example only works with the 'BLE (Silabs)' protocol stack variant.
 
-   Get the EFR Connect app:
+   Get the Simplicity Connect app:
     - https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo
     - https://apps.apple.com/us/app/efr-connect-ble-mobile-app/id1030932759
 
@@ -1160,6 +1160,6 @@ static void sound_read_cb(sl_bt_evt_gatt_server_user_read_request_t *data)
   Serial.println(soundLevel_db);
 }
 
-#ifndef BLE_STACK_SILABS
+#ifndef ARDUINO_SILABS_STACK_BLE_SILABS
   #error "This example is only compatible with the Silicon Labs BLE stack. Please select 'BLE (Silabs)' in 'Tools > Protocol stack'."
 #endif

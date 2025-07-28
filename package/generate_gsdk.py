@@ -13,11 +13,12 @@ gsdk_dir = None
 slc_output_dir = None
 gsdk_version = None
 matter_extension_version = None
+aiml_extension_version = None
 
 gsdk_cpp_empty_folder = "app/common/example/empty/"
 gsdk_bt_soc_empty_folder = "app/bluetooth/example/bt_soc_empty/"
 matter_lighting_app_folder = "extension/matter_extension/slc/sample-app/lighting-app/efr32/"
-matter_zap_folder = "extension/matter_extension/examples/lighting-app/silabs/data_model/"
+matter_zap_folder = "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/data_model/"
 gsdk_license_file = "gsdk_license"
 variants_folder = "../variants/"
 
@@ -89,6 +90,8 @@ def generate_gsdk(current_platform_config):
     print(f"Arduino variant: {arduino_variant_name}")
     print(f"Board: {board_opn}")
     print(f"AI capable: {ai_capable}") # Indicates if the board supports hardware acceleration for AI/ML tasks
+    if ai_capable:
+        print(f"AI/ML extension version: {aiml_extension_version}")
     print(f"Project file: {slcp_file_name}")
     print(f"Prebuild: {prebuild}")
     print(f"Protocol stack: {protocol_stack}")
@@ -128,6 +131,7 @@ def generate_gsdk(current_platform_config):
     if is_matter:
         patch_matter_max_dynamic_endpoint_count()
         patch_matter_device_descriptors(current_platform_config["matter_vendor_name"], current_platform_config["matter_vendor_id"])
+        patch_matter_device_name()
     build_project()
     apply_license_to_unlicensed_files(slc_output_dir + "autogen")
     apply_license_to_unlicensed_files(slc_output_dir + "config")
@@ -172,10 +176,10 @@ def generate_project_with_slc(gsdk_soc_empty_folder, slcp_file_name, board_opn):
 
     # Call slc to generate the project
     slc_process = subprocess.Popen(
-        ["slc", "generate", "-o", "makefile", "-tlcn", "gcc", "-cp",
+        ["slc", "generate", "-o", "makefile", "-tlcn", "gcc", "-cp", "--generator-timeout", "600",
          "-s", gsdk_dir, "-p", gsdk_dir+gsdk_soc_empty_folder+slcp_file_name, "-d", slc_output_dir, "--with", board_opn]
     )
-    slc_process.communicate(timeout=180)
+    slc_process.communicate(timeout=600)
     print("SLC generation finished")
 
 
@@ -215,6 +219,8 @@ def patch_peripheral_inits():
                  line = "  //" + line
             if "sl_spidrv_init_instances();" in line:
                  line = "  //" + line
+            if "sl_iostream_init_instances();" in line:
+                line = "  //" + line
             if "sl_iostream_uart_init_instances();" in line:
                  line = "  //" + line
             if "sl_iostream_usart_init_instances();" in line:
@@ -282,7 +288,7 @@ def patch_makefiles():
                 ("$(OUTPUT_DIR)/project/src/LightingManager.o: src/LightingManager.cpp" in line) or
                 ("$(OUTPUT_DIR)/project/src/ZclCallbacks.o: src/ZclCallbacks.cpp" in line) or
                 ("$(OUTPUT_DIR)/project/src/ZclCallbacks.o: src/ZclCallbacks.cpp" in line) or
-                ("$(OUTPUT_DIR)/sdk/util/third_party/tensorflow_extra/src/sl_tflite_micro_init.o: $(COPIED_SDK_PATH)/util/third_party/tensorflow_extra/src/sl_tflite_micro_init.cc" in line)
+                ("$(OUTPUT_DIR)/project/aiml_2.0.0/src/sl_tflite_micro_init.o: aiml_2.0.0/src/sl_tflite_micro_init.cc" in line)
                ):
                 line = "#" + line
                 buf[linecnt + 1] = "#" + buf[linecnt + 1]
@@ -301,7 +307,7 @@ def patch_matter_max_dynamic_endpoint_count():
     """
     Patches a Matter config file to allow dynamic endpoints to be created
     """
-    chip_device_config_file_path = "matter_" + matter_extension_version + "/src/include/platform/CHIPDeviceConfig.h"
+    chip_device_config_file_path = "matter_" + matter_extension_version + "/third_party/matter_sdk/src/include/platform/CHIPDeviceConfig.h"
     dynamic_endpoints_num = 16
 
     with open(slc_output_dir + chip_device_config_file_path, "r") as in_file:
@@ -319,8 +325,7 @@ def patch_matter_device_descriptors(vendor_name, vendor_id):
     """
     Patches device descriptors (like name and manufacturer) in the Matter config file
     """
-    chip_device_config_file_path = "matter_" + matter_extension_version + "/src/include/platform/CHIPDeviceConfig.h"
-    dynamic_endpoints_num = 16
+    chip_device_config_file_path = "matter_" + matter_extension_version + "/third_party/matter_sdk/src/include/platform/CHIPDeviceConfig.h"
 
     with open(slc_output_dir + chip_device_config_file_path, "r") as in_file:
         buf = in_file.readlines()
@@ -341,7 +346,7 @@ def patch_matter_device_descriptors(vendor_name, vendor_id):
                  line = "#define CHIP_DEVICE_CONFIG_TEST_SERIAL_NUMBER \"42069\"\n"
             out_file.write(line)
 
-    platform_config_header_path = "matter_" + matter_extension_version + "/src/platform/silabs/CHIPDevicePlatformConfig.h"
+    platform_config_header_path = "matter_" + matter_extension_version + "/third_party/matter_sdk/src/platform/silabs/CHIPDevicePlatformConfig.h"
     with open(slc_output_dir + platform_config_header_path, "r") as in_file:
         buf = in_file.readlines()
 
@@ -356,6 +361,24 @@ def patch_matter_device_descriptors(vendor_name, vendor_id):
             out_file.write(line)
 
     print("Patched Matter device descriptors")
+
+
+def patch_matter_device_name():
+    """
+    Patches the Matter device name to "Arduino Matter Device"
+    """
+    app_config_file_path = "include/AppConfig.h"
+
+    with open(slc_output_dir + app_config_file_path, "r") as in_file:
+        buf = in_file.readlines()
+
+    with open(slc_output_dir + app_config_file_path, "w") as out_file:
+        for line in buf:
+            if "#define BLE_DEV_NAME" in line:
+                 line = "#define BLE_DEV_NAME \"Arduino Matter Device\"\n"
+            out_file.write(line)
+
+    print("Patched Matter device name")
 
 
 def build_project():
@@ -454,14 +477,14 @@ def copy_output_files(output_dir, is_matter):
 
     shutil.copytree(slc_output_dir + "autogen", output_dir + "autogen")
     shutil.copytree(slc_output_dir + "config", output_dir + "config")
-    shutil.copytree(slc_output_dir + "gecko_sdk_" + gsdk_version, output_dir + "gecko_sdk_" + gsdk_version)
+    shutil.copytree(slc_output_dir + "simplicity_sdk_" + gsdk_version, output_dir + "simplicity_sdk_" + gsdk_version)
     # Matter has some additional folders
     if is_matter:
         shutil.copytree(slc_output_dir + "matter_" + matter_extension_version, output_dir + "matter_" + matter_extension_version)
         shutil.copytree(slc_output_dir + "include", output_dir + "include")
 
     print("Applying license to GSDK folder...")
-    shutil.copy(gsdk_license_file, output_dir + "gecko_sdk_" + gsdk_version + "/LICENSE")
+    shutil.copy(gsdk_license_file, output_dir + "simplicity_sdk_" + gsdk_version + "/LICENSE")
 
 
 def copy_output_files_prebuild(output_dir, is_matter, is_ble_arduino, is_noradio, ai_capable):
@@ -520,12 +543,12 @@ def copy_output_files_prebuild(output_dir, is_matter, is_ble_arduino, is_noradio
                         shutil.copyfile(filepath, header_output_dir + "internal/" + str(f))
                     else:
                         shutil.copyfile(filepath, header_output_dir + str(f))
-                    print(f"Copying '{f}'")
+                    print(f"Copying '{filepath}'")
                     count += 1
 
-        if is_noradio and ai_capable:
+        if ai_capable:
             # Copy the headers from tflite-micro with preserving the structure
-            shutil.copytree(slc_output_dir + "gecko_sdk_" + gsdk_version + "/util/third_party/tflite-micro/tensorflow", header_output_dir + "tensorflow")
+            shutil.copytree(slc_output_dir + "aiml_" + aiml_extension_version + "/third_party/tflite-micro/tensorflow", header_output_dir + "tensorflow")
 
         # Remove 'cc' files
         for (root, dirs, file) in os.walk(header_output_dir):
@@ -536,12 +559,11 @@ def copy_output_files_prebuild(output_dir, is_matter, is_ble_arduino, is_noradio
 
         print(f"Copied {count} header files")
 
-    # Copy the headers from Matter/src/ with preserving the structure
+    # Copy the headers from a generated Matter variant while preserving the structure of the Matter SDK
     if is_matter:
-        # Copy the whole output directory
+        # Copy the whole output directory except for the SDK
         shutil.copytree(slc_output_dir + "autogen", output_dir + "autogen")
         shutil.copytree(slc_output_dir + "config", output_dir + "config")
-        shutil.copytree(slc_output_dir + "gecko_sdk_" + gsdk_version, output_dir + "gecko_sdk_" + gsdk_version)
         shutil.copytree(slc_output_dir + "matter_" + matter_extension_version, output_dir + "matter_" + matter_extension_version)
         shutil.copytree(slc_output_dir + "include", output_dir + "include")
         # Remove 'c' 'cpp' 'a' and 'S' files
@@ -556,6 +578,64 @@ def copy_output_files_prebuild(output_dir, is_matter, is_ble_arduino, is_noradio
                     #os.remove(filepath)
                 if f.endswith('.S'):
                     os.remove(filepath)
+
+        # Copy the headers from the Simplicity SDK folder
+        header_output_dir = output_dir + "include/"
+        # Create the folders for the structures we have to keep
+        os.mkdir(header_output_dir + "openthread")
+        os.mkdir(header_output_dir + "openthread/platform")
+        os.mkdir(header_output_dir + "psa")
+        os.mkdir(header_output_dir + "mbedtls")
+        sisdk_folder_path = slc_output_dir + "simplicity_sdk_" + gsdk_version
+        for (root, dirs, file) in os.walk(sisdk_folder_path):
+            for f in file:
+                filepath = os.path.join(root, f)
+                if f.endswith('.h'):
+                    # Retain containing directory structure for the following
+                    if "include/openthread/platform" in filepath:
+                        shutil.copyfile(filepath, header_output_dir + "openthread/platform/" + str(f))
+                    elif "include/openthread" in filepath:
+                        shutil.copyfile(filepath, header_output_dir + "openthread/" + str(f))
+                    elif "include/psa" in filepath:
+                        shutil.copyfile(filepath, header_output_dir + "psa/" + str(f))
+                    elif "include/mbedtls" in filepath:
+                        shutil.copyfile(filepath, header_output_dir + "mbedtls/" + str(f))
+                    else:
+                        shutil.copyfile(filepath, header_output_dir + str(f))
+                    print(f"Copying '{filepath}'")
+
+        if ai_capable:
+            # Create AI/ML specific include directories
+            os.mkdir(header_output_dir + "flatbuffers")
+            os.mkdir(header_output_dir + "fixedpoint")
+            os.mkdir(header_output_dir + "internal")
+            # Copy headers from the AI/ML SDK without preserving structure
+            aimlsdk_folder_path = slc_output_dir + "aiml_" + aiml_extension_version
+            for (root, dirs, file) in os.walk(aimlsdk_folder_path):
+                for f in file:
+                    filepath = os.path.join(root, f)
+                    if f.endswith('.h'):
+                        # Skip the 'tflite-micro' headers
+                        if "tflite-micro/tensorflow" in filepath:
+                            print(f"Skipping '{f}' as it is in 'tflite-micro/tensorflow'")
+                            continue
+                        if "include/flatbuffers" in filepath:
+                            shutil.copyfile(filepath, header_output_dir + "flatbuffers/" + str(f))
+                        elif "gemmlowp/fixedpoint" in filepath:
+                            shutil.copyfile(filepath, header_output_dir + "fixedpoint/" + str(f))
+                        elif "gemmlowp/internal" in filepath:
+                            shutil.copyfile(filepath, header_output_dir + "internal/" + str(f))
+                        else:
+                            shutil.copyfile(filepath, header_output_dir + str(f))
+                        print(f"Copying '{filepath}'")
+            # Copy the headers from tflite-micro with preserving the structure
+            shutil.copytree(slc_output_dir + "aiml_" + aiml_extension_version + "/third_party/tflite-micro/tensorflow", header_output_dir + "tensorflow")
+            # Remove 'cc' files
+            for (root, dirs, file) in os.walk(header_output_dir):
+                for f in file:
+                    filepath = os.path.join(root, f)
+                    if f.endswith('.cc'):
+                        os.remove(filepath)
 
     # Copy BLE HCI header files if the variant is 'BLE (Arduino)'
     if is_ble_arduino:
@@ -657,6 +737,7 @@ def read_config_file(config_file_path):
         global slc_output_dir
         global gsdk_version
         global matter_extension_version
+        global aiml_extension_version
         lines = f.readlines()
         for line in lines:
             if line.startswith("#") or len(line) < 3:
@@ -671,6 +752,8 @@ def read_config_file(config_file_path):
                 gsdk_version = value
             if config == "matter_extension_version":
                 matter_extension_version = value
+            if config == "aiml_extension_version":
+                aiml_extension_version = value
         if gsdk_dir is None or slc_output_dir is None or gsdk_version is None or matter_extension_version is None:
             print(f"Incomplete or incorrect config file ({config_file_path}), exiting...")
             exit(-1)
@@ -730,7 +813,8 @@ thingplusmatter_ble_arduino_platform_config = {
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/thingplusmatter/thingplusmatter_ble_arduino.slcp",
     "additional_files": ["slcp/thingplusmatter/sl_spidrv_eusart_thingplus1_config.h",
-                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h"]
+                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 thingplusmatter_ble_arduino_prebuilt_platform_config = {
@@ -742,7 +826,8 @@ thingplusmatter_ble_arduino_prebuilt_platform_config = {
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/thingplusmatter/thingplusmatter_ble_arduino.slcp",
     "additional_files": ["slcp/thingplusmatter/sl_spidrv_eusart_thingplus1_config.h",
-                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h"]
+                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 thingplusmatter_ble_silabs_platform_config = {
@@ -778,7 +863,8 @@ thingplusmatter_matter_platform_config = {
     "protocol_stack": 'matter',
     "slcp_file": "slcp/thingplusmatter/thingplusmatter_matter.slcp",
     "additional_files": ["slcp/thingplusmatter/sl_spidrv_eusart_thingplus1_config.h",
-                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h"],
+                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h",
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"
@@ -793,7 +879,8 @@ thingplusmatter_matter_prebuilt_platform_config = {
     "protocol_stack": 'matter',
     "slcp_file": "slcp/thingplusmatter/thingplusmatter_matter.slcp",
     "additional_files": ["slcp/thingplusmatter/sl_spidrv_eusart_thingplus1_config.h",
-                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h"],
+                         "slcp/thingplusmatter/sl_iostream_eusart_thingplus1_config.h",
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"
@@ -829,7 +916,8 @@ xg27devkit_ble_arduino_platform_config = {
     "prebuild": False,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xg27devkit/xg27devkit_ble_arduino.slcp",
-    "additional_files": ["slcp/xg27devkit/sl_iostream_usart_xg27devkit1_config.h"]
+    "additional_files": ["slcp/xg27devkit/sl_iostream_usart_xg27devkit1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xg27devkit_ble_arduino_prebuilt_platform_config = {
@@ -840,7 +928,8 @@ xg27devkit_ble_arduino_prebuilt_platform_config = {
     "prebuild": True,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xg27devkit/xg27devkit_ble_arduino.slcp",
-    "additional_files": ["slcp/xg27devkit/sl_iostream_usart_xg27devkit1_config.h"]
+    "additional_files": ["slcp/xg27devkit/sl_iostream_usart_xg27devkit1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xg27devkit_ble_silabs_platform_config = {
@@ -869,7 +958,7 @@ xg24explorerkit_noradio_platform_config = {
     "name": "xg24explorerkit_noradio",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'noradio',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_noradio.slcp",
@@ -881,7 +970,7 @@ xg24explorerkit_noradio_prebuilt_platform_config = {
     "name": "xg24explorerkit_noradio_precomp",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'noradio',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_noradio.slcp",
@@ -893,31 +982,33 @@ xg24explorerkit_ble_arduino_platform_config = {
     "name": "xg24explorerkit_ble_arduino",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_ble_arduino.slcp",
     "additional_files": ["slcp/xg24explorerkit/sl_spidrv_eusart_xg24explorerkit1_config.h",
-                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h"]
+                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xg24explorerkit_ble_arduino_prebuilt_platform_config = {
     "name": "xg24explorerkit_ble_arduino_precomp",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_ble_arduino.slcp",
     "additional_files": ["slcp/xg24explorerkit/sl_spidrv_eusart_xg24explorerkit1_config.h",
-                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h"]
+                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xg24explorerkit_ble_silabs_platform_config = {
     "name": "xg24explorerkit_ble_silabs",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_ble_silabs.slcp",
@@ -929,7 +1020,7 @@ xg24explorerkit_ble_silabs_prebuilt_platform_config = {
     "name": "xg24explorerkit_ble_silabs_precomp",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_ble_silabs.slcp",
@@ -941,12 +1032,13 @@ xg24explorerkit_matter_platform_config = {
     "name": "xg24explorerkit_matter",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_matter.slcp",
     "additional_files": ["slcp/xg24explorerkit/sl_spidrv_eusart_xg24explorerkit1_config.h",
-                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h"],
+                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h",
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"
@@ -956,12 +1048,13 @@ xg24explorerkit_matter_prebuilt_platform_config = {
     "name": "xg24explorerkit_matter_precomp",
     "arduino_variant_name": "xg24explorerkit",
     "board_opn": "brd2703a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/xg24explorerkit/xg24explorerkit_matter.slcp",
     "additional_files": ["slcp/xg24explorerkit/sl_spidrv_eusart_xg24explorerkit1_config.h",
-                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h"],
+                         "slcp/xg24explorerkit/sl_iostream_eusart_xg24explorerkit1_config.h",
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"
@@ -971,7 +1064,7 @@ xg24devkit_noradio_platform_config = {
     "name": "xg24devkit_noradio",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'noradio',
     "slcp_file": "slcp/xg24devkit/xg24devkit_noradio.slcp",
@@ -982,7 +1075,7 @@ xg24devkit_noradio_prebuilt_platform_config = {
     "name": "xg24devkit_noradio_precomp",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'noradio',
     "slcp_file": "slcp/xg24devkit/xg24devkit_noradio.slcp",
@@ -993,29 +1086,29 @@ xg24devkit_ble_arduino_platform_config = {
     "name": "xg24devkit_ble_arduino",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xg24devkit/xg24devkit_ble_arduino.slcp",
-    "additional_files": []
+    "additional_files": [["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xg24devkit_ble_arduino_prebuilt_platform_config = {
     "name": "xg24devkit_ble_arduino_precomp",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xg24devkit/xg24devkit_ble_arduino.slcp",
-    "additional_files": []
+    "additional_files": [["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xg24devkit_ble_silabs_platform_config = {
     "name": "xg24devkit_ble_silabs",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/xg24devkit/xg24devkit_ble_silabs.slcp",
@@ -1026,7 +1119,7 @@ xg24devkit_ble_silabs_prebuilt_platform_config = {
     "name": "xg24devkit_ble_silabs_precomp",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/xg24devkit/xg24devkit_ble_silabs.slcp",
@@ -1037,11 +1130,11 @@ xg24devkit_matter_platform_config = {
     "name": "xg24devkit_matter",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/xg24devkit/xg24devkit_matter.slcp",
-    "additional_files": [],
+    "additional_files": [["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"
@@ -1051,11 +1144,11 @@ xg24devkit_matter_prebuilt_platform_config = {
     "name": "xg24devkit_matter_precomp",
     "arduino_variant_name": "xg24devkit",
     "board_opn": "brd2601b",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/xg24devkit/xg24devkit_matter.slcp",
-    "additional_files": [],
+    "additional_files": [["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"
@@ -1100,7 +1193,8 @@ wio_mg24_ble_arduino_platform_config = {
     "additional_files": ["slcp/wio_mg24/sl_spidrv_eusart_wio_mg24_config.h",
                          "slcp/wio_mg24/sl_iostream_eusart_wio_mg24_config.h",
                          ["slcp/wio_mg24/brd2907a.slcc", "hardware/board/component/"],
-                         ["slcp/wio_mg24/brd2907a_config.slcc", "hardware/board/config/component/"]]
+                         ["slcp/wio_mg24/brd2907a_config.slcc", "hardware/board/config/component/"],
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 wio_mg24_ble_arduino_prebuilt_platform_config = {
@@ -1114,7 +1208,8 @@ wio_mg24_ble_arduino_prebuilt_platform_config = {
     "additional_files": ["slcp/wio_mg24/sl_spidrv_eusart_wio_mg24_config.h",
                          "slcp/wio_mg24/sl_iostream_eusart_wio_mg24_config.h",
                          ["slcp/wio_mg24/brd2907a.slcc", "hardware/board/component/"],
-                         ["slcp/wio_mg24/brd2907a_config.slcc", "hardware/board/config/component/"]]
+                         ["slcp/wio_mg24/brd2907a_config.slcc", "hardware/board/config/component/"],
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 wio_mg24_ble_silabs_platform_config = {
@@ -1175,7 +1270,7 @@ bgm220explorerkit_ble_arduino_platform_config = {
     "prebuild": False,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/bgm220explorerkit/bgm220explorerkit_ble_arduino.slcp",
-    "additional_files": []
+    "additional_files": [["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 bgm220explorerkit_ble_arduino_prebuilt_platform_config = {
@@ -1186,7 +1281,7 @@ bgm220explorerkit_ble_arduino_prebuilt_platform_config = {
     "prebuild": True,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/bgm220explorerkit/bgm220explorerkit_ble_arduino.slcp",
-    "additional_files": []
+    "additional_files": [["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 bgm220explorerkit_ble_silabs_platform_config = {
@@ -1251,7 +1346,7 @@ nanomatter_ble_arduino_platform_config = {
     "name": "nano_matter_ble_arduino",
     "arduino_variant_name": "nano_matter",
     "board_opn": "brd2707a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/nano_matter/nano_matter_ble_arduino.slcp",
@@ -1262,14 +1357,15 @@ nanomatter_ble_arduino_platform_config = {
                          "slcp/nano_matter/sl_i2cspm_nanomatter_config.h",
                          "slcp/nano_matter/sl_i2cspm_nanomatter1_config.h",
                          ["slcp/nano_matter/brd2707a.slcc", "hardware/board/component/"],
-                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"]]
+                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"],
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 nanomatter_ble_arduino_prebuilt_platform_config = {
     "name": "nano_matter_ble_arduino_precomp",
     "arduino_variant_name": "nano_matter",
     "board_opn": "brd2707a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/nano_matter/nano_matter_ble_arduino.slcp",
@@ -1280,14 +1376,15 @@ nanomatter_ble_arduino_prebuilt_platform_config = {
                          "slcp/nano_matter/sl_i2cspm_nanomatter_config.h",
                          "slcp/nano_matter/sl_i2cspm_nanomatter1_config.h",
                          ["slcp/nano_matter/brd2707a.slcc", "hardware/board/component/"],
-                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"]]
+                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"],
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 nanomatter_ble_silabs_platform_config = {
     "name": "nano_matter_ble_silabs",
     "arduino_variant_name": "nano_matter",
     "board_opn": "brd2707a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/nano_matter/nano_matter_ble_silabs.slcp",
@@ -1305,7 +1402,7 @@ nanomatter_ble_silabs_prebuilt_platform_config = {
     "name": "nano_matter_ble_silabs_precomp",
     "arduino_variant_name": "nano_matter",
     "board_opn": "brd2707a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/nano_matter/nano_matter_ble_silabs.slcp",
@@ -1323,7 +1420,7 @@ nanomatter_matter_platform_config = {
     "name": "nano_matter_matter",
     "arduino_variant_name": "nano_matter",
     "board_opn": "brd2707a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/nano_matter/nano_matter_matter.slcp",
@@ -1334,7 +1431,8 @@ nanomatter_matter_platform_config = {
                          "slcp/nano_matter/sl_i2cspm_nanomatter_config.h",
                          "slcp/nano_matter/sl_i2cspm_nanomatter1_config.h",
                          ["slcp/nano_matter/brd2707a.slcc", "hardware/board/component/"],
-                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"]],
+                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"],
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Arduino",
     "matter_vendor_id": "0x1515"
@@ -1344,7 +1442,7 @@ nanomatter_matter_prebuilt_platform_config = {
     "name": "nano_matter_matter_precomp",
     "arduino_variant_name": "nano_matter",
     "board_opn": "brd2707a",
-    "ai_capable": False,
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/nano_matter/nano_matter_matter.slcp",
@@ -1355,7 +1453,8 @@ nanomatter_matter_prebuilt_platform_config = {
                          "slcp/nano_matter/sl_i2cspm_nanomatter_config.h",
                          "slcp/nano_matter/sl_i2cspm_nanomatter1_config.h",
                          ["slcp/nano_matter/brd2707a.slcc", "hardware/board/component/"],
-                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"]],
+                         ["slcp/nano_matter/brd2707a_config.slcc", "hardware/board/config/component/"],
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Arduino",
     "matter_vendor_id": "0x1515"
@@ -1394,7 +1493,8 @@ lyra24p20_ble_arduino_platform_config = {
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/lyra24p20/lyra24p20_ble_arduino.slcp",
     "additional_files": ["slcp/lyra24p20/sl_spidrv_eusart_lyra24p20_config.h",
-                         "slcp/lyra24p20/sl_iostream_eusart_lyra24p20_config.h"]
+                         "slcp/lyra24p20/sl_iostream_eusart_lyra24p20_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 lyra24p20_ble_arduino_prebuilt_platform_config = {
@@ -1406,7 +1506,8 @@ lyra24p20_ble_arduino_prebuilt_platform_config = {
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/lyra24p20/lyra24p20_ble_arduino.slcp",
     "additional_files": ["slcp/lyra24p20/sl_spidrv_eusart_lyra24p20_config.h",
-                         "slcp/lyra24p20/sl_iostream_eusart_lyra24p20_config.h"]
+                         "slcp/lyra24p20/sl_iostream_eusart_lyra24p20_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 lyra24p20_ble_silabs_platform_config = {
@@ -1437,7 +1538,7 @@ xiao_mg24_noradio_platform_config = {
     "name": "xiao_mg24_noradio",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'noradio',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_noradio.slcp",
@@ -1453,7 +1554,7 @@ xiao_mg24_noradio_prebuilt_platform_config = {
     "name": "xiao_mg24_noradio_precomp",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'noradio',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_noradio.slcp",
@@ -1469,7 +1570,7 @@ xiao_mg24_ble_arduino_platform_config = {
     "name": "xiao_mg24_ble_arduino",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_ble_arduino.slcp",
@@ -1478,14 +1579,15 @@ xiao_mg24_ble_arduino_platform_config = {
                          "slcp/xiao_mg24/sl_iostream_usart_xiao_mg24_config.h",
                          "slcp/xiao_mg24/sl_iostream_eusart_xiao_mg24_1_config.h",
                          "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_config.h",
-                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h"]
+                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xiao_mg24_ble_arduino_prebuilt_platform_config = {
     "name": "xiao_mg24_ble_arduino_precomp",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_arduino',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_ble_arduino.slcp",
@@ -1494,14 +1596,15 @@ xiao_mg24_ble_arduino_prebuilt_platform_config = {
                          "slcp/xiao_mg24/sl_iostream_usart_xiao_mg24_config.h",
                          "slcp/xiao_mg24/sl_iostream_eusart_xiao_mg24_1_config.h",
                          "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_config.h",
-                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h"]
+                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h",
+                         ["slcp/common/bluetooth_hci_reset.slcc", "protocol/bluetooth/bgstack/ll/component/"]]
 }
 
 xiao_mg24_ble_silabs_platform_config = {
     "name": "xiao_mg24_ble_silabs",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_ble_silabs.slcp",
@@ -1517,7 +1620,7 @@ xiao_mg24_ble_silabs_prebuilt_platform_config = {
     "name": "xiao_mg24_ble_silabs_precomp",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'ble_silabs',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_ble_silabs.slcp",
@@ -1533,7 +1636,7 @@ xiao_mg24_matter_platform_config = {
     "name": "xiao_mg24_matter",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": False,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_matter.slcp",
@@ -1542,7 +1645,8 @@ xiao_mg24_matter_platform_config = {
                          "slcp/xiao_mg24/sl_iostream_usart_xiao_mg24_config.h",
                          "slcp/xiao_mg24/sl_iostream_eusart_xiao_mg24_1_config.h",
                          "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_config.h",
-                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h"],
+                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h",
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"
@@ -1552,7 +1656,7 @@ xiao_mg24_matter_prebuilt_platform_config = {
     "name": "xiao_mg24_matter_precomp",
     "arduino_variant_name": "xiao_mg24",
     "board_opn": "brd4187c",
-    "ai_capable": False, # TODO: True
+    "ai_capable": True,
     "prebuild": True,
     "protocol_stack": 'matter',
     "slcp_file": "slcp/xiao_mg24/xiao_mg24_matter.slcp",
@@ -1561,7 +1665,8 @@ xiao_mg24_matter_prebuilt_platform_config = {
                          "slcp/xiao_mg24/sl_iostream_usart_xiao_mg24_config.h",
                          "slcp/xiao_mg24/sl_iostream_eusart_xiao_mg24_1_config.h",
                          "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_config.h",
-                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h"],
+                         "slcp/xiao_mg24/sl_i2cspm_xiao_mg24_1_config.h",
+                         ["slcp/common/MatterBLE.h", "extension/matter_extension/third_party/matter_sdk/examples/lighting-app/silabs/include/"]],
     "matter_zap_file": "slcp/common/arduino_matter.zap",
     "matter_vendor_name": "Silicon Labs",
     "matter_vendor_id": "0x1049"

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,64 +26,24 @@
 
 #include "Arduino.h"
 #include "arduino_variant.h"
-#include "arduino_i2c_config.h"
-#include "arduino_spi_config.h"
 
 #ifdef ARDUINO_MATTER
 
-#include "AppConfig.h"
-#include <DeviceInfoProviderImpl.h>
-#include <MatterConfig.h>
-#include <app/server/Server.h>
-#include <platform/silabs/platformAbstraction/SilabsPlatform.h>
-#include <provision/ProvisionManager.h>
-
-#ifdef BLE_DEV_NAME
-#undef BLE_DEV_NAME
-#endif
-#define BLE_DEV_NAME "Arduino Matter device"
-
-static chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
-
+#include "AppTask.h"
 using namespace ::chip;
-using namespace ::chip::DeviceLayer;
-using namespace ::chip::Credentials;
-using namespace chip::DeviceLayer::Silabs;
 
-#else //ARDUINO_MATTER
+AppTask AppTask::sAppTask;
 
-extern "C" {
-  #include "sl_system_init.h"
+CHIP_ERROR AppTask::StartAppTask()
+{
+  return CHIP_NO_ERROR;
 }
 
-#endif //ARDUINO_MATTER
+#endif // ARDUINO_MATTER
 
 void init_arduino_variant()
 {
-  #ifdef ARDUINO_MATTER
-  // Initialize the Matter stack
-  GetPlatform().Init();
-
-  if (Provision::Manager::GetInstance().ProvisionRequired()) {
-    Provision::Manager::GetInstance().Start();
-  } else {
-    if (SilabsMatterConfig::InitMatter(BLE_DEV_NAME) != CHIP_NO_ERROR) {
-      appError(CHIP_ERROR_INTERNAL);
-    }
-    gExampleDeviceInfoProvider.SetStorageDelegate(&chip::Server::GetInstance().GetPersistentStorage());
-    chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
-
-    chip::DeviceLayer::PlatformMgr().LockChipStack();
-    // Initialize device attestation config
-    SetDeviceAttestationCredentialsProvider(&Provision::Manager::GetInstance().GetStorage());
-    chip::DeviceLayer::PlatformMgr().UnlockChipStack();
-  }
-
-  #else //ARDUINO_MATTER
-
-  sl_system_init();
-
-  #endif //ARDUINO_MATTER
+  ;
 }
 
 // Variant pin mapping - maps Arduino pin numbers to Silabs ports/pins

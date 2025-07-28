@@ -30,13 +30,14 @@
 #ifndef SHA256_ALT_H
 #define SHA256_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_sha256 Accelerated SHA-224/SHA-256 Hash Function
+ * \addtogroup sl_mbedtls_plugins_sha256 Accelerated SHA-224/SHA-256 Hash Function
  * \brief Accelerated mbed TLS SHA-224/SHA-256 cryptographic hash functions for
  *        the mbed TLS API using Silicon Labs peripherals. This implementation
  *        builds on the PSA Crypto drivers (\ref sl_psa_drivers).
@@ -51,9 +52,6 @@
 #if defined(SEMAILBOX_PRESENT)
 #include "sli_se_transparent_types.h"
 #define SL_HASH_OPERATION_CTX_TYPE sli_se_transparent_hash_operation_t
-#elif defined(CRYPTO_PRESENT)
-#include "sli_crypto_transparent_types.h"
-#define SL_HASH_OPERATION_CTX_TYPE sli_crypto_transparent_hash_operation_t
 #elif defined(CRYPTOACC_PRESENT)
 #include "sli_cryptoacc_transparent_types.h"
 #define SL_HASH_OPERATION_CTX_TYPE sli_cryptoacc_transparent_hash_operation_t
@@ -78,7 +76,8 @@ typedef SL_HASH_OPERATION_CTX_TYPE mbedtls_sha256_context;
 
 #endif /* #if defined(MBEDTLS_SHA256_ALT) */
 
-/** \} (end addtogroup sl_crypto_sha256) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_sha256) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* SHA256_ALT_H */

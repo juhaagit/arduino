@@ -3,7 +3,7 @@
  * @brief BGM24 LETIMER register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** LETIMER Register Declaration. */
-typedef struct {
+typedef struct letimer_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP version                                         */
   __IOM uint32_t EN;                            /**< module en                                          */
   __IOM uint32_t SWRST;                         /**< Software Reset Register                            */

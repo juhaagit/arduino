@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,8 +47,10 @@ void SilabsSPI::begin()
   if (this->initialized) {
     return;
   }
-  SPIDRV_Init(this->sl_spidrv_handle, this->sl_spidrv_config);
-  this->initialized = true;
+  sl_status_t sc = SPIDRV_Init(this->sl_spidrv_handle, this->sl_spidrv_config);
+  if (sc == SL_STATUS_OK) {
+    this->initialized = true;
+  }
 }
 
 void SilabsSPI::beginTransaction(SPISettings settings)
@@ -106,7 +108,11 @@ void SilabsSPI::transfer(void* tx_buf, size_t count, bool block)
 
 void SilabsSPI::transfer(void *buf, size_t count)
 {
-  transfer(buf, count, true);
+  if (!buf || count == 0u) {
+    return;
+  }
+  // Transfer bytes from 'buf' while replacing them with the received bytes
+  this->transfer(buf, buf, count, true);
 }
 
 void SilabsSPI::_transfer_block(void* tx_buf, size_t count)

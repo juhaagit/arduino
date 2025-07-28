@@ -15,7 +15,7 @@ void setup()
   Serial.begin(115200);
   Serial.println("Si7210 hall sensor example");
 
-  #ifdef ARDUINO_SILABS_XG27DEVKIT
+  #ifdef ARDUINO_BOARD_SILABS_XG27DEVKIT
   // The xG27 Dev Kit has a separate sensor power rail
   // which needs to be enabled by pulling PC6 high
   pinMode(PC6, OUTPUT);

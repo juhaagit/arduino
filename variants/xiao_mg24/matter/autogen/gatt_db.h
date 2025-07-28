@@ -18,5 +18,12 @@ extern const sli_bt_gattdb_t gattdb;
 #define gattdb_CHIPoBLEChar_Tx                25
 #define gattdb_CHIPoBLEChar_C3                28
 
+typedef enum {
+  static_matter_pairing_service  = 0x0001,
+  static_device_information      = 0x0002,
+  static_generic_access          = 0x0004,
+  static_service_gatt_none       = 0x0008,
+  gattdb_all_caps = 0x000f
+} gattdb_cap_t;
 
 #endif // __GATT_DB_H

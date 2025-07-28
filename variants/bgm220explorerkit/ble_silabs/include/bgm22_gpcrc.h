@@ -3,7 +3,7 @@
  * @brief BGM22 GPCRC register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** GPCRC Register Declaration. */
-typedef struct {
+typedef struct gpcrc_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP Version ID                                      */
   __IOM uint32_t EN;                            /**< CRC Enable                                         */
   __IOM uint32_t CTRL;                          /**< Control Register                                   */

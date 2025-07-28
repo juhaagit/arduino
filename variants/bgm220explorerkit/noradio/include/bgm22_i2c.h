@@ -3,7 +3,7 @@
  * @brief BGM22 I2C register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** I2C Register Declaration. */
-typedef struct {
+typedef struct i2c_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP VERSION Register                                */
   __IOM uint32_t EN;                            /**< Enable Register                                    */
   __IOM uint32_t CTRL;                          /**< Control Register                                   */

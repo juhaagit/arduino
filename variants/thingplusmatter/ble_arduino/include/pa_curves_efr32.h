@@ -76,17 +76,27 @@ extern "C" {
 #else
 #error "No valid PA available for selected chip."
 #endif
-#elif defined (_SILICON_LABS_32B_SERIES_2_CONFIG_4)
+#elif (_SILICON_LABS_32B_SERIES_2_CONFIG == 4)
   #if defined(_SILICON_LABS_EFR32_2G4HZ_HP_PA_PRESENT) \
   && (_SILICON_LABS_EFR32_2G4HZ_HP_PA_MAX_OUTPUT_DBM > 10)
   #include "efr32xg24/sl_rail_util_pa_curves_20dbm.h"
   #else
   #include "efr32xg24/sl_rail_util_pa_curves_10dbm.h"
   #endif
-#elif defined (_SILICON_LABS_32B_SERIES_2_CONFIG_5)
-#include "efr32xg25/sl_rail_util_pa_dbm_powersetting_mapping_table_eff.h"
+#elif (_SILICON_LABS_32B_SERIES_2_CONFIG == 5)
 #include "efr32xg25/sl_rail_util_pa_dbm_powersetting_mapping_table.h"
 #include "efr32xg25/sl_rail_util_pa_curves.h"
+#elif (_SILICON_LABS_32B_SERIES_2_CONFIG == 6)
+  #if defined(_SILICON_LABS_EFR32_2G4HZ_HP_PA_PRESENT) \
+  && (_SILICON_LABS_EFR32_2G4HZ_HP_PA_MAX_OUTPUT_DBM > 10)
+  #include "efr32xg26/sl_rail_util_pa_curves_20dbm.h"
+  #else
+  #if defined(EFR32MG26B510F3200IL136)
+  #include "efr32xg26/sl_rail_util_pa_curves_BGA.h"
+  #else
+  #include "efr32xg26/sl_rail_util_pa_curves_10dbm.h"
+  #endif
+  #endif
 #elif (_SILICON_LABS_32B_SERIES_2_CONFIG == 7)
 // EFR32XG27 boards come in two different packaging -- CSP and QFN
 // These packages have different matching circuits which leads
@@ -94,11 +104,16 @@ extern "C" {
 // CSP packages have _SILICON_LABS_EFR32_2G4HZ_HP_PA_MAX_OUTPUT_DBM
 // = 4 whereas for QFN package it is 6 or 8dBm, so this parameter
 // is used to differentiate it.
-  #if (_SILICON_LABS_EFR32_2G4HZ_HP_PA_MAX_OUTPUT_DBM < 6)
-  #include "efr32xg27/sl_rail_util_pa_curves_CSP.h"
-  #else
-  #include "efr32xg27/sl_rail_util_pa_curves_QFN.h"
-  #endif
+#if (_SILICON_LABS_EFR32_2G4HZ_HP_PA_MAX_OUTPUT_DBM < 6)
+#include "efr32xg27/sl_rail_util_pa_curves_CSP.h"
+#else
+#include "efr32xg27/sl_rail_util_pa_curves_QFN.h"
+#endif
+#elif (_SILICON_LABS_32B_SERIES_2_CONFIG == 9)
+#include "efr32xg29/sl_rail_util_pa_curves.h"
+#elif defined(_SILICON_LABS_32B_SERIES_3)
+#include "sixg301/sl_rail_util_pa_dbm_powersetting_mapping_table.h"
+#include "sixg301/sl_rail_util_pa_curves.h"
 #else
 #ifdef RAIL_INTERNAL_BUILD
 #include "pa_curves_efr32_internal.h"

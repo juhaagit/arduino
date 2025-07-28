@@ -30,11 +30,15 @@
 #ifndef SL_PWM_H
 #define SL_PWM_H
 
+#include "em_device.h"
+
+#if defined(SL_COMPONENT_CATALOG_PRESENT)
+#include "sl_component_catalog.h"
+#endif
+
 #include "sl_status.h"
 #include "sl_enum.h"
 #include <stdint.h>
-
-#include "em_timer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,7 +66,7 @@ extern "C" {
  * ```c
  *
  * #include "sl_pwm.h"
- * #include "em_gpio.h"
+ * #include "sl_gpio.h"
  *
  * int main( void )
  * {
@@ -72,7 +76,7 @@ extern "C" {
  *   sl_pwm_instance_t sl_pwm_led0 = {
  *     .timer    = TIMER0,
  *     .channel  = 0,
- *     .port     = gpioPortA,
+ *     .port     = SL_GPIO_PORT_A,
  *     .pin      = 0,
  *     .location = 0,
  *   };

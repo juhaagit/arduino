@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,14 @@
  * THE SOFTWARE.
  */
 
+#include <sl_common.h>
+#include <app/CommandHandler.h>
 #include <app/data-model/Nullable.h>
 #include <app-common/zap-generated/cluster-enums.h>
 #include "MatterEndpoint.h"
-#include "devices/DeviceWindowCovering.h"
 #include "devices/DeviceDoorLock.h"
-#include <app/CommandHandler.h>
+#include "devices/DeviceWindowCovering.h"
+#include "devices/MatterDevice.h"
 
 using namespace ::chip;
 using namespace ::chip::Platform;
@@ -46,47 +48,53 @@ inline bool instanceof(const T* ptr)
   return dynamic_cast<const Base*>(ptr) != nullptr;
 }
 
-EmberAfStatus emberAfExternalAttributeReadCallback(EndpointId endpoint,
-                                                   ClusterId clusterId,
-                                                   const EmberAfAttributeMetadata* attributeMetadata,
-                                                   uint8_t* buffer,
-                                                   uint16_t maxReadLength)
+Status emberAfExternalAttributeReadCallback(EndpointId endpoint,
+                                            ClusterId clusterId,
+                                            const EmberAfAttributeMetadata* attributeMetadata,
+                                            uint8_t* buffer,
+                                            uint16_t maxReadLength)
 {
   ChipLogProgress(DeviceLayer, "emberAfExternalAttributeReadCallback");
   uint16_t endpointIndex = emberAfGetDynamicIndexFromEndpoint(endpoint);
 
   Device* dev = GetDeviceForEndpointIndex(endpointIndex);
   if (!dev) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return Status::Failure;
   }
 
-  EmberAfStatus result = dev->HandleReadEmberAfAttribute(clusterId, attributeMetadata->attributeId, buffer, maxReadLength);
-
-  if (!dev->IsOnline() && result == EMBER_ZCL_STATUS_SUCCESS) {
+  CHIP_ERROR result = dev->HandleReadEmberAfAttribute(clusterId, attributeMetadata->attributeId, buffer, maxReadLength);
+  if (result != CHIP_NO_ERROR) {
+    return Status::Failure;
+  }
+  if (!dev->IsOnline()) {
     dev->SetOnline(true);
   }
-  return result;
+  return Status::Success;
 }
 
-EmberAfStatus emberAfExternalAttributeWriteCallback(EndpointId endpoint,
-                                                    ClusterId clusterId,
-                                                    const EmberAfAttributeMetadata* attributeMetadata,
-                                                    uint8_t* buffer)
+Status emberAfExternalAttributeWriteCallback(EndpointId endpoint,
+                                             ClusterId clusterId,
+                                             const EmberAfAttributeMetadata* attributeMetadata,
+                                             uint8_t* buffer)
 {
   ChipLogProgress(DeviceLayer, "emberAfExternalAttributeWriteCallback");
   uint16_t endpointIndex = emberAfGetDynamicIndexFromEndpoint(endpoint);
 
   Device* dev = GetDeviceForEndpointIndex(endpointIndex);
   if (!dev) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return Status::Failure;
   }
 
-  return dev->HandleWriteEmberAfAttribute(clusterId, attributeMetadata->attributeId, buffer);
+  CHIP_ERROR result = dev->HandleWriteEmberAfAttribute(clusterId, attributeMetadata->attributeId, buffer);
+  if (result != CHIP_NO_ERROR) {
+    return Status::Failure;
+  }
+  return Status::Success;
 }
 
 bool emberAfWindowCoveringClusterUpOrOpenCallback(app::CommandHandler* commandObj,
                                                   const app::ConcreteCommandPath& commandPath,
-                                                  const Commands::UpOrOpen::DecodableType& commandData)
+                                                  const WindowCovering::Commands::UpOrOpen::DecodableType& commandData)
 {
   (void)commandData;
   ChipLogProgress(DeviceLayer, "emberAfWindowCoveringClusterUpOrOpenCallback");
@@ -97,7 +105,7 @@ bool emberAfWindowCoveringClusterUpOrOpenCallback(app::CommandHandler* commandOb
     commandObj->AddStatus(commandPath, Status::Failure);
     return false;
   }
-  if (instanceof<DeviceWindowCovering>(dev)) {
+  if (dev->GetDeviceType() == Device::device_type_t::kDeviceType_WindowCovering) {
     DeviceWindowCovering* window_covering_device = static_cast<DeviceWindowCovering*>(dev);
     window_covering_device->SetRequestedLiftPosition(0u);
     commandObj->AddStatus(commandPath, Status::Success);
@@ -109,7 +117,7 @@ bool emberAfWindowCoveringClusterUpOrOpenCallback(app::CommandHandler* commandOb
 
 bool emberAfWindowCoveringClusterDownOrCloseCallback(app::CommandHandler* commandObj,
                                                      const app::ConcreteCommandPath& commandPath,
-                                                     const Commands::DownOrClose::DecodableType& commandData)
+                                                     const WindowCovering::Commands::DownOrClose::DecodableType& commandData)
 {
   (void)commandData;
   ChipLogProgress(DeviceLayer, "emberAfWindowCoveringClusterDownOrCloseCallback");
@@ -120,7 +128,7 @@ bool emberAfWindowCoveringClusterDownOrCloseCallback(app::CommandHandler* comman
     commandObj->AddStatus(commandPath, Status::Failure);
     return false;
   }
-  if (instanceof<DeviceWindowCovering>(dev)) {
+  if (dev->GetDeviceType() == Device::device_type_t::kDeviceType_WindowCovering) {
     DeviceWindowCovering* window_covering_device = static_cast<DeviceWindowCovering*>(dev);
     window_covering_device->SetRequestedLiftPosition(10000u);
     commandObj->AddStatus(commandPath, Status::Success);
@@ -132,7 +140,7 @@ bool emberAfWindowCoveringClusterDownOrCloseCallback(app::CommandHandler* comman
 
 bool emberAfWindowCoveringClusterStopMotionCallback(app::CommandHandler* commandObj,
                                                     const app::ConcreteCommandPath& commandPath,
-                                                    const Commands::StopMotion::DecodableType& fields)
+                                                    const WindowCovering::Commands::StopMotion::DecodableType& fields)
 {
   (void)fields;
   ChipLogProgress(DeviceLayer, "emberAfWindowCoveringClusterStopMotionCallback");
@@ -142,7 +150,7 @@ bool emberAfWindowCoveringClusterStopMotionCallback(app::CommandHandler* command
 
 bool emberAfWindowCoveringClusterGoToLiftValueCallback(app::CommandHandler* commandObj,
                                                        const app::ConcreteCommandPath& commandPath,
-                                                       const Commands::GoToLiftValue::DecodableType& commandData)
+                                                       const WindowCovering::Commands::GoToLiftValue::DecodableType& commandData)
 {
   (void)commandData;
   ChipLogProgress(DeviceLayer, "emberAfWindowCoveringClusterGoToLiftValueCallback");
@@ -152,7 +160,7 @@ bool emberAfWindowCoveringClusterGoToLiftValueCallback(app::CommandHandler* comm
 
 bool emberAfWindowCoveringClusterGoToLiftPercentageCallback(app::CommandHandler* commandObj,
                                                             const app::ConcreteCommandPath& commandPath,
-                                                            const Commands::GoToLiftPercentage::DecodableType& commandData)
+                                                            const WindowCovering::Commands::GoToLiftPercentage::DecodableType& commandData)
 {
   ChipLogProgress(DeviceLayer, "emberAfWindowCoveringClusterGoToLiftPercentageCallback");
   uint16_t percent = commandData.liftPercent100thsValue;
@@ -162,7 +170,7 @@ bool emberAfWindowCoveringClusterGoToLiftPercentageCallback(app::CommandHandler*
     commandObj->AddStatus(commandPath, Status::Failure);
     return false;
   }
-  if (instanceof<DeviceWindowCovering>(dev)) {
+  if (dev->GetDeviceType() == Device::device_type_t::kDeviceType_WindowCovering) {
     DeviceWindowCovering* window_covering_device = static_cast<DeviceWindowCovering*>(dev);
     window_covering_device->SetRequestedLiftPosition(percent);
     commandObj->AddStatus(commandPath, Status::Success);
@@ -174,7 +182,7 @@ bool emberAfWindowCoveringClusterGoToLiftPercentageCallback(app::CommandHandler*
 
 bool emberAfWindowCoveringClusterGoToTiltValueCallback(app::CommandHandler* commandObj,
                                                        const app::ConcreteCommandPath& commandPath,
-                                                       const Commands::GoToTiltValue::DecodableType& commandData)
+                                                       const WindowCovering::Commands::GoToTiltValue::DecodableType& commandData)
 {
   (void)commandData;
   ChipLogProgress(DeviceLayer, "emberAfWindowCoveringClusterGoToTiltValueCallback");
@@ -184,7 +192,7 @@ bool emberAfWindowCoveringClusterGoToTiltValueCallback(app::CommandHandler* comm
 
 bool emberAfWindowCoveringClusterGoToTiltPercentageCallback(app::CommandHandler* commandObj,
                                                             const app::ConcreteCommandPath& commandPath,
-                                                            const Commands::GoToTiltPercentage::DecodableType& commandData)
+                                                            const WindowCovering::Commands::GoToTiltPercentage::DecodableType& commandData)
 {
   (void)commandData;
   ChipLogProgress(DeviceLayer, "emberAfWindowCoveringClusterGoToTiltPercentageCallback");
@@ -192,15 +200,14 @@ bool emberAfWindowCoveringClusterGoToTiltPercentageCallback(app::CommandHandler*
   return false;
 }
 
-/**
- * @brief Cluster Attribute Changed Callback
- *
- * The method is implemented by default as a weak function and it takes care of updating
- * the server attribute values by calling the PostAttributeChange method. If the application overrides
- * this method, it needs to handle updating attributes (ideally by calling PostAttributeChange).
- *
- */
-void SL_WEAK MatterWindowCoveringClusterServerAttributeChangedCallback(const app::ConcreteAttributePath& attributePath)
+//
+// @brief Cluster Attribute Changed Callback
+//
+// The method is implemented by default as a weak function and it takes care of updating
+// the server attribute values by calling the PostAttributeChange method. If the application overrides
+// this method, it needs to handle updating attributes (ideally by calling PostAttributeChange).
+//
+SL_WEAK void MatterWindowCoveringClusterServerAttributeChangedCallback(const app::ConcreteAttributePath& attributePath)
 {
   (void)attributePath;
 }
@@ -221,7 +228,7 @@ bool emberAfPluginDoorLockOnDoorLockCommand(chip::EndpointId endpointId,
   if (!dev || !dev->IsReachable()) {
     return false;
   }
-  if (instanceof<DeviceDoorLock>(dev)) {
+  if (dev->GetDeviceType() == Device::device_type_t::kDeviceType_DoorLock) {
     DeviceDoorLock* door_lock_device = static_cast<DeviceDoorLock*>(dev);
     door_lock_device->SetLockState(DeviceDoorLock::lock_state_t::LOCKED);
     return true;
@@ -240,7 +247,7 @@ bool emberAfPluginDoorLockOnDoorUnlockCommand(chip::EndpointId endpointId,
   if (!dev || !dev->IsReachable()) {
     return false;
   }
-  if (instanceof<DeviceDoorLock>(dev)) {
+  if (dev->GetDeviceType() == Device::device_type_t::kDeviceType_DoorLock) {
     DeviceDoorLock* door_lock_device = static_cast<DeviceDoorLock*>(dev);
     door_lock_device->SetLockState(DeviceDoorLock::lock_state_t::UNLOCKED);
     return true;

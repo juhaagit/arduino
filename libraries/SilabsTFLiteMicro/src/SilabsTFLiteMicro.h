@@ -24,5 +24,14 @@
  * THE SOFTWARE.
  */
 
+#ifndef SL_SILABS_TFLITE_MICRO_H
+#define SL_SILABS_TFLITE_MICRO_H
+
+#ifndef ARDUINO_SILABS_AIML_CAPABLE
+  #error "Your board or currently selected protocol stack is not AI/ML capable. Please select an AI/ML capable board and protocol stack."
+#endif
+
 #include "sl_tflite_micro_model.h"
 #include "sl_tflite_micro_init.h"
+
+#endif // SL_SILABS_TFLITE_MICRO_H

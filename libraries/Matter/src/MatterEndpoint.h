@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,6 +53,7 @@
 #define DEVICE_TYPE_ONOFF_PLUGIN_UNIT 0x010A
 #define DEVICE_TYPE_AIR_QUALITY_SENSOR 0x002C
 #define DEVICE_TYPE_DOOR_LOCK 0x000A
+#define DEVICE_TYPE_AIR_PURIFIER 0x002D
 
 // Device Version for dynamic endpoints
 #define DEVICE_VERSION_DEFAULT 1

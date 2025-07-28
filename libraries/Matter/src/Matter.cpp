@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,10 @@
  */
 
 #include "Matter.h"
-#include <app/server/Server.h>
-#include <SilabsDeviceDataProvider.h>
+#include <util/endpoint-config-api.h>
+#include <QRCodeSetupPayloadParser.h>
+#include <ManualSetupPayloadGenerator.h>
+#include <ProvisionManager.h>
 
 using namespace chip;
 using namespace chip::app;
@@ -192,11 +194,19 @@ void MatterClass::disableBridgeEndpoint()
 
 String MatterClass::getManualPairingCode()
 {
-  // Create buffer for manual pairing code that can fit max size + check digit + null terminator
-  char manualPairingCodeBuffer[chip::kManualSetupLongCodeCharLength + 1];
-  chip::MutableCharSpan manualPairingCode(manualPairingCodeBuffer);
-  GetManualPairingCode(manualPairingCode, chip::RendezvousInformationFlag::kBLE);
-  return manualPairingCode.data();
+  std::string inputPayload = getOnboardingQRCodePayload().c_str();
+  SetupPayload parsedSetupPayload;
+  QRCodeSetupPayloadParser parser(inputPayload);
+  CHIP_ERROR err = parser.populatePayload(parsedSetupPayload);
+  if (err != CHIP_NO_ERROR) {
+    return "N/A";
+  }
+  std::string manualPairingCode;
+  err = ManualSetupPayloadGenerator(parsedSetupPayload).payloadDecimalStringRepresentation(manualPairingCode);
+  if (err == CHIP_NO_ERROR) {
+    return String(manualPairingCode.c_str());
+  }
+  return "N/A";
 }
 
 String MatterClass::getOnboardingQRCodeUrl()
@@ -206,8 +216,7 @@ String MatterClass::getOnboardingQRCodeUrl()
 
   char setupPayloadBuffer[chip::QRCodeBasicSetupPayloadGenerator::kMaxQRCodeBase38RepresentationLength + 1];
   chip::MutableCharSpan setupPayload(setupPayloadBuffer);
-
-  CHIP_ERROR err = Silabs::SilabsDeviceDataProvider::GetDeviceDataProvider().GetSetupPayload(setupPayload);
+  CHIP_ERROR err = Provision::Manager::GetInstance().GetStorage().GetSetupPayload(setupPayload);
   if (CHIP_NO_ERROR == err) {
     chip::Platform::ScopedMemoryBuffer<char> qrCodeBuffer;
     const size_t qrCodeBufferMaxSize = strlen(kQrCodeBaseUrl) + strlen(kUrlDataAssignmentPhrase) + 3 * setupPayload.size() + 1;
@@ -217,7 +226,6 @@ String MatterClass::getOnboardingQRCodeUrl()
       return qrCodeBuffer.Get();
     }
   }
-
   return "N/A";
 }
 
@@ -225,8 +233,7 @@ String MatterClass::getOnboardingQRCodePayload()
 {
   char setupPayloadBuffer[chip::QRCodeBasicSetupPayloadGenerator::kMaxQRCodeBase38RepresentationLength + 1];
   chip::MutableCharSpan setupPayload(setupPayloadBuffer);
-
-  CHIP_ERROR err = Silabs::SilabsDeviceDataProvider::GetDeviceDataProvider().GetSetupPayload(setupPayload);
+  CHIP_ERROR err = Provision::Manager::GetInstance().GetStorage().GetSetupPayload(setupPayload);
   if (CHIP_NO_ERROR == err) {
     return setupPayload.data();
   }
@@ -245,7 +252,13 @@ bool MatterClass::isDeviceThreadConnected()
 
 void MatterClass::decommission()
 {
-  chip::Server::GetInstance().ScheduleFactoryReset();
+  PlatformMgr().ScheduleWork([](intptr_t) {
+    PlatformMgr().HandleServerShuttingDown(); // HandleServerShuttingDown calls OnShutdown() which is only implemented for the
+                                              // basic information cluster it seems. And triggers and Event flush, which is not
+                                              // relevant when there are no fabrics left
+    ConfigurationMgr().InitiateFactoryReset();
+  });
+
   while (1) {
     // Wait for the factory reset to complete
     // The device will reboot after the decommissioning has completed

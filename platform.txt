@@ -2,7 +2,7 @@
 ###########################
 
 name=Silicon Labs
-version=2.3.0
+version=3.0.0
 
 # Compiler variables
 ####################
@@ -32,7 +32,7 @@ compiler.elf2hex.cmd=arm-none-eabi-objcopy
 compiler.ldflags={build.ld_flags} -Wl,--no-warn-rwx-segments
 compiler.ldlibs={build.ld_libs}
 compiler.size.cmd=arm-none-eabi-size
-compiler.define=-DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_SILABS="{version}" -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch}
+compiler.define=-DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_SILABS="{version}" -DARDUINO_BOARD_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_SILABS_{build.platform}
 compiler.optimization_flags=-Os
 compiler.optimization_flags.release=-Os
 compiler.optimization_flags.debug=-O0

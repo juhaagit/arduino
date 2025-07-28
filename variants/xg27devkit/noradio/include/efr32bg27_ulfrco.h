@@ -3,7 +3,7 @@
  * @brief EFR32BG27 ULFRCO register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** ULFRCO Register Declaration. */
-typedef struct {
+typedef struct ulfrco_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP version                                         */
   uint32_t       RESERVED0[1U];                 /**< Reserved for future use                            */
   __IM uint32_t  STATUS;                        /**< Status Register                                    */

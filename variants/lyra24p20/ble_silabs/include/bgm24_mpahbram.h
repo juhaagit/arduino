@@ -3,7 +3,7 @@
  * @brief BGM24 MPAHBRAM register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** MPAHBRAM Register Declaration. */
-typedef struct {
+typedef struct mpahbram_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP version ID                                      */
   __IOM uint32_t CMD;                           /**< Command register                                   */
   __IOM uint32_t CTRL;                          /**< Control register                                   */

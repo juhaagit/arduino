@@ -19,6 +19,7 @@
 #include <MatterFan.h>
 
 MatterFan matter_fan;
+using FanMode = DeviceFan::fan_mode_t;
 
 void setup()
 {
@@ -53,7 +54,7 @@ void setup()
 
 void loop()
 {
-  static uint8_t fan_last_speed = 0;
+  static uint8_t fan_last_speed = 0u;
   uint8_t fan_current_speed = matter_fan.get_percent();
 
   if (fan_current_speed != fan_last_speed) {
@@ -63,15 +64,43 @@ void loop()
     Serial.println("%");
   }
 
-  static bool fan_last_state = false;
-  bool fan_current_state = matter_fan.get_onoff();
+  static FanMode fan_last_mode = FanMode::Off;
+  FanMode fan_current_mode = matter_fan.get_mode();
 
-  if (fan_current_state != fan_last_state) {
-    fan_last_state = fan_current_state;
-    if (fan_current_state) {
-      Serial.println("Fan ON");
-    } else {
-      Serial.println("Fan OFF");
+  if (fan_current_mode != fan_last_mode) {
+    fan_last_mode = fan_current_mode;
+    switch (fan_current_mode) {
+      case FanMode::Off:
+        Serial.println("Fan mode: Off");
+        matter_fan.set_percent(0);
+        break;
+      case FanMode::Low:
+        Serial.println("Fan mode: Low");
+        matter_fan.set_percent(20);
+        break;
+      case FanMode::Med:
+        Serial.println("Fan mode: Medium");
+        matter_fan.set_percent(50);
+        break;
+      case FanMode::High:
+        Serial.println("Fan mode: High");
+        matter_fan.set_percent(100);
+        break;
+      case FanMode::On:
+        Serial.println("Fan mode: On");
+        matter_fan.set_percent(fan_last_speed);
+        break;
+      case FanMode::Auto:
+        Serial.println("Fan mode: Auto");
+        matter_fan.set_percent(random(1, 100));
+        break;
+      case FanMode::Smart:
+        Serial.println("Fan mode: Smart");
+        matter_fan.set_percent(random(42, 69));
+        break;
+      default:
+        Serial.println("Fan mode: Unknown");
+        break;
     }
   }
 }

@@ -30,39 +30,10 @@
 #ifndef SL_MEMORY_H
 #define SL_MEMORY_H
 
-#include "sl_memory_region.h"
+#include "sl_memory_manager_region.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/***************************************************************************//**
- * @addtogroup linker
- * @{
- ******************************************************************************/
-
-/***************************************************************************//**
- * @brief
- *   Get size and location of the stack.
- *
- * @return
- *   description of the region reserved for the c stack.
- ******************************************************************************/
-sl_memory_region_t sl_memory_get_stack_region(void);
-
-/***************************************************************************//**
- * @brief
- *   Get size and location of the heap.
- *
- * @return
- *   description of the region reserved for the c heap.
- ******************************************************************************/
-sl_memory_region_t sl_memory_get_heap_region(void);
-
-/** @} end linker */
-
-#ifdef __cplusplus
-}
+#ifndef SL_SUPPRESS_DEPRECATION_WARNINGS_SDK_2024_6
+#warning "This file is deprecated as of Simplicity SDK 2024.6. Content was moved to sl_memory_manager.h."
 #endif
 
 #endif // SL_MEMORY_H

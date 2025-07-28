@@ -29,7 +29,9 @@
 #include <functional>
 #include <vector>
 
-using namespace ::chip;
+using ::chip::EndpointId;
+using ::chip::ClusterId;
+using ::chip::AttributeId;
 
 extern void CallMatterReportingCallback(intptr_t closure);
 extern void ScheduleMatterReportingCallback(EndpointId endpointId, ClusterId cluster, AttributeId attribute);
@@ -48,6 +50,26 @@ public:
     kChanged_SerialNumber = 1u << 5,
     kChanged_Last         = kChanged_SerialNumber,
   } Changed;
+
+  enum device_type_t {
+    kDeviceType_AirQualitySensor  = 0x0000,
+    kDeviceType_ContactSensor     = 0x0001,
+    kDeviceType_DoorLock          = 0x0002,
+    kDeviceType_Fan               = 0x0003,
+    kDeviceType_FlowSensor        = 0x0004,
+    kDeviceType_HumiditySensor    = 0x0005,
+    kDeviceType_IlluminanceSensor = 0x0006,
+    kDeviceType_Lightbulb         = 0x0007,
+    kDeviceType_OccupancySensor   = 0x0008,
+    kDeviceType_OnOffPluginUnit   = 0x0009,
+    kDeviceType_PressureSensor    = 0x000A,
+    kDeviceType_Switch            = 0x000B,
+    kDeviceType_TempSensor        = 0x000C,
+    kDeviceType_Thermostat        = 0x000D,
+    kDeviceType_WindowCovering    = 0x000E,
+    kDeviceType_AirPurifier       = 0x000F,
+    kDeviceType_Unspecified       = 0xFFFF
+  };
 
   Device(const char* device_name);
 
@@ -68,37 +90,37 @@ public:
   void SetDeviceChangeCallback(void (*matter_device_change_cb)(void));
   void CallDeviceChangeCallback();
 
-  virtual EmberAfStatus HandleReadEmberAfAttribute(ClusterId clusterId,
+  virtual CHIP_ERROR HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                chip::AttributeId attributeId,
+                                                uint8_t* buffer,
+                                                uint16_t maxReadLength);
+
+  virtual CHIP_ERROR HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                                 chip::AttributeId attributeId,
+                                                 uint8_t* buffer);
+
+  CHIP_ERROR HandleReadBridgedDeviceBasicAttribute(ClusterId clusterId,
                                                    chip::AttributeId attributeId,
-                                                   uint8_t* buffer,
+                                                   uint8_t * buffer,
                                                    uint16_t maxReadLength);
 
-  virtual EmberAfStatus HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                    chip::AttributeId attributeId,
-                                                    uint8_t* buffer);
+  CHIP_ERROR HandleReadIdentifyAttribute(ClusterId clusterId,
+                                         chip::AttributeId attributeId,
+                                         uint8_t* buffer,
+                                         uint16_t maxReadLength);
 
-  EmberAfStatus HandleReadBridgedDeviceBasicAttribute(ClusterId clusterId,
-                                                      chip::AttributeId attributeId,
-                                                      uint8_t * buffer,
-                                                      uint16_t maxReadLength);
-
-  EmberAfStatus HandleReadIdentifyAttribute(ClusterId clusterId,
-                                            chip::AttributeId attributeId,
-                                            uint8_t* buffer,
-                                            uint16_t maxReadLength);
-
-  EmberAfStatus HandleWriteIdentifyAttribute(ClusterId clusterId,
-                                             chip::AttributeId attributeId,
-                                             uint8_t* buffer);
-
-  EmberAfStatus HandleReadGroupsAttribute(ClusterId clusterId,
+  CHIP_ERROR HandleWriteIdentifyAttribute(ClusterId clusterId,
                                           chip::AttributeId attributeId,
-                                          uint8_t* buffer,
-                                          uint16_t maxReadLength);
+                                          uint8_t* buffer);
 
-  EmberAfStatus HandleWriteGroupsAttribute(ClusterId clusterId,
-                                           chip::AttributeId attributeId,
-                                           uint8_t* buffer);
+  CHIP_ERROR HandleReadGroupsAttribute(ClusterId clusterId,
+                                       chip::AttributeId attributeId,
+                                       uint8_t* buffer,
+                                       uint16_t maxReadLength);
+
+  CHIP_ERROR HandleWriteGroupsAttribute(ClusterId clusterId,
+                                        chip::AttributeId attributeId,
+                                        uint8_t* buffer);
 
   void HandleIdentifyStart();
   void HandleIdentifyStop();
@@ -106,6 +128,11 @@ public:
 
   uint32_t GetBridgedDeviceBasicInformationClusterFeatureMap();
   uint16_t GetBridgedDeviceBasicInformationClusterRevision();
+
+  device_type_t GetDeviceType()
+  {
+    return this->device_type;
+  }
 
   inline void SetEndpointId(chip::EndpointId id)
   {
@@ -156,6 +183,13 @@ protected:
   void HandleDeviceStatusChanged(Changed_t itemChangedMask);
   bool reachable;
   bool online;
+
+  device_type_t device_type;
+
+  void SetDeviceType(device_type_t device_type)
+  {
+    this->device_type = device_type;
+  }
 
   bool identify_in_progress;
   uint16_t identify_time;

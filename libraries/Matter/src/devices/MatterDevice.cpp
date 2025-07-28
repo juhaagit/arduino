@@ -25,11 +25,13 @@
 #include <platform/CHIPDeviceLayer.h>
 #include <app-common/zap-generated/callback.h>
 
+using namespace ::chip;
 using namespace chip::app::Clusters::Actions;
 
 Device::Device(const char* device_name) :
   reachable(false),
   online(false),
+  device_type(kDeviceType_Unspecified),
   identify_in_progress(false),
   identify_time(0),
   identify_type(0),
@@ -145,35 +147,35 @@ uint16_t Device::GetBridgedDeviceBasicInformationClusterRevision()
   return this->bridged_device_basic_information_cluster_revision;
 }
 
-EmberAfStatus Device::HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                  chip::AttributeId attributeId,
-                                                  uint8_t* buffer)
+CHIP_ERROR Device::HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                               chip::AttributeId attributeId,
+                                               uint8_t* buffer)
 {
-  return EMBER_ZCL_STATUS_FAILURE;
+  return CHIP_ERROR_NOT_IMPLEMENTED;
 }
 
-EmberAfStatus Device::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                 chip::AttributeId attributeId,
-                                                 uint8_t* buffer,
-                                                 uint16_t maxReadLength)
+CHIP_ERROR Device::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                              chip::AttributeId attributeId,
+                                              uint8_t* buffer,
+                                              uint16_t maxReadLength)
 {
-  return EMBER_ZCL_STATUS_FAILURE;
+  return CHIP_ERROR_NOT_IMPLEMENTED;
 }
 
-EmberAfStatus Device::HandleReadBridgedDeviceBasicAttribute(ClusterId clusterId,
-                                                            chip::AttributeId attributeId,
-                                                            uint8_t * buffer,
-                                                            uint16_t maxReadLength)
+CHIP_ERROR Device::HandleReadBridgedDeviceBasicAttribute(ClusterId clusterId,
+                                                         chip::AttributeId attributeId,
+                                                         uint8_t * buffer,
+                                                         uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::BridgedDeviceBasicInformation::Attributes;
   ChipLogProgress(DeviceLayer, "HandleReadBridgedDeviceBasicAttribute: clusterId='%lu' attrId=%ld, maxReadLength=%d", clusterId, attributeId, maxReadLength);
 
   if (clusterId != chip::app::Clusters::BridgedDeviceBasicInformation::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   if ((attributeId == Reachable::Id) && (maxReadLength == 1)) {
@@ -197,10 +199,10 @@ EmberAfStatus Device::HandleReadBridgedDeviceBasicAttribute(ClusterId clusterId,
     uint32_t featureMap = this->GetBridgedDeviceBasicInformationClusterFeatureMap();
     memcpy(buffer, &featureMap, sizeof(featureMap));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void Device::HandleDeviceStatusChanged(Changed_t itemChangedMask)
@@ -224,15 +226,15 @@ void Device::HandleDeviceStatusChanged(Changed_t itemChangedMask)
   }
 }
 
-EmberAfStatus Device::HandleReadIdentifyAttribute(ClusterId clusterId,
-                                                  chip::AttributeId attributeId,
-                                                  uint8_t* buffer,
-                                                  uint16_t maxReadLength)
+CHIP_ERROR Device::HandleReadIdentifyAttribute(ClusterId clusterId,
+                                               chip::AttributeId attributeId,
+                                               uint8_t* buffer,
+                                               uint16_t maxReadLength)
 {
   using namespace chip::app::Clusters;
 
   if (clusterId != Identify::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   if ((attributeId == Identify::Attributes::IdentifyTime::Id) && (maxReadLength == 2)) {
@@ -246,20 +248,20 @@ EmberAfStatus Device::HandleReadIdentifyAttribute(ClusterId clusterId,
     uint16_t clusterRevision = this->identify_cluster_revision;
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus Device::HandleWriteIdentifyAttribute(ClusterId clusterId,
-                                                   chip::AttributeId attributeId,
-                                                   uint8_t* buffer)
+CHIP_ERROR Device::HandleWriteIdentifyAttribute(ClusterId clusterId,
+                                                chip::AttributeId attributeId,
+                                                uint8_t* buffer)
 {
   using namespace chip::app::Clusters;
 
   if (clusterId != Identify::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   if (attributeId == Identify::Attributes::IdentifyTime::Id) {
@@ -271,10 +273,10 @@ EmberAfStatus Device::HandleWriteIdentifyAttribute(ClusterId clusterId,
     app::ConcreteAttributePath attributePath(this->endpoint_id, Identify::Id, Identify::Attributes::IdentifyType::Id);
     MatterIdentifyClusterServerAttributeChangedCallback(attributePath);
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void Device::HandleIdentifyStart()
@@ -292,15 +294,15 @@ bool Device::GetIdentifyInProgress()
   return this->identify_in_progress;
 }
 
-EmberAfStatus Device::HandleReadGroupsAttribute(ClusterId clusterId,
-                                                chip::AttributeId attributeId,
-                                                uint8_t* buffer,
-                                                uint16_t maxReadLength)
+CHIP_ERROR Device::HandleReadGroupsAttribute(ClusterId clusterId,
+                                             chip::AttributeId attributeId,
+                                             uint8_t* buffer,
+                                             uint16_t maxReadLength)
 {
   using namespace chip::app::Clusters;
 
   if (clusterId != Groups::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   if ((attributeId == Groups::Attributes::NameSupport::Id) && (maxReadLength == 1)) {
@@ -312,27 +314,27 @@ EmberAfStatus Device::HandleReadGroupsAttribute(ClusterId clusterId,
     uint16_t clusterRevision = this->groups_cluster_revision;
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus Device::HandleWriteGroupsAttribute(ClusterId clusterId,
-                                                 chip::AttributeId attributeId,
-                                                 uint8_t* buffer)
+CHIP_ERROR Device::HandleWriteGroupsAttribute(ClusterId clusterId,
+                                              chip::AttributeId attributeId,
+                                              uint8_t* buffer)
 {
   using namespace chip::app::Clusters;
 
   if (clusterId != Groups::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   if (attributeId == Groups::Attributes::NameSupport::Id) {
     this->groups_cluster_name_support = *buffer;
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }

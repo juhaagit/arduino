@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,10 @@
 #include "DeviceOccupancySensor.h"
 
 DeviceOccupancySensor::DeviceOccupancySensor(const char* device_name) :
-  Device(device_name)
+  Device(device_name),
+  occupancy(false)
 {
+  this->SetDeviceType(device_type_t::kDeviceType_OccupancySensor);
 }
 
 bool DeviceOccupancySensor::GetOccupancy()
@@ -58,13 +60,13 @@ uint16_t DeviceOccupancySensor::GetOccupancySensorClusterRevision()
   return this->occupancy_sensor_cluster_revision;
 }
 
-EmberAfStatus DeviceOccupancySensor::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                                chip::AttributeId attributeId,
-                                                                uint8_t* buffer,
-                                                                uint16_t maxReadLength)
+CHIP_ERROR DeviceOccupancySensor::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                             chip::AttributeId attributeId,
+                                                             uint8_t* buffer,
+                                                             uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::OccupancySensing::Attributes;
@@ -75,7 +77,7 @@ EmberAfStatus DeviceOccupancySensor::HandleReadEmberAfAttribute(ClusterId cluste
   }
 
   if (clusterId != chip::app::Clusters::OccupancySensing::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == Occupancy::Id) && (maxReadLength == 1)) {
@@ -88,10 +90,10 @@ EmberAfStatus DeviceOccupancySensor::HandleReadEmberAfAttribute(ClusterId cluste
     uint16_t clusterRevision = this->GetOccupancySensorClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceOccupancySensor::HandleOccupancySensorDeviceStatusChanged(Changed_t itemChangedMask)

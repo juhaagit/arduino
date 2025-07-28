@@ -27,27 +27,27 @@
 #include "arduino_spi_config.h"
 
 SPIDRV_Init_t sl_spidrv_config = {
-  .port = SL_SPIDRV_EUSART_MIKROE_PERIPHERAL,
-  .portTx = SL_SPIDRV_EUSART_MIKROE_TX_PORT,
-  .portRx = SL_SPIDRV_EUSART_MIKROE_RX_PORT,
-  .portClk = SL_SPIDRV_EUSART_MIKROE_SCLK_PORT,
-#if defined(SL_SPIDRV_EUSART_MIKROE_CS_PORT)
-  .portCs = SL_SPIDRV_EUSART_MIKROE_CS_PORT,
+  .port = SL_SPIDRV_USART_MIKROE_PERIPHERAL,
+  .portTx = SL_SPIDRV_USART_MIKROE_TX_PORT,
+  .portRx = SL_SPIDRV_USART_MIKROE_RX_PORT,
+  .portClk = SL_SPIDRV_USART_MIKROE_CLK_PORT,
+#if defined(SL_SPIDRV_USART_MIKROE_CS_PORT)
+  .portCs = SL_SPIDRV_USART_MIKROE_CS_PORT,
 #endif
-  .pinTx = SL_SPIDRV_EUSART_MIKROE_TX_PIN,
-  .pinRx = SL_SPIDRV_EUSART_MIKROE_RX_PIN,
-  .pinClk = SL_SPIDRV_EUSART_MIKROE_SCLK_PIN,
-#if defined(SL_SPIDRV_EUSART_MIKROE_CS_PIN)
-  .pinCs = SL_SPIDRV_EUSART_MIKROE_CS_PIN,
+  .pinTx = SL_SPIDRV_USART_MIKROE_TX_PIN,
+  .pinRx = SL_SPIDRV_USART_MIKROE_RX_PIN,
+  .pinClk = SL_SPIDRV_USART_MIKROE_CLK_PIN,
+#if defined(SL_SPIDRV_USART_MIKROE_CS_PIN)
+  .pinCs = SL_SPIDRV_USART_MIKROE_CS_PIN,
 #endif
-  .bitRate = SL_SPIDRV_EUSART_MIKROE_BITRATE,
-  .frameLength = SL_SPIDRV_EUSART_MIKROE_FRAME_LENGTH,
+  .bitRate = SL_SPIDRV_USART_MIKROE_BITRATE,
+  .frameLength = SL_SPIDRV_USART_MIKROE_FRAME_LENGTH,
   .dummyTxValue = 0,
-  .type = SL_SPIDRV_EUSART_MIKROE_TYPE,
-  .bitOrder = SL_SPIDRV_EUSART_MIKROE_BIT_ORDER,
-  .clockMode = SL_SPIDRV_EUSART_MIKROE_CLOCK_MODE,
-  .csControl = SL_SPIDRV_EUSART_MIKROE_CS_CONTROL,
-  .slaveStartMode = SL_SPIDRV_EUSART_MIKROE_SLAVE_START_MODE,
+  .type = SL_SPIDRV_USART_MIKROE_TYPE,
+  .bitOrder = SL_SPIDRV_USART_MIKROE_BIT_ORDER,
+  .clockMode = SL_SPIDRV_USART_MIKROE_CLOCK_MODE,
+  .csControl = SL_SPIDRV_USART_MIKROE_CS_CONTROL,
+  .slaveStartMode = SL_SPIDRV_USART_MIKROE_SLAVE_START_MODE,
 };
 
 SPIDRV_Init_t sl_spidrv_config_spi1 = {
@@ -76,5 +76,10 @@ SPIDRV_Init_t sl_spidrv_config_spi1 = {
 
 uint8_t sl_spi_direct_transfer(void* spi_peripheral, uint8_t data)
 {
-  return EUSART_Spi_TxRx((EUSART_TypeDef*)spi_peripheral, (uint16_t)data);
+  if ((USART_TypeDef*)spi_peripheral == USART0) {
+    return USART_SpiTransfer((USART_TypeDef*)spi_peripheral, data);
+  } else if ((EUSART_TypeDef*)spi_peripheral == EUSART0 || (EUSART_TypeDef*)spi_peripheral == EUSART1) {
+    return EUSART_Spi_TxRx((EUSART_TypeDef*)spi_peripheral, (uint16_t)data);
+  }
+  return 0;
 }

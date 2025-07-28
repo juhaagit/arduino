@@ -3,7 +3,7 @@
  * @brief MGM24 PCNT register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** PCNT Register Declaration. */
-typedef struct {
+typedef struct pcnt_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP version ID                                      */
   __IOM uint32_t EN;                            /**< Module Enable Register                             */
   __IOM uint32_t SWRST;                         /**< Software Reset Register                            */

@@ -14,6 +14,7 @@ from testcases.testcase_hil_imu_spi import testcase_hil_imu_spi
 from testcases.testcase_hil_si7021_wire import testcase_hil_si7021_wire
 from testcases.testcase_hil_ble_silabs_advertise import testcase_hil_ble_silabs_advertise
 from testcases.testcase_hil_ble_arduino_advertise import testcase_hil_ble_arduino_advertise
+from testcases.testcase_hil_matter_smoke import testcase_hil_matter_smoke
 
 all_variants = [
     ["nano_matter", "none"],
@@ -57,6 +58,7 @@ testcase_list = {
     "si7021_wire": testcase_hil_si7021_wire,
     "ble_silabs_advertise": testcase_hil_ble_silabs_advertise,
     "ble_arduino_advertise": testcase_hil_ble_arduino_advertise,
+    "matter_smoke": testcase_hil_matter_smoke,
 }
 
 

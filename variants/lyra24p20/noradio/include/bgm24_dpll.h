@@ -3,7 +3,7 @@
  * @brief BGM24 DPLL register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** DPLL Register Declaration. */
-typedef struct {
+typedef struct dpll_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP Version                                         */
   __IOM uint32_t EN;                            /**< Enable                                             */
   __IOM uint32_t CFG;                           /**< Config                                             */

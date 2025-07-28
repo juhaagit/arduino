@@ -3,7 +3,7 @@
  * @brief Memory region types
  *******************************************************************************
  * # License
- * <b>Copyright 2020 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2024 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -30,20 +30,10 @@
 #ifndef SL_REGION_H
 #define SL_REGION_H
 
-#include <stddef.h>
+#include "sl_memory_manager_region.h"
 
-/***************************************************************************//**
- * @addtogroup linker Linker
- * @brief Functions to extract locations of linker sections.
- * @{
- ******************************************************************************/
-
-/** Memory region structure. */
-typedef struct sl_memory_region_t {
-  void * addr; ///< Pointer to the beginning of the memory region. Can be NULL.
-  size_t size; ///< Size of this memory region.
-} sl_memory_region_t;
-
-/** @} end linker */
+#ifndef SL_SUPPRESS_DEPRECATION_WARNINGS_SDK_2024_6
+#warning "This file is deprecated as of Simplicity SDK 2024.6. Content was moved to sl_memory_manager.h."
+#endif
 
 #endif

@@ -45,34 +45,7 @@ extern "C" {
 #endif
 
 /***************************************************************************//**
- * \addtogroup psa_builtin_keys
- *
- * \brief Built-in key mechanism provides access to the keys stored in hardware.
- * It can be accessed using key ID that is in the range
- * [MBEDTLS_PSA_KEY_ID_BUILTIN_MIN, MBEDLTS_PSA_KEY_ID_BUILTIN_MAX].
- *
- *
- * \note Available builtin key IDs vary for different family of devices.
- *       For devices vith VSE see \ref sl_psa_drivers_cryptoacc_builtin_keys ,
- *       and for devices with Secure Engine see \ref sl_psa_drivers_se_builtin_keys .
- * \{
- ******************************************************************************/
-/** \} (end addtogroup psa_builtin_keys) */
-
-/***************************************************************************//**
- * \addtogroup key_derivation
- *
- * If single-shot key derivation is used (sl_psa_key_derivation_single_shot),
- * following limitations have to be considered:
- * -# PBKDF2-CMAC is not suported on xG21
- * -# PBKDF2-CMAC is only KDF supported for xG27
- *
- * \{
- ******************************************************************************/
-/** \} (end addtogroup key_derivation) */
-
-/***************************************************************************//**
- * \addtogroup sl_psa_drivers
+ * \addtogroup sl_psa_key_management
  * \{
  ******************************************************************************/
 
@@ -91,8 +64,8 @@ extern "C" {
  *   the key will be volatile, and the key identifier attribute is reset to 0.
  *
  * @param[in] preferred_location
- *   The location of the key. Can be SL_PSA_KEY_LOCATION_WRAPPED,
- *   SL_PSA_KEY_LOCATION_BUILTIN, or PSA_KEY_LOCATION_LOCAL_STORAGE.
+ *   The location of the key. Can be \ref SL_PSA_KEY_LOCATION_WRAPPED,
+ *   \ref SL_PSA_KEY_LOCATION_BUILTIN, or PSA_KEY_LOCATION_LOCAL_STORAGE.
  ******************************************************************************/
 void sl_psa_set_key_lifetime_with_location_preference(
   psa_key_attributes_t *attributes,
@@ -106,15 +79,101 @@ void sl_psa_set_key_lifetime_with_location_preference(
  *
  * @return
  *   The 'most secure' usable location of a key. In order of preference, the
- *   following values can be returned: SL_PSA_KEY_LOCATION_WRAPPED,
+ *   following values can be returned: \ref SL_PSA_KEY_LOCATION_WRAPPED,
  *   or PSA_KEY_LOCATION_LOCAL_STORAGE.
  ******************************************************************************/
 psa_key_location_t sl_psa_get_most_secure_key_location(void);
 
-/** \} (end addtogroup sl_psa_drivers) */
+/** \} (end addtogroup sl_psa_key_management) */
 
 #ifdef __cplusplus
 }
 #endif
 
+#ifdef DOXYGEN
+/***************************************************************************//**
+ * \defgroup sl_psa_crypto PSA Crypto Extensions
+ *  @brief Silicon Labs specific extensions to the PSA Crypto API
+ *  @{
+ ******************************************************************************/
+
+/***************************************************************************//**
+ * \defgroup sl_psa_key_derivation Key Derivation
+ *  @brief Key Derivation extensions to the PSA Crypto API
+ *  @{
+ ******************************************************************************/
+
+// This function is declared in psa/crypto.h, which currently is not included with
+// doxygen. Declared here for visibility on docs.silabs.com.
+
+/** Perform a single-shot key derivation operation and output the resulting key.
+ *
+ * This function supports HKDF and PBKDF2.
+ *
+ * \note
+ * - PBKDF2-CMAC is not suported on xG21
+ * - PBKDF2-CMAC is only KDF supported for xG27
+ *
+ * This function obtains its secret input from a key object, and any additional
+ * inputs such as buffers and integers. The output of this function is a key
+ * object containing the output of the selected key derivation function.
+ *
+ *
+ * \param alg                     The key derivation algorithm to compute
+ *                                (\c PSA_ALG_XXX value such that
+ *                                #PSA_ALG_IS_KEY_DERIVATION(\p alg) is true).
+ * \param key_in                  Identifier of the secret key to input to the
+ *                                operation. It must allow the usage
+ *                                PSA_KEY_USAGE_DERIVE and be of a symmetric
+ *                                type.
+ * \param[in] info                A context- and application specific
+ *                                information string. Only used for HKDF, but
+ *                                can be omitted.
+ * \param info_length             The length of the provided info in bytes.
+ * \param[in] salt                An optional salt value (a non-secret random value).
+ *                                Used for both HKDF and PBKDF2. Recommended for
+ *                                PBKDF2.
+ * \param salt_length             The length of the provided salt in bytes.
+ * \param iterations              The number of iterations to use. Maximum
+ *                                supported value is 16384. Only used for PBKDF2.
+ * \param[in] key_out_attributes  The attributes for the new key output by the
+ *                                derivation operation. The key must be of a
+ *                                symmetric type.
+ * \param[out] key_out            The identifier of the new key output by the
+ *                                derivation operation.
+ *
+ * \retval #PSA_SUCCESS
+ *         Success.
+ * \retval #PSA_ERROR_INVALID_HANDLE
+ * \retval #PSA_ERROR_NOT_PERMITTED
+ *         The input key does not have the required usage policy set.
+ * \retval #PSA_ERROR_INVALID_ARGUMENT
+ *         The input- or output key is not of a symmetric type.
+ * \retval #PSA_ERROR_INVALID_ARGUMENT
+ *         The input- or output key is larger than what the SE can handle.
+ * \retval #PSA_ERROR_NOT_SUPPORTED
+ *         The requested algorithm is not supported.
+ * \retval #PSA_ERROR_HARDWARE_FAILURE
+ * \retval #PSA_ERROR_INSUFFICIENT_MEMORY
+ * \retval #PSA_ERROR_STORAGE_FAILURE
+ * \retval #PSA_ERROR_BAD_STATE
+ *         The library has not been previously initialized by psa_crypto_init().
+ *         It is implementation-dependent whether a failure to initialize
+ *         results in this error code.
+ */
+psa_status_t sl_psa_key_derivation_single_shot(
+  psa_algorithm_t alg,
+  mbedtls_svc_key_id_t key_in,
+  const uint8_t *info,
+  size_t info_length,
+  const uint8_t *salt,
+  size_t salt_length,
+  size_t iterations,
+  const psa_key_attributes_t *key_out_attributes,
+  mbedtls_svc_key_id_t *key_out);
+
+/** @} */ // end defgroup sl_psa_key_derivation
+/** @} */ // end defgroup sl_psa_crypto
+
+#endif // DOXYGEN
 #endif // SL_PSA_CRYPTO_H

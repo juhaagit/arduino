@@ -15,7 +15,7 @@
 
    This example only works with the 'BLE (Silabs)' protocol stack variant.
 
-   You can scan for the device and initiate connections with the EFR Connect app:
+   You can scan for the device and initiate connections with the Simplicity Connect app:
     - https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo
     - https://apps.apple.com/us/app/efr-connect-ble-mobile-app/id1030932759
 
@@ -234,6 +234,6 @@ static void ble_initialize_gatt_db()
   app_assert_status(sc);
 }
 
-#ifndef BLE_STACK_SILABS
+#ifndef ARDUINO_SILABS_STACK_BLE_SILABS
   #error "This example is only compatible with the Silicon Labs BLE stack. Please select 'BLE (Silabs)' in 'Tools > Protocol stack'."
 #endif

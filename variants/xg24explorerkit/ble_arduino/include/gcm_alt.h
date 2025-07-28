@@ -30,13 +30,14 @@
 #ifndef GCM_ALT_H
 #define GCM_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_gcm Accelerated GCM AES-128 Cipher
+ * \addtogroup sl_mbedtls_plugins_gcm Accelerated GCM AES-128 Cipher
  * \brief Accelerated AES-GCM-128 cipher for the mbed TLS API using the CRYPTOACC
  *        or SE peripheral
  *
@@ -53,11 +54,10 @@
 /* SiliconLabs CRYPTO hardware acceleration implementation */
 
 #include "em_device.h"
+#include <stdbool.h>
 
 #if defined(CRYPTO_PRESENT)
 #include "em_crypto.h"
-#elif defined(SEMAILBOX_PRESENT)
-#include "em_se.h"
 #elif defined(CRYPTOACC_PRESENT)
 #include "sx_aes.h"
 #include "sl_enum.h"
@@ -115,7 +115,8 @@ mbedtls_gcm_context;
 
 #endif /* MBEDTLS_GCM_ALT */
 
-/** \} (end addtogroup sl_crypto_gcm) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_gcm) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* GCM_ALT_H */

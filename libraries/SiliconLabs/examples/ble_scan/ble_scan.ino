@@ -125,6 +125,6 @@ static String get_complete_local_name_from_ble_advertisement(sl_bt_evt_scanner_l
   return "N/A";
 }
 
-#ifndef BLE_STACK_SILABS
+#ifndef ARDUINO_SILABS_STACK_BLE_SILABS
   #error "This example is only compatible with the Silicon Labs BLE stack. Please select 'BLE (Silabs)' in 'Tools > Protocol stack'."
 #endif

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -132,6 +132,7 @@ public:
 private:
   void set_default_config();
 
+  bool initialized;
   void (*user_on_overflow_cb)(void);
   WDOG_Init_TypeDef wdog_config;
   WDOG_TypeDef *wdog;

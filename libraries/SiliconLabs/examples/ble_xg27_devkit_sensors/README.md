@@ -2,7 +2,7 @@
 
 ## Overview
 
-This example showcases the xG27 Dev Kit's built-in sensors using BLE. It collects and processes sensor data from the board and provides graphical feedback via the EFR Connect iOS/Android app.
+This example showcases the xG27 Dev Kit's built-in sensors using BLE. It collects and processes sensor data from the board and provides graphical feedback via the Simplicity Connect iOS/Android app.
 
 ## Hardware Required
 
@@ -12,9 +12,9 @@ This example showcases the xG27 Dev Kit's built-in sensors using BLE. It collect
 
 ## Software Required
 
-- [EFR Connect mobile application for Android](https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo)
+- [Simplicity Connect app for Android](https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo)
 
-- [EFR Connect mobile application for iOS](https://itunes.apple.com/us/app/silicon-labs-blue-gecko-wstk/id1030932759?mt=8)
+- [Simplicity Connect app for iOS](https://itunes.apple.com/us/app/silicon-labs-blue-gecko-wstk/id1030932759?mt=8)
 
 ## Setup
 
@@ -41,9 +41,9 @@ The xG27 Dev Kit contains a set of peripherals that can be accessed from the EFR
 Follow the below steps to test the example:
 
 1. Upload the code to your Arduino board: From Arduino IDE go to Tools > Board and select the Arduino board you’re using "xG27 Dev Kit (BLE)". Go to Tools > Port and select the port your board is connected to. Then, click the upload button.
-2. Open the EFR Connect app on your smartphone.
+2. Open the Simplicity Connect app on your smartphone.
 3. Go to Demo tab -> Environment -> Connect to the device with the name "Dev Kit #xxxxx" -> The demo application automatically requests data from the xG27 Dev Kit and displays it on the main dashboard. Or users can use the manual method to get data from the sensor (From step 4 - 5).
-4. From EFR Connect App -> Scan -> Find your device in the Bluetooth Browser, advertising as "Dev Kit #xxxxx", and tap Connect.
+4. From the Simplicity Connect App -> Scan -> Find your device in the Bluetooth Browser, advertising as "Dev Kit #xxxxx", and tap Connect.
 5. Find the Service at the GATT database. There are four services: Device Information Service, Hall Effect Service, IMU Service, and Environmental Sensing Service. Try to read, re-read the characteristics and enable notification on this service to get the value from sensors.
 
 ![environment_demo](images/env_demo.png)

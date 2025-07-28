@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ DeviceDoorLock::DeviceDoorLock(const char* device_name) :
   Device(device_name),
   lock_state(lock_state_t::UNLOCKED)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_DoorLock);
 }
 
 DeviceDoorLock::lock_state_t DeviceDoorLock::GetLockState()
@@ -60,13 +60,13 @@ uint16_t DeviceDoorLock::GetDoorLockClusterRevision()
   return this->door_lock_cluster_revision;
 }
 
-EmberAfStatus DeviceDoorLock::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                         chip::AttributeId attributeId,
-                                                         uint8_t* buffer,
-                                                         uint16_t maxReadLength)
+CHIP_ERROR DeviceDoorLock::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                      chip::AttributeId attributeId,
+                                                      uint8_t* buffer,
+                                                      uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::DoorLock::Attributes;
@@ -77,7 +77,7 @@ EmberAfStatus DeviceDoorLock::HandleReadEmberAfAttribute(ClusterId clusterId,
   }
 
   if (clusterId != chip::app::Clusters::DoorLock::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == LockState::Id) && (maxReadLength == 1)) {
@@ -102,34 +102,34 @@ EmberAfStatus DeviceDoorLock::HandleReadEmberAfAttribute(ClusterId clusterId,
     uint16_t clusterRevision = this->GetDoorLockClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus DeviceDoorLock::HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                          chip::AttributeId attributeId,
-                                                          uint8_t* buffer)
+CHIP_ERROR DeviceDoorLock::HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                                       chip::AttributeId attributeId,
+                                                       uint8_t* buffer)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::DoorLock::Attributes;
   ChipLogProgress(DeviceLayer, "HandleWriteDoorLockAttribute: clusterId=%lu attrId=%ld", clusterId, attributeId);
 
   if (clusterId != chip::app::Clusters::DoorLock::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if (attributeId == LockState::Id) {
     this->SetLockState((DeviceDoorLock::lock_state_t)(*buffer));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceDoorLock::HandleDoorLockDeviceStatusChanged(Changed_t itemChangedMask)

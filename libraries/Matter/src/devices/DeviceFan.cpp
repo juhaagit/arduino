@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ DeviceFan::DeviceFan(const char* device_name) :
   current_percent(0),
   current_fan_mode(fan_mode_t::Off)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_Fan);
 }
 
 uint8_t DeviceFan::GetPercentSetting()
@@ -76,28 +76,6 @@ void DeviceFan::SetFanMode(uint8_t fan_mode)
     this->HandleFanDeviceStatusChanged(kChanged_ModeSetting);
     CallDeviceChangeCallback();
   }
-
-  if (!changed) {
-    return;
-  }
-
-  // Adjust the percentage to the selected mode
-  switch ((fan_mode_t)fan_mode) {
-    case fan_mode_t::Low:
-      this->SetPercentSetting(20);
-      break;
-
-    case fan_mode_t::Med:
-      this->SetPercentSetting(50);
-      break;
-
-    case fan_mode_t::High:
-      this->SetPercentSetting(100);
-      break;
-
-    default:
-      break;
-  }
 }
 
 uint8_t DeviceFan::GetFanMode()
@@ -125,13 +103,13 @@ uint16_t DeviceFan::GetFanClusterRevision()
   return this->fan_cluster_revision;
 }
 
-EmberAfStatus DeviceFan::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                    chip::AttributeId attributeId,
-                                                    uint8_t* buffer,
-                                                    uint16_t maxReadLength)
+CHIP_ERROR DeviceFan::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                 chip::AttributeId attributeId,
+                                                 uint8_t* buffer,
+                                                 uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::FanControl::Attributes;
@@ -142,7 +120,7 @@ EmberAfStatus DeviceFan::HandleReadEmberAfAttribute(ClusterId clusterId,
   }
 
   if (clusterId != chip::app::Clusters::FanControl::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == FanMode::Id) && (maxReadLength == 1)) {
@@ -173,25 +151,25 @@ EmberAfStatus DeviceFan::HandleReadEmberAfAttribute(ClusterId clusterId,
     uint16_t clusterRevision = this->GetFanClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus DeviceFan::HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                     chip::AttributeId attributeId,
-                                                     uint8_t* buffer)
+CHIP_ERROR DeviceFan::HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                                  chip::AttributeId attributeId,
+                                                  uint8_t* buffer)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::FanControl::Attributes;
   ChipLogProgress(DeviceLayer, "HandleWriteFanControlAttribute: clusterId=%lu attrId=%ld", clusterId, attributeId);
 
   if (clusterId != chip::app::Clusters::FanControl::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if (attributeId == PercentSetting::Id) {
@@ -201,10 +179,10 @@ EmberAfStatus DeviceFan::HandleWriteEmberAfAttribute(ClusterId clusterId,
   } else if (attributeId == FanMode::Id) {
     this->SetFanMode(*buffer);
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceFan::HandleFanDeviceStatusChanged(Changed_t itemChangedMask)

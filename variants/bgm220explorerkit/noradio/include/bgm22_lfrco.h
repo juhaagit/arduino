@@ -3,7 +3,7 @@
  * @brief BGM22 LFRCO register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** LFRCO Register Declaration. */
-typedef struct {
+typedef struct lfrco_typedef{
   __IM uint32_t  IPVERSION;                     /**< IP version                                         */
   __IOM uint32_t CTRL;                          /**< Control Register                                   */
   __IM uint32_t  STATUS;                        /**< Status Register                                    */

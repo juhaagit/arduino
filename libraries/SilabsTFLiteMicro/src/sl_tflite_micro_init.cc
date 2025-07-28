@@ -51,7 +51,7 @@
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "em_common.h"
 #include "em_assert.h"
-#include "sl_memory.h"
+#include "sl_memory_manager.h"
 #include <new>
 
 // Set arena size

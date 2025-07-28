@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ DeviceThermostat::DeviceThermostat(const char* device_name,
   abs_max_heating_setpoint(3200),
   max_heating_setpoint(3000)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_Thermostat);
 }
 
 int16_t DeviceThermostat::GetLocalTemperatureValue()
@@ -167,13 +167,13 @@ int16_t DeviceThermostat::GetMaxHeatingSetpoint()
   return this->max_heating_setpoint;
 }
 
-EmberAfStatus DeviceThermostat::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                           chip::AttributeId attributeId,
-                                                           uint8_t* buffer,
-                                                           uint16_t maxReadLength)
+CHIP_ERROR DeviceThermostat::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                        chip::AttributeId attributeId,
+                                                        uint8_t* buffer,
+                                                        uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::Thermostat::Attributes;
@@ -184,7 +184,7 @@ EmberAfStatus DeviceThermostat::HandleReadEmberAfAttribute(ClusterId clusterId,
   }
 
   if (clusterId != chip::app::Clusters::Thermostat::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == LocalTemperature::Id) && (maxReadLength == 2)) {
@@ -218,18 +218,18 @@ EmberAfStatus DeviceThermostat::HandleReadEmberAfAttribute(ClusterId clusterId,
     uint16_t clusterRevision = this->GetThermostatClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus DeviceThermostat::HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                            chip::AttributeId attributeId,
-                                                            uint8_t* buffer)
+CHIP_ERROR DeviceThermostat::HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                                         chip::AttributeId attributeId,
+                                                         uint8_t* buffer)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters;
@@ -237,7 +237,7 @@ EmberAfStatus DeviceThermostat::HandleWriteEmberAfAttribute(ClusterId clusterId,
   ChipLogProgress(DeviceLayer, "HandleWriteThermostatAttribute: clusterId=%lu attrId=%ld", clusterId, attributeId);
 
   if (clusterId != chip::app::Clusters::Thermostat::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if (attributeId == OccupiedHeatingSetpoint::Id) {
@@ -245,10 +245,10 @@ EmberAfStatus DeviceThermostat::HandleWriteEmberAfAttribute(ClusterId clusterId,
   } else if (attributeId == SystemMode::Id) {
     this->SetSystemMode(*buffer);
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceThermostat::HandleThermostatDeviceStatusChanged(Changed_t itemChangedMask)

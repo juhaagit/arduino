@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -82,8 +82,8 @@ static const uint8_t A7  = PIN_A7;
 #define PIN_SERIAL_RX (21) // PA6
 #define PIN_SERIAL_TX (22) // PA5
 
-#define PIN_SERIAL_RX1 (A7) // PA0
-#define PIN_SERIAL_TX1 (A6) // PB1
+#define PIN_SERIAL_RX1 (A5) // PD5
+#define PIN_SERIAL_TX1 (A4) // PD4
 
 // SPI
 // ---
@@ -98,14 +98,14 @@ static const uint8_t MOSI  = D1; // PC3
 static const uint8_t MISO  = D2; // PC2
 static const uint8_t SCK   = D3; // PC1
 
-#define PIN_SPI_SS1    (D5)
-#define PIN_SPI_MOSI1  (A6)
-#define PIN_SPI_MISO1  (A7)
-#define PIN_SPI_SCK1   (D6)
-static const uint8_t SS1    = D5; // PC8
-static const uint8_t MOSI1  = A6; // PB1
-static const uint8_t MISO1  = A7; // PA0
-static const uint8_t SCK1   = D6; // PB0
+#define PIN_SPI_SS1    (A6)
+#define PIN_SPI_MOSI1  (A4)
+#define PIN_SPI_MISO1  (A5)
+#define PIN_SPI_SCK1   (A7)
+static const uint8_t SS1    = A6; // PB1
+static const uint8_t MOSI1  = A4; // PD4
+static const uint8_t MISO1  = A5; // PD5
+static const uint8_t SCK1   = A7; // PA0
 
 // Wire
 // ----

@@ -30,13 +30,14 @@
 #ifndef SHA512_ALT_H
 #define SHA512_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_sha512 Accelerated SHA-384/SHA-512 Hash Function
+ * \addtogroup sl_mbedtls_plugins_sha512 Accelerated SHA-384/SHA-512 Hash Function
  * \brief Accelerated mbed TLS SHA-384/SHA-512 cryptographic hash function for
  *        the mbed TLS API using Silicon Labs peripherals. This implementation
  *        builds on the PSA Crypto drivers (\ref sl_psa_drivers).
@@ -72,7 +73,8 @@ typedef SL_HASH_OPERATION_CTX_TYPE mbedtls_sha512_context;
 
 #endif /* MBEDTLS_SHA512_ALT */
 
-/** \} (end addtogroup sl_crypto_sha512) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_sha512) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* SHA512_ALT_H */

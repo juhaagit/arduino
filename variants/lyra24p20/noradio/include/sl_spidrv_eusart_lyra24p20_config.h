@@ -3,7 +3,7 @@
  * @brief SPIDRV_EUSART config for the Lyra24P20
  *******************************************************************************
  * # License
- * <b>Copyright 2024 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -82,15 +82,15 @@
 
 // EUSART0 TX on PB01
 #define SL_SPIDRV_EUSART_LYRA24P20_TX_PORT       gpioPortB
-#define SL_SPIDRV_EUSART_LYRA24P20_TX_PIN        3
+#define SL_SPIDRV_EUSART_LYRA24P20_TX_PIN        1
 
 // EUSART0 RX on PB02
 #define SL_SPIDRV_EUSART_LYRA24P20_RX_PORT       gpioPortB
-#define SL_SPIDRV_EUSART_LYRA24P20_RX_PIN        4
+#define SL_SPIDRV_EUSART_LYRA24P20_RX_PIN        2
 
 // EUSART0 SCLK on PB00
 #define SL_SPIDRV_EUSART_LYRA24P20_SCLK_PORT     gpioPortB
-#define SL_SPIDRV_EUSART_LYRA24P20_SCLK_PIN      0
+#define SL_SPIDRV_EUSART_LYRA24P20_SCLK_PIN      4
 
 // [EUSART_SL_SPIDRV_EUSART_LYRA24P20]$
 // <<< sl:end pin_tool >>>

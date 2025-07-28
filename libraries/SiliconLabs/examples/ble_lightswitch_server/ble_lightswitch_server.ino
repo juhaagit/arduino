@@ -7,13 +7,13 @@
    it will accept any incoming connection. The device offers a GATT service and characteristic
    for controlling the onboard LED.
    You can control the LED with another device running the 'ble_lightswitch_client' example.
-   Alternatively, you can use EFR Connect's GATT explorer to turn the LED on/off.
+   Alternatively, you can use the GATT explorer in the Simplicity Connect app to turn the LED on/off.
 
    Find out more on the API usage at: https://docs.silabs.com/bluetooth/latest/bluetooth-stack-api/
 
    This example only works with the 'BLE (Silabs)' protocol stack variant.
 
-   Get the EFR Connect app:
+   Get the Simplicity Connect app:
     - https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo
     - https://apps.apple.com/us/app/efr-connect-ble-mobile-app/id1030932759
 
@@ -245,6 +245,6 @@ static void ble_initialize_gatt_db()
   app_assert_status(sc);
 }
 
-#ifndef BLE_STACK_SILABS
+#ifndef ARDUINO_SILABS_STACK_BLE_SILABS
   #error "This example is only compatible with the Silicon Labs BLE stack. Please select 'BLE (Silabs)' in 'Tools > Protocol stack'."
 #endif

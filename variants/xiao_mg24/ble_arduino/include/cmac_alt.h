@@ -30,13 +30,14 @@
 #ifndef CMAC_ALT_H
 #define CMAC_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_cmac Accelerated AES-CMAC Cipher
+ * \addtogroup sl_mbedtls_plugins_cmac Accelerated AES-CMAC Cipher
  * \brief Accelerated AES-CMAC cipher for the mbed TLS API using the CRYPTOACC or
  *        SE peripheral. This implementation builds on the PSA Crypto drivers
  *        (\ref sl_psa_drivers).
@@ -54,9 +55,6 @@ extern "C" {
 #if defined(SEMAILBOX_PRESENT)
 #include "sli_se_transparent_types.h"
 #define SL_MAC_OPERATION_CTX_TYPE sli_se_transparent_mac_operation_t
-#elif defined(CRYPTO_PRESENT)
-#include "sli_crypto_transparent_types.h"
-#define SL_MAC_OPERATION_CTX_TYPE sli_crypto_transparent_mac_operation_t
 #elif defined(CRYPTOACC_PRESENT)
 #include "sli_cryptoacc_transparent_types.h"
 #define SL_MAC_OPERATION_CTX_TYPE sli_cryptoacc_transparent_mac_operation_t
@@ -72,7 +70,8 @@ struct mbedtls_cmac_context_t {
 
 #endif /* MBEDTLS_CMAC_ALT */
 
-/** \} (end addtogroup sl_crypto_cmac) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_cmac) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* CMAC_ALT_H */

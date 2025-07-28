@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,9 +47,9 @@ DECLARE_DYNAMIC_ATTRIBUTE_LIST_END();                                           
 
 // Fan control endpoint cluster list
 DECLARE_DYNAMIC_CLUSTER_LIST_BEGIN(fanControlEndpointClusters)
-DECLARE_DYNAMIC_CLUSTER(FanControl::Id, fanControlAttrs, nullptr, nullptr),
-DECLARE_DYNAMIC_CLUSTER(Descriptor::Id, descriptorAttrs, nullptr, nullptr),
-DECLARE_DYNAMIC_CLUSTER(BridgedDeviceBasicInformation::Id, bridgedDeviceBasicAttrs, nullptr, nullptr)
+DECLARE_DYNAMIC_CLUSTER(FanControl::Id, fanControlAttrs, ZAP_CLUSTER_MASK(SERVER), nullptr, nullptr),
+DECLARE_DYNAMIC_CLUSTER(Descriptor::Id, descriptorAttrs, ZAP_CLUSTER_MASK(SERVER), nullptr, nullptr),
+DECLARE_DYNAMIC_CLUSTER(BridgedDeviceBasicInformation::Id, bridgedDeviceBasicAttrs, ZAP_CLUSTER_MASK(SERVER), nullptr, nullptr)
 DECLARE_DYNAMIC_CLUSTER_LIST_END;
 
 /***************************************************************************//**
@@ -205,6 +205,32 @@ uint8_t MatterFan::get_percent()
     return 0;
   }
   return this->fan_device->GetPercentSetting();
+}
+
+/***************************************************************************//**
+ * Sets the fan's current mode
+ *
+ * @param[in] fan_mode the requested fan mode from DeviceFan::fan_mode_t
+ ******************************************************************************/
+void MatterFan::set_mode(DeviceFan::fan_mode_t fan_mode)
+{
+  if (!this->initialized) {
+    return;
+  }
+  this->fan_device->SetFanMode(fan_mode);
+}
+
+/***************************************************************************//**
+ * Gets the fan's current mode
+ *
+ * @return the fan's current mode from DeviceFan::fan_mode_t
+ ******************************************************************************/
+DeviceFan::fan_mode_t MatterFan::get_mode()
+{
+  if (!this->initialized) {
+    return DeviceFan::fan_mode_t::Off;
+  }
+  return static_cast<DeviceFan::fan_mode_t>(this->fan_device->GetFanMode());
 }
 
 /***************************************************************************//**

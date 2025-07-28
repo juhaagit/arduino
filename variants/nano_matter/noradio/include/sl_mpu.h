@@ -33,9 +33,10 @@
  * @brief RAM execution disable utilities can be used to disable execution from
  *        RAM and other selected memory regions.
  * @details
- *   RAM execution disable utilities are useful to protect against code injection attacks.
- *   These utilities make use of MPU to disable execution from RAM and other selected
- *   memory regions.
+ *   RAM execution disable utilities are useful to protect against code
+ *   injection attacks.
+ *   These utilities make use of MPU to disable execution from RAM and other
+ *   selected memory regions.
  *
  * @{
  ******************************************************************************/
@@ -44,8 +45,6 @@
 #define SL_MPU_H
 
 #include "sl_status.h"
-
-#if (defined (__MPU_PRESENT) && (__MPU_PRESENT == 1U)) || defined(DOXYGEN)
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,7 +80,6 @@ sl_status_t sl_mpu_disable_execute(uint32_t address_begin,
 }
 #endif
 
-#endif /* defined (__MPU_PRESENT) && (__MPU_PRESENT == 1U) */
 #endif /* SL_MPU_H */
 
 /** @} (end addtogroup mpu) */

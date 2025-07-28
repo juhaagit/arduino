@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2023 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@
 #ifndef ARDUINO_SERIAL_CONFIG_H
 #define ARDUINO_SERIAL_CONFIG_H
 
-#include "sl_iostream_usart_vcom_config.h"
+#include "sl_iostream_eusart_vcom_config.h"
 #include "sl_iostream_eusart_xg24explorerkit1_config.h"
 extern "C" {
   #include "em_usart.h"
@@ -37,7 +37,7 @@ extern "C" {
   #include "sl_iostream_uart.h"
 }
 
-#define SL_SERIAL_PERIPHERAL SL_IOSTREAM_USART_VCOM_PERIPHERAL
+#define SL_SERIAL_PERIPHERAL SL_IOSTREAM_EUSART_VCOM_PERIPHERAL
 
 extern sl_iostream_t* sl_serial_stream_handle;
 extern sl_iostream_uart_t* sl_serial_instance_handle;

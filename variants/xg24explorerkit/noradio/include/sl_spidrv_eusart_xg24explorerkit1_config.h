@@ -3,7 +3,7 @@
  * @brief SPIDRV_EUSART config for the xG24 Explorer Kit
  *******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -77,19 +77,19 @@
 // <<< sl:start pin_tool >>>
 // <eusart signal=TX,RX,SCLK,(CS)> SL_SPIDRV_EUSART_XG24EXPLORERKIT1
 // $[EUSART_SL_SPIDRV_EUSART_XG24EXPLORERKIT1]
-#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_PERIPHERAL    EUSART0
-#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_PERIPHERAL_NO 0
+#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_PERIPHERAL    EUSART1
+#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_PERIPHERAL_NO 1
 
 // EUSART0 TX on PB01
-#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_TX_PORT       gpioPortB
-#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_TX_PIN        1
+#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_TX_PORT       gpioPortD
+#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_TX_PIN        4
 
 // EUSART0 RX on PB02
-#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_RX_PORT       gpioPortA
-#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_RX_PIN        0
+#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_RX_PORT       gpioPortD
+#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_RX_PIN        5
 
 // EUSART0 SCLK on PB00
-#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_SCLK_PORT     gpioPortB
+#define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_SCLK_PORT     gpioPortA
 #define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_SCLK_PIN      0
 
 // [EUSART_SL_SPIDRV_EUSART_XG24EXPLORERKIT1]$

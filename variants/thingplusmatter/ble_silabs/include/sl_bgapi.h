@@ -18,6 +18,7 @@
 #define SL_BGAPI_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include "sl_status.h"
 
 #ifdef __cplusplus
@@ -159,6 +160,14 @@ enum sl_bgapi_dev_types {
 #define SL_BGAPI_MSG_HEADER_LEN (4)
 
 /**
+ * @brief The length of the BGAPI message payload of a generic error response
+ *
+ * See function @ref sl_bgapi_set_error_response for how to generate a generic
+ * error response.
+ */
+#define SL_BGAPI_MSG_ERROR_PAYLOAD_LEN (2)
+
+/**
  * @brief Get the device type of a BGAPI message
  *
  * @param HDR The header of the message as a uint32_t integer
@@ -192,17 +201,25 @@ enum sl_bgapi_dev_types {
  */
 #define SL_BGAPI_MSG_ENCRYPTED(HDR) ((HDR)&SL_BGAPI_BIT_ENCRYPTED)
 
+/**
+ * @brief Construct a BGAPI message header from an event ID and payload length.
+ *
+ * It is the caller's responsibility to verify that the input values are within
+ * valid range.
+ *
+ * @param[in] evt_id The full event ID constant, for example
+ *   `sl_bt_evt_system_boot_id`
+ * @param[in] payload_len Length of the full BGAPI message payload
+ *
+ * @return The header as a `uint32_t` value
+ */
+#define SL_BGAPI_MSG_HEADER_FROM_ID_AND_LEN(evt_id, payload_len) \
+  ((uint32_t) (((uint32_t) (evt_id))                             \
+               | (((uint32_t) (payload_len) & 0x00FF) << 8)      \
+               | (((uint32_t) (payload_len) & 0x0700) >> 8)))    \
+
 /** @} */ // end addtogroup sl_bgapi_types
 /******************************************************************************/
-
-/**
- * Internal function for setting the command handler function. Used by API library.
- *
- * @param cmd_handler_delegate Pointer to command handler delegate function
- */
-void sli_bgapi_set_cmd_handler_delegate(void (*cmd_handler_delegate)(uint32_t,
-                                                                     sl_bgapi_handler,
-                                                                     const void*));
 
 /**
  * @addtogroup sl_bgapi_functions BGAPI Functions
@@ -300,6 +317,42 @@ void sl_bgapi_handle_command(uint32_t hdr, const void* data);
  *   command was executed in @ref sl_bgapi_handle_command.
  */
 void* sl_bgapi_get_command_response(void);
+
+/**
+ * @brief Set a generic error response to the specified buffer.
+ *
+ * NOTE: This function is provided for NCP/CPC components that need to handle
+ * BGAPI commands and responses in their binary format. Normal application code
+ * that issues BGAPI commands by calling API functions defined by protocol
+ * stacks must never call this function directly.
+ *
+ * This function is available for NCP components that have detected fatal errors
+ * in command processing (for example have failed to receive a complete command
+ * message from the NCP host) and need to generate an error response without
+ * going through the normal BGAPI command processing.
+ *
+ * @param[in] command_hdr The header of the command that we are responding to.
+ *   It is possible in certain types of failures that the NCP implementation
+ *   does not even have the full command header. In these cases it is
+ *   recommended that the NCP implementation sets the unavailable bytes of the
+ *   header to value zero to avoid transmitting uninitialized bytes. BGAPI
+ *   commands are processed one command at a time and the recipient will be able
+ *   to handle the error response even if it's missing the device ID, the class
+ *   ID, or the command ID.
+ *
+ * @param[in] result The value to set to the @p result field of the error
+ *   response.
+ *
+ * @param[out] response The response buffer to fill
+ *
+ * @param[in] response_buf_size The size of the response buffer. The caller must
+ *   provide a buffer that has at least @ref SL_BGAPI_MSG_HEADER_LEN + @ref
+ *   SL_BGAPI_MSG_ERROR_PAYLOAD_LEN bytes available.
+ */
+void sl_bgapi_set_error_response(uint32_t command_hdr,
+                                 uint16_t result,
+                                 void *response,
+                                 size_t response_buf_size);
 
 /** @} */ // end addtogroup sl_bgapi_functions
 

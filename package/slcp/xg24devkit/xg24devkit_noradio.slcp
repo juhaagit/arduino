@@ -15,6 +15,10 @@ filter:
   - name: "Project Difficulty"
     value: ["Beginner"]
 
+sdk_extension:
+  - id: aiml
+    version: 2.0.0
+
 component:
   - id: sl_system
   - id: device_init
@@ -49,6 +53,14 @@ component:
   - id: nvm3_lib
   - id: emlib_rmu
   - id: emlib_wdog
+  - id: memory_manager_cpp
+  # AI/ML components
+  - id: tensorflow_lite_micro
+    from: aiml
+  - id: tensorflow_debug_log_none
+    from: aiml
+  - id: tensorflow_lite_micro_accelerated_kernels
+    from: aiml
 
 source:
   - path: main.c
@@ -58,6 +70,10 @@ include:
   - path: .
     file_list:
       - path: app.h
+
+define:
+  - name: TF_LITE_STATIC_MEMORY
+    value: "1"
 
 configuration:
   - name: SL_PSA_KEY_USER_SLOT_COUNT
@@ -70,6 +86,8 @@ configuration:
     value: "spidrvCsControlApplication"
   - name: SL_SPIDRV_EUSART_XG24DEVKIT1_CS_CONTROL
     value: "spidrvCsControlApplication"
+  - name: SL_TFLITE_MICRO_ARENA_SIZE
+    value: "8192"
 
 tag:
   - hardware:rf:band:2400

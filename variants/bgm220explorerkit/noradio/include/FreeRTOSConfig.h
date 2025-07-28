@@ -59,6 +59,11 @@
 #include "SEGGER_SYSVIEW_FreeRTOS.h"
 #endif
 
+#if defined(SL_CATALOG_CODE_CLASSIFICATION_VALIDATOR_PRESENT)
+#include "sli_code_classification_validator.h"
+#define traceTASK_SWITCHED_IN() sli_ccv_task_switched_in()
+#endif
+
 //-------- <<< Use Configuration Wizard in Context Menu >>> --------------------
 
 //  <o>Minimal stack size [words] <0-65535>

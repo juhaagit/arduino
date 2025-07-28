@@ -25,19 +25,20 @@
  */
 
 extern "C" {
+  #include "em_usart.h"
   #include "em_eusart.h"
 }
 #include "sl_spidrv_instances.h"
-#include "sl_spidrv_eusart_mikroe_config.h"
+#include "sl_spidrv_usart_mikroe_config.h"
 #include "sl_spidrv_eusart_xg24explorerkit1_config.h"
 
 #ifndef ARDUINO_SPI_CONFIG_H
 #define ARDUINO_SPI_CONFIG_H
 
-#define SL_SPIDRV_PERIPHERAL SL_SPIDRV_EUSART_MIKROE_PERIPHERAL
+#define SL_SPIDRV_PERIPHERAL SL_SPIDRV_USART_MIKROE_PERIPHERAL
 
 extern SPIDRV_Init_t sl_spidrv_config;
-#define SL_SPIDRV_PERIPHERAL_HANDLE sl_spidrv_eusart_mikroe_handle
+#define SL_SPIDRV_PERIPHERAL_HANDLE sl_spidrv_usart_mikroe_handle
 
 // Not used - just here to silence the compiler warnings
 #define SL_SPIDRV_EUSART_XG24EXPLORERKIT1_CS_PORT       gpioPortB

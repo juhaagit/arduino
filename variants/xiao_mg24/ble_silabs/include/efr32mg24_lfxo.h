@@ -3,7 +3,7 @@
  * @brief EFR32MG24 LFXO register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** LFXO Register Declaration. */
-typedef struct {
+typedef struct lfxo_typedef{
   __IM uint32_t  IPVERSION;                     /**< LFXO IP version                                    */
   __IOM uint32_t CTRL;                          /**< LFXO Control Register                              */
   __IOM uint32_t CFG;                           /**< LFXO Configuration Register                        */

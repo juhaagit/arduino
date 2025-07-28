@@ -43,6 +43,32 @@ typedef enum
   sl_bt_gap_coded_phy_500k = 0x8  /**< (0x8) 500k Coded PHY (S=2) */
 } sl_bt_gap_phy_and_coding_type_t;
 
+/**
+ * Deprecated and replaced by sl_bt_legacy_advertiser_connection_mode_t and
+ * sl_bt_extended_advertiser_connection_mode_t.
+ */
+typedef enum
+{
+  sl_bt_advertiser_non_connectable           = 0x0, /**< (0x0) Non-connectable
+                                                         non-scannable */
+  sl_bt_advertiser_connectable_scannable     = 0x2, /**< (0x2) Undirected
+                                                         connectable scannable.
+                                                         This mode can only be
+                                                         used in legacy
+                                                         advertising PDUs. */
+  sl_bt_advertiser_scannable_non_connectable = 0x3, /**< (0x3) Undirected
+                                                         scannable
+                                                         (Non-connectable but
+                                                         responds to scan
+                                                         requests) */
+  sl_bt_advertiser_connectable_non_scannable = 0x4  /**< (0x4) Undirected
+                                                         connectable
+                                                         non-scannable. This
+                                                         mode can only be used
+                                                         in extended advertising
+                                                         PDUs. */
+} sl_bt_advertiser_connection_mode_t;
+
 
 #ifdef __cplusplus
 }

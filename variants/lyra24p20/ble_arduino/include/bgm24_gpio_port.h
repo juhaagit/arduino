@@ -3,7 +3,7 @@
  * @brief BGM24 GPIO Port register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -37,7 +37,7 @@
 /**************************************************************************//**
  * @brief BGM24 GPIO PORT
  *****************************************************************************/
-typedef struct {
+typedef struct gpio_port_typedef{
   __IOM uint32_t CTRL;                          /**< Port control            */
   __IOM uint32_t MODEL;                         /**< mode low                */
   uint32_t       RESERVED0[1];                  /**< Reserved for future use */

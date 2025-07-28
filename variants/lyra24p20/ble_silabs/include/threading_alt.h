@@ -31,37 +31,26 @@
 #ifndef THREADING_ALT_H
 #define THREADING_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_threading Threading Primitives
+ * \addtogroup sl_mbedtls_plugins_threading Threading Primitives
  * \brief Threading primitive implementation for mbed TLS
  *
- * This file contains the glue logic between the mbed TLS threading API
- * and CMSIS RTOS2 API.
+ * This module provides a threading implementation, based on CMSIS RTOS2, that
+ * can be used by Mbed TLS when threading is required.
  *
- * In order to enable support for Micrium OS backend
- * the user must make sure SL_CATALOG_MICRIUMOS_KERNEL_PRESENT is defined.
- * In order to enable support for FreeRTOS backend the user must make sure
- * SL_CATALOG_FREERTOS_KERNEL_PRESENT is defined.
- *
- * Applications created using Simplicity Studio 5 the sl_component_catalog.h
- * file will define one of the above in order to declare the presence
- * of a specific RTOS.
- *
- * \note
- * In order to use the Silicon Labs Hardware Acceleration plugins in
- * multi-threaded applications, select
- * <b>Mbed TLS support for EFM32/EFR32 crypto acceleration</b> component.
+ * \note These plugins are automatically enabled when creating an SLC project
+ * with Micrium OS or FreeRTOS with Mbed TLS.
  *
  * \{
  ******************************************************************************/
 
 #include <stdbool.h>
-#include "mbedtls/threading.h"
 
 #if defined(MBEDTLS_THREADING_ALT) && defined(MBEDTLS_THREADING_C)
 
@@ -71,16 +60,8 @@
 
 #if defined(SL_CATALOG_MICRIUMOS_KERNEL_PRESENT) || defined(SL_CATALOG_FREERTOS_KERNEL_PRESENT)
 
-#include "cmsis_os2.h"
+#include "sli_psec_osal.h"
 #include "sl_assert.h"
-
-#if defined(SL_CATALOG_FREERTOS_KERNEL_PRESENT)
-  #include "FreeRTOSConfig.h"
-  #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    #include "FreeRTOS.h"  // StaticSemaphore_t
-    #include <string.h>
-  #endif
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,14 +69,31 @@ extern "C" {
 
 #define SL_THREADING_ALT
 
-/// SE manager mutex definition for CMSIS RTOS2.
-typedef struct mbedtls_threading_mutex {
-#if defined(SL_CATALOG_FREERTOS_KERNEL_PRESENT) && (configSUPPORT_STATIC_ALLOCATION == 1)
-  osMutexAttr_t mutex_attr;
-  StaticSemaphore_t static_sem_object;
+#define MUTEX_INIT  = { 0 }
+
+/// Mbed TLS mutexes maps to SLI PSEC OSAL locks.
+typedef sli_psec_osal_lock_t mbedtls_threading_mutex_t;
+
+typedef struct mbedtls_test_thread_t {
+  osThreadAttr_t thread_attr;
+  osThreadId_t thread_ID;
+} mbedtls_test_thread_t;
+
+#include "mbedtls/threading.h"
+
+#ifndef MBEDTLS_ERR_THREADING_THREAD_ERROR
+#define MBEDTLS_ERR_THREADING_THREAD_ERROR                 -0x001F
 #endif
-  osMutexId_t   mutex_ID;
-} mbedtls_threading_mutex_t;
+/**
+ * \brief          Set mutex recursive
+ *
+ * \param mutex    Pointer to the mutex
+ */
+static inline void THREADING_SetRecursive(mbedtls_threading_mutex_t *mutex)
+{
+  sl_status_t sl_status = sli_psec_osal_set_recursive_lock((sli_psec_osal_lock_t*)mutex);
+  EFM_ASSERT(sl_status == SL_STATUS_OK);
+}
 
 /**
  * \brief          Initialize a given mutex
@@ -104,21 +102,8 @@ typedef struct mbedtls_threading_mutex {
  */
 static inline void THREADING_InitMutex(mbedtls_threading_mutex_t *mutex)
 {
-  if (mutex == NULL) {
-    return;
-  }
-
-#if defined(SL_CATALOG_FREERTOS_KERNEL_PRESENT) && (configSUPPORT_STATIC_ALLOCATION == 1)
-  // Zeroize all members of the mutex attributes object and setup the static control block.
-  memset(&mutex->mutex_attr, 0, sizeof(mutex->mutex_attr));
-  mutex->mutex_attr.cb_mem = &mutex->static_sem_object;
-  mutex->mutex_attr.cb_size = sizeof(mutex->static_sem_object);
-  mutex->mutex_ID = osMutexNew(&mutex->mutex_attr);
-#else
-  mutex->mutex_ID = osMutexNew(NULL);
-#endif
-
-  EFM_ASSERT(mutex->mutex_ID != NULL);
+  sl_status_t sl_status = sli_psec_osal_init_lock(mutex);
+  EFM_ASSERT(sl_status == SL_STATUS_OK);
 }
 
 /**
@@ -128,12 +113,8 @@ static inline void THREADING_InitMutex(mbedtls_threading_mutex_t *mutex)
  */
 static inline void THREADING_FreeMutex(mbedtls_threading_mutex_t *mutex)
 {
-  if (mutex == NULL) {
-    return;
-  }
-
-  osStatus_t status = osMutexDelete(mutex->mutex_ID);
-  EFM_ASSERT(status == osOK);
+  sl_status_t sl_status = sli_psec_osal_free_lock(mutex);
+  EFM_ASSERT(sl_status == SL_STATUS_OK);
 }
 
 /**
@@ -148,12 +129,8 @@ static inline int THREADING_TakeMutexBlocking(mbedtls_threading_mutex_t *mutex)
   if (mutex == NULL) {
     return MBEDTLS_ERR_THREADING_BAD_INPUT_DATA;
   }
-
-  osStatus_t status = osOK;
-  if (osKernelGetState() == osKernelRunning) {
-    status = osMutexAcquire(mutex->mutex_ID, osWaitForever);
-  }
-  return (status == osOK ? 0 : MBEDTLS_ERR_THREADING_MUTEX_ERROR);
+  sl_status_t sl_status = sli_psec_osal_take_lock(mutex);
+  return (sl_status == SL_STATUS_OK ? 0 : MBEDTLS_ERR_THREADING_MUTEX_ERROR);
 }
 
 /**
@@ -168,12 +145,8 @@ static inline int THREADING_TakeMutexNonBlocking(mbedtls_threading_mutex_t *mute
   if (mutex == NULL) {
     return MBEDTLS_ERR_THREADING_BAD_INPUT_DATA;
   }
-
-  osStatus_t status = osOK;
-  if (osKernelGetState() == osKernelRunning) {
-    status = osMutexAcquire(mutex->mutex_ID, 0u);
-  }
-  return (status == osOK ? 0 : MBEDTLS_ERR_THREADING_MUTEX_ERROR);
+  sl_status_t sl_status = sli_psec_osal_take_lock_non_blocking(mutex);
+  return (sl_status == SL_STATUS_OK ? 0 : MBEDTLS_ERR_THREADING_MUTEX_ERROR);
 }
 
 /**
@@ -188,12 +161,50 @@ static inline int THREADING_GiveMutex(mbedtls_threading_mutex_t *mutex)
   if (mutex == NULL) {
     return MBEDTLS_ERR_THREADING_BAD_INPUT_DATA;
   }
+  sl_status_t sl_status = sli_psec_osal_give_lock(mutex);
+  return (sl_status == SL_STATUS_OK ? 0 : MBEDTLS_ERR_THREADING_MUTEX_ERROR);
+}
 
-  osStatus_t status = osOK;
-  if (osKernelGetState() == osKernelRunning) {
-    status = osMutexRelease(mutex->mutex_ID);
+/**
+ * \brief          The thread create function implementation
+ *
+ * \param thread   Pointer to the thread being created
+ * \param thread_func  Pointer to the thread function
+ * \param thread_data  Pointer to the thread data
+ */
+static inline int THREADING_ThreadCreate(mbedtls_test_thread_t *thread,
+                                         void (*thread_func)(
+                                           void *),
+                                         void *thread_data)
+{
+  if (thread == NULL || thread_func == NULL) {
+    return MBEDTLS_ERR_THREADING_BAD_INPUT_DATA;
   }
-  return (status == osOK ? 0 : MBEDTLS_ERR_THREADING_MUTEX_ERROR);
+
+  thread->thread_ID = osThreadNew(thread_func, thread_data, &thread->thread_attr);
+  if (thread->thread_ID == NULL) {
+    return MBEDTLS_ERR_THREADING_THREAD_ERROR;
+  }
+
+  return 0;
+}
+
+/**
+ * \brief          The thread join function implementation
+ *
+ * \param thread   Pointer to the thread being joined
+ */
+static inline int THREADING_ThreadJoin(mbedtls_test_thread_t *thread)
+{
+  if (thread == NULL) {
+    return MBEDTLS_ERR_THREADING_BAD_INPUT_DATA;
+  }
+
+  if (osThreadJoin(thread->thread_ID) != 0) {
+    return MBEDTLS_ERR_THREADING_THREAD_ERROR;
+  }
+
+  return 0;
 }
 
 #ifdef __cplusplus
@@ -212,6 +223,13 @@ void mbedtls_threading_set_alt(void (*mutex_init)(mbedtls_threading_mutex_t *),
                                int (*mutex_lock)(mbedtls_threading_mutex_t *),
                                int (*mutex_unlock)(mbedtls_threading_mutex_t *) );
 
+/* Forward declaration of test_thread_set_alt */
+void mbedtls_test_thread_set_alt(int (*thread_create)(mbedtls_test_thread_t *thread,
+                                                      void (*thread_func)(
+                                                        void *),
+                                                      void *thread_data),
+                                 int (*thread_join)(mbedtls_test_thread_t *thread));
+
 /**
  * \brief          Helper function for setting up the mbed TLS threading subsystem
  */
@@ -223,13 +241,19 @@ static inline void THREADING_setup(void)
                             &THREADING_GiveMutex);
 }
 
+static inline void THREAD_test_setup(void)
+{
+  mbedtls_test_thread_set_alt(&THREADING_ThreadCreate,
+                              &THREADING_ThreadJoin);
+}
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* MBEDTLS_THREADING_ALT && MBEDTLS_THREADING_C */
 
-/** \} (end addtogroup sl_crypto_threading) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_threading) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* THREADING_ALT_H */

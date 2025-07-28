@@ -4,7 +4,7 @@
  *        for EFR32BG27C140F768IM40
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -135,6 +135,7 @@ typedef enum IRQn{
  * @brief Processor and Core Peripheral Section
  *****************************************************************************/
 
+#define __CORTEXM                 1U      /**< Core architecture */
 #define __CM33_REV                0x0004U /**< Cortex-M33 Core revision */
 #define __DSP_PRESENT             1U      /**< Presence of DSP  */
 #define __FPU_PRESENT             1U      /**< Presence of FPU  */
@@ -175,6 +176,7 @@ typedef enum IRQn{
 #define _SILICON_LABS_SECURITY_FEATURE_SE                 0                                    /** Mid */
 #define _SILICON_LABS_SECURITY_FEATURE_VAULT              1                                    /** High */
 #define _SILICON_LABS_SECURITY_FEATURE_ROT                2                                    /** Root Of Trust */
+#define _SILICON_LABS_SECURITY_FEATURE_BASE               3                                    /** Base */
 #define _SILICON_LABS_SECURITY_FEATURE                    _SILICON_LABS_SECURITY_FEATURE_ROT   /** Security feature set */
 #define _SILICON_LABS_DCDC_FEATURE_NOTUSED                0                                    /** Not Used */
 #define _SILICON_LABS_DCDC_FEATURE_DCDC_BUCK              1                                    /** Includes Buck DCDC */

@@ -3,7 +3,7 @@
  * @brief BGM24 USART register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,7 +42,7 @@
  *****************************************************************************/
 
 /** USART Register Declaration. */
-typedef struct {
+typedef struct usart_typedef{
   __IM uint32_t  IPVERSION;                     /**< IPVERSION                                          */
   __IOM uint32_t EN;                            /**< USART Enable                                       */
   __IOM uint32_t CTRL;                          /**< Control Register                                   */

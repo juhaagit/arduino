@@ -48,6 +48,8 @@
 
 #define RTE_RTOS_FreeRTOS_TIMERS
 
+#define RTE_RTOS_FreeRTOS_HEAP_3
+
 
 #endif /* RTE_COMPONENTS_H */
 

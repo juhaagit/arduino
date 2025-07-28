@@ -50,6 +50,7 @@
 #include "psa/crypto_driver_common.h"
 #include "psa/crypto_platform.h"
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
  * \addtogroup sl_psa_drivers
  * \{
@@ -62,8 +63,6 @@
 
 // -----------------------------------------------------------------------------
 // Defines
-
-/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 
 /// Location value for keys to be stored encrypted with the device-unique secret,
 /// or for accessing the built-in keys on Vault devices. Kept for backward
@@ -155,8 +154,7 @@ typedef struct {
 
 #endif // SLI_MBEDTLS_DEVICE_HSE
 
-/// @endcond
 /** \} (end addtogroup sl_psa_drivers_se) */
 /** \} (end addtogroup sl_psa_drivers) */
-
+/// @endcond
 #endif // SLI_SE_OPAQUE_TYPES_H

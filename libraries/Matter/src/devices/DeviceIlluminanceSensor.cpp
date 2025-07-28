@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ DeviceIlluminanceSensor::DeviceIlluminanceSensor(const char* device_name,
   max_value(max),
   measured_value(measured_value)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_IlluminanceSensor);
 }
 
 uint16_t DeviceIlluminanceSensor::GetMeasuredValue()
@@ -71,13 +71,13 @@ uint16_t DeviceIlluminanceSensor::GetIlluminanceSensorClusterRevision()
   return this->illuminance_sensor_cluster_revision;
 }
 
-EmberAfStatus DeviceIlluminanceSensor::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                                  chip::AttributeId attributeId,
-                                                                  uint8_t* buffer,
-                                                                  uint16_t maxReadLength)
+CHIP_ERROR DeviceIlluminanceSensor::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                               chip::AttributeId attributeId,
+                                                               uint8_t* buffer,
+                                                               uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters::IlluminanceMeasurement::Attributes;
@@ -88,7 +88,7 @@ EmberAfStatus DeviceIlluminanceSensor::HandleReadEmberAfAttribute(ClusterId clus
   }
 
   if (clusterId != chip::app::Clusters::IlluminanceMeasurement::Id) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if ((attributeId == MeasuredValue::Id) && (maxReadLength == 2)) {
@@ -107,10 +107,10 @@ EmberAfStatus DeviceIlluminanceSensor::HandleReadEmberAfAttribute(ClusterId clus
     uint16_t clusterRevision = this->GetIlluminanceSensorClusterRevision();
     memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
   } else {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceIlluminanceSensor::HandleIlluminanceSensorDeviceStatusChanged(Changed_t itemChangedMask)

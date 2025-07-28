@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,16 +26,10 @@
 
 #include "Arduino.h"
 #include "arduino_variant.h"
-#include "arduino_i2c_config.h"
-#include "arduino_spi_config.h"
-
-extern "C" {
-  #include "sl_system_init.h"
-}
 
 void init_arduino_variant()
 {
-  sl_system_init();
+  ;
 }
 
 // Variant pin mapping - maps Arduino pin numbers to Silabs ports/pins
@@ -53,10 +47,10 @@ PinName gPinNames[] = {
   PA8, // A1 - LED - 9
   PD3, // A2 - SDA - 10
   PD2, // A3 - SCL - WU - 11
-  PB1, // A4 - Tx - DAC1 - WU - 12
-  PB2, // A5 - Rx - DAC2 - 13
-  PB3, // A6 - SPI1 SDO - Tx1 - DAC3 - WU - 14
-  PB4, // A7 - SPI1 SDI - Rx1 - 15
+  PB1, // A4 - SPI1 SDO - Tx1 - DAC1 - WU - 12
+  PB2, // A5 - SPI1 SDI - Rx1 - DAC2 - 13
+  PB3, // A6 - DAC3 - WU - 14
+  PB4, // A7 - SPI1 SCK - 15
   PC7, // Button - WU - 16
   PA0, // Rx - 17
   PA7  // Tx - 18

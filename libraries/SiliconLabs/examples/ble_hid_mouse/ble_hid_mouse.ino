@@ -22,7 +22,7 @@
 
 #define MOUSE_BUTTON BTN_BUILTIN
 // Used pins for xG27 DevKit
-#if defined(ARDUINO_SILABS_XG27DEVKIT)
+#if defined(ARDUINO_BOARD_SILABS_XG27DEVKIT)
 #define IMU_EN   PB4
 #define IMU_CS   PB2
 #define IMU_COPI PC0
@@ -31,9 +31,8 @@
 #define IMU_INT  PA0 // For future use
 #define FLASH_CS PC3 // Only necessary for de-selection
 // Used pins for xG24 DevKit
-#elif defined(ARDUINO_SILABS_XG24DEVKIT)
-// On this board there is no dedicated IMU_EN but a common SENSOR_ENABLE pin
-// that one is used here
+#elif defined(ARDUINO_BOARD_SILABS_XG24DEVKIT)
+// On this board there is no dedicated IMU_EN, but a common SENSOR_ENABLE pin is used here
 #define IMU_EN   PC9
 #define IMU_CS   PA7
 #define IMU_COPI PC3
@@ -43,7 +42,7 @@
 #define FLASH_CS PC0 // Only necessary for de-selection
 #else
 #error "Board not supported by this sketch :( Use a 'Silicon Labs xG24 Dev Kit' or 'Silicon Labs xG27 Dev Kit'!"
-#endif // defined(ARDUINO_SILABS_XG27DEVKIT)
+#endif
 
 #define IMU_ACC_X_THRESHOLD 10
 #define IMU_ACC_Y_THRESHOLD 10
@@ -779,6 +778,6 @@ static void ble_initialize_gatt_db()
   app_assert_status(sc);
 }
 
-#ifndef BLE_STACK_SILABS
+#ifndef ARDUINO_SILABS_STACK_BLE_SILABS
   #error "This example is only compatible with the Silicon Labs BLE stack. Please select 'BLE (Silabs)' in 'Tools > Protocol stack'."
 #endif

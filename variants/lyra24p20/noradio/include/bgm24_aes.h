@@ -3,7 +3,7 @@
  * @brief BGM24 AES register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -41,7 +41,7 @@
  *****************************************************************************/
 
 /** AES Register Declaration. */
-typedef struct {
+typedef struct aes_typedef{
   __IOM uint32_t FETCHADDR;                     /**< Fetcher Address                                    */
   uint32_t       RESERVED0[1U];                 /**< Reserved for future use                            */
   __IOM uint32_t FETCHLEN;                      /**< Fetcher Length                                     */

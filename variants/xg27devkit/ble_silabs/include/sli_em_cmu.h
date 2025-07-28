@@ -56,7 +56,7 @@ void sli_em_cmu_SYSCLKInitPreClockSelect(void);
  * @note This function is needed for macro expansion of CMU_CLOCK_SELECT_SET when
  *       the clock is SYSCLK.
  ******************************************************************************/
-void sli_em_cmu_SYSCLKInitPostClockSelect(void);
+void sli_em_cmu_SYSCLKInitPostClockSelect(bool optimize_divider);
 
 /***************************************************************************//**
  * @brief Sets the HFXO0 FORCEEN bit.
@@ -93,7 +93,7 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
     sli_em_cmu_SYSCLKInitPreClockSelect();                             \
     CMU->SYSCLKCTRL = (CMU->SYSCLKCTRL & ~_CMU_SYSCLKCTRL_CLKSEL_MASK) \
                       | CMU_SYSCLKCTRL_CLKSEL_HFRCODPLL;               \
-    sli_em_cmu_SYSCLKInitPostClockSelect();                            \
+    sli_em_cmu_SYSCLKInitPostClockSelect(true);                        \
   } while (0)
 
 #define CMU_SYSCLK_SELECT_HFXO                                         \
@@ -102,7 +102,7 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
     sli_em_cmu_SYSCLKInitPreClockSelect();                             \
     CMU->SYSCLKCTRL = (CMU->SYSCLKCTRL & ~_CMU_SYSCLKCTRL_CLKSEL_MASK) \
                       | CMU_SYSCLKCTRL_CLKSEL_HFXO;                    \
-    sli_em_cmu_SYSCLKInitPostClockSelect();                            \
+    sli_em_cmu_SYSCLKInitPostClockSelect(true);                        \
     if ((HFXO0->CTRL & HFXO_CTRL_DISONDEMAND) == 0) {                  \
       HFXO0->CTRL_CLR = HFXO_CTRL_FORCEEN;                             \
     }                                                                  \
@@ -113,7 +113,7 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
     sli_em_cmu_SYSCLKInitPreClockSelect();                             \
     CMU->SYSCLKCTRL = (CMU->SYSCLKCTRL & ~_CMU_SYSCLKCTRL_CLKSEL_MASK) \
                       | CMU_SYSCLKCTRL_CLKSEL_CLKIN0;                  \
-    sli_em_cmu_SYSCLKInitPostClockSelect();                            \
+    sli_em_cmu_SYSCLKInitPostClockSelect(true);                        \
   } while (0)
 
 #define CMU_SYSCLK_SELECT_FSRCO                                        \
@@ -121,7 +121,7 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
     sli_em_cmu_SYSCLKInitPreClockSelect();                             \
     CMU->SYSCLKCTRL = (CMU->SYSCLKCTRL & ~_CMU_SYSCLKCTRL_CLKSEL_MASK) \
                       | CMU_SYSCLKCTRL_CLKSEL_FSRCO;                   \
-    sli_em_cmu_SYSCLKInitPostClockSelect();                            \
+    sli_em_cmu_SYSCLKInitPostClockSelect(true);                        \
   } while (0)
 
 #if defined(RFFPLL_PRESENT)
@@ -131,7 +131,7 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
     sli_em_cmu_SYSCLKInitPreClockSelect();                             \
     CMU->SYSCLKCTRL = (CMU->SYSCLKCTRL & ~_CMU_SYSCLKCTRL_CLKSEL_MASK) \
                       | CMU_SYSCLKCTRL_CLKSEL_RFFPLL0SYS;              \
-    sli_em_cmu_SYSCLKInitPostClockSelect();                            \
+    sli_em_cmu_SYSCLKInitPostClockSelect(true);                        \
   } while (0)
 
 #endif /* RFFPLL_PRESENT */
@@ -342,10 +342,10 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
 #define CMU_SYSTICK_SELECT_LFRCO CMU_SYSTICK_SELECT_EM23GRPACLK
 #define CMU_SYSTICK_SELECT_ULFRCO CMU_SYSTICK_SELECT_EM23GRPACLK
 
-#define CMU_SYSTICK_SELECT_HCLK                                    \
-  do {                                                             \
-    sli_em_cmu_SYSTICEXTCLKENClear();                              \
-    SysTick->CTRL = (SysTick->CTRL | ~SysTick_CTRL_CLKSOURCE_Msk); \
+#define CMU_SYSTICK_SELECT_HCLK                                   \
+  do {                                                            \
+    sli_em_cmu_SYSTICEXTCLKENClear();                             \
+    SysTick->CTRL = (SysTick->CTRL | SysTick_CTRL_CLKSOURCE_Msk); \
   } while (0)
 
 #define CMU_EM23GRPACLK_SELECT_LFRCO                                                  \
@@ -629,7 +629,8 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
   || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_5)  \
   || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6)  \
   || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_7)  \
-  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8)) \
+  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8)  \
+  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_9)) \
   && defined(CoreDebug_DEMCR_TRCENA_Msk)
 #define CMU_TRACECLK_RESTORE_TRACE_PRE()                             \
   bool restoreTrace = CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk; \
@@ -664,7 +665,8 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
   || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_5) \
   || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6) \
   || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_7) \
-  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8)
+  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8) \
+  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_9)
   #define CMU_TRACECLK_SELECT_SYSCLK                                         \
   do {                                                                       \
     CMU_TRACECLK_RESTORE_TRACE_PRE();                                        \
@@ -852,12 +854,12 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
 #endif /* EUSART_PRESENT && EUSART_COUNT > 4 */
 #endif /* CMU_EM01GRPCCLKCTRL_CLKSEL_HFRCODPLLRT */
 
+#if defined(_CMU_EM01GRPCCLKCTRL_CLKSEL_HFRCOEM23)
 #define CMU_EM01GRPCCLK_SELECT_HFRCOEM23                                              \
   do {                                                                                \
     CMU->EM01GRPCCLKCTRL = (CMU->EM01GRPCCLKCTRL & ~_CMU_EM01GRPCCLKCTRL_CLKSEL_MASK) \
                            | _CMU_EM01GRPCCLKCTRL_CLKSEL_HFRCOEM23;                   \
   } while (0)
-
 #if defined(EUSART_PRESENT) && EUSART_COUNT > 1
 #define CMU_EUSART1_SELECT_HFRCOEM23 CMU_EM01GRPCCLK_SELECT_HFRCOEM23
 #endif /* EUSART_PRESENT && EUSART_COUNT > 1 */
@@ -870,6 +872,7 @@ void sli_em_cmu_SYSTICEXTCLKENClear(void);
 #if defined(EUSART_PRESENT) && EUSART_COUNT > 4
 #define CMU_EUSART4_SELECT_HFRCOEM23 CMU_EM01GRPCCLK_SELECT_HFRCOEM23
 #endif /* EUSART_PRESENT && EUSART_COUNT > 4 */
+#endif
 
 #define CMU_EM01GRPCCLK_SELECT_FSRCO                                                  \
   do {                                                                                \

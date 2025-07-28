@@ -30,13 +30,14 @@
 #ifndef ECJPAKE_ALT_H
 #define ECJPAKE_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_jpake Accelerated Elliptic Curve J-PAKE
+ * \addtogroup sl_mbedtls_plugins_jpake Accelerated Elliptic Curve J-PAKE
  * \brief Accelerated Elliptic Curve J-PAKE for the mbed TLS API using the SE
  *        peripheral
  *
@@ -82,7 +83,8 @@ typedef struct {
 
 #endif /* MBEDTLS_ECJPAKE_ALT */
 
-/** \} (end addtogroup sl_crypto_jpake) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_jpake) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* ECJPAKE_ALT_H */

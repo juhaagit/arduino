@@ -3,7 +3,7 @@
  * @brief IOSTREAM_USART config for the Arduino Nano Matter board
  *******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -48,7 +48,7 @@
 // <usartEvenParity=> Even parity
 // <usartOddParity=> Odd parity
 // <i> Default: usartNoParity
-#define SL_IOSTREAM_EUSART_XIAO_MG24_1_PARITY                eusartNoParity
+#define SL_IOSTREAM_EUSART_XIAO_MG24_1_PARITY                SL_IOSTREAM_EUSART_UART_NO_PARITY
 
 // <o SL_IOSTREAM_EUSART_XIAO_MG24_1_STOP_BITS> Number of stop bits to use.
 // <usartStopbits0p5=> 0.5 stop bits
@@ -56,7 +56,7 @@
 // <usartStopbits1p5=> 1.5 stop bits
 // <usartStopbits2=> 2 stop bits
 // <i> Default: usartStopbits1
-#define SL_IOSTREAM_EUSART_XIAO_MG24_1_STOP_BITS             eusartStopbits1
+#define SL_IOSTREAM_EUSART_XIAO_MG24_1_STOP_BITS             SL_IOSTREAM_EUSART_UART_STOP_BITS_1
 
 // <o SL_IOSTREAM_EUSART_XIAO_MG24_1_FLOW_CONTROL_TYPE> Flow control
 // <usartHwFlowControlNone=> None
@@ -65,7 +65,7 @@
 // <usartHwFlowControlCtsAndRts=> CTS/RTS
 // <uartFlowControlSoftware=> Software Flow control (XON/XOFF)
 // <i> Default: usartHwFlowControlNone
-#define SL_IOSTREAM_EUSART_XIAO_MG24_1_FLOW_CONTROL_TYPE     eusartHwFlowControlNone
+#define SL_IOSTREAM_EUSART_XIAO_MG24_1_FLOW_CONTROL_TYPE     SL_IOSTREAM_EUSART_UART_FLOW_CTRL_NONE
 
 // <o SL_IOSTREAM_EUSART_XIAO_MG24_1_RX_BUFFER_SIZE> Receive buffer size
 // <i> Default: 32

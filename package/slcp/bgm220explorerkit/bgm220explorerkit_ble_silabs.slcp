@@ -29,6 +29,9 @@ component:
   - id: component_catalog
   - id: mpu
   - id: bt_post_build
+  - id: sl_system
+  - id: clock_manager
+  - id: device_init
   - id: bluetooth_feature_dynamic_gattdb
   - id: udelay
   - id: app_log
@@ -52,6 +55,8 @@ component:
   - id: gpiointerrupt
   - id: mbedtls_ccm
   - id: emlib_rmu
+  - id: emlib_wdog
+  - id: memory_manager_cpp
 
 source:
   - path: main.c

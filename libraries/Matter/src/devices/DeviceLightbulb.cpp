@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ DeviceLightbulb::DeviceLightbulb(const char* device_name) :
   level_control_startup_current_level(254u),
   color_control_options(0u)
 {
-  ;
+  this->SetDeviceType(device_type_t::kDeviceType_Lightbulb);
 }
 
 bool DeviceLightbulb::IsOn()
@@ -235,13 +235,13 @@ DeviceLightbulb::StartupOnOff_t DeviceLightbulb::GetStartupOnOff()
   return (DeviceLightbulb::StartupOnOff_t)this->startup_on_off;
 }
 
-EmberAfStatus DeviceLightbulb::HandleReadEmberAfAttribute(ClusterId clusterId,
-                                                          chip::AttributeId attributeId,
-                                                          uint8_t* buffer,
-                                                          uint16_t maxReadLength)
+CHIP_ERROR DeviceLightbulb::HandleReadEmberAfAttribute(ClusterId clusterId,
+                                                       chip::AttributeId attributeId,
+                                                       uint8_t* buffer,
+                                                       uint16_t maxReadLength)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters;
@@ -259,7 +259,7 @@ EmberAfStatus DeviceLightbulb::HandleReadEmberAfAttribute(ClusterId clusterId,
 
   if (clusterId != OnOff::Id && clusterId != LevelControl::Id && clusterId != ColorControl::Id) {
     ChipLogProgress(DeviceLayer, "HandleReadLightbulbAttribute: invalid cluster");
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INVALID_ARGUMENT;
   }
 
   if (clusterId == OnOff::Id) {                                                                       // -- OnOff cluster
@@ -283,7 +283,7 @@ EmberAfStatus DeviceLightbulb::HandleReadEmberAfAttribute(ClusterId clusterId,
       memcpy(buffer, &featureMap, sizeof(featureMap));
     } else {
       ChipLogProgress(DeviceLayer, "HandleReadLightbulbAttribute - OnOff: invalid read");
-      return EMBER_ZCL_STATUS_FAILURE;
+      return CHIP_ERROR_INVALID_ARGUMENT;
     }
   }
 
@@ -317,7 +317,7 @@ EmberAfStatus DeviceLightbulb::HandleReadEmberAfAttribute(ClusterId clusterId,
       memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
     } else {
       ChipLogProgress(DeviceLayer, "HandleReadLightbulbAttribute - LevelControl: invalid read");
-      return EMBER_ZCL_STATUS_FAILURE;
+      return CHIP_ERROR_INVALID_ARGUMENT;
     }
   }
 
@@ -351,19 +351,19 @@ EmberAfStatus DeviceLightbulb::HandleReadEmberAfAttribute(ClusterId clusterId,
       memcpy(buffer, &clusterRevision, sizeof(clusterRevision));
     } else {
       ChipLogProgress(DeviceLayer, "HandleReadLightbulbAttribute - ColorControl: invalid read");
-      return EMBER_ZCL_STATUS_FAILURE;
+      return CHIP_ERROR_INVALID_ARGUMENT;
     }
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
-EmberAfStatus DeviceLightbulb::HandleWriteEmberAfAttribute(ClusterId clusterId,
-                                                           chip::AttributeId attributeId,
-                                                           uint8_t* buffer)
+CHIP_ERROR DeviceLightbulb::HandleWriteEmberAfAttribute(ClusterId clusterId,
+                                                        chip::AttributeId attributeId,
+                                                        uint8_t* buffer)
 {
   if (!this->reachable) {
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   using namespace ::chip::app::Clusters;
@@ -378,7 +378,7 @@ EmberAfStatus DeviceLightbulb::HandleWriteEmberAfAttribute(ClusterId clusterId,
 
   if (clusterId != OnOff::Id && clusterId != LevelControl::Id && clusterId != ColorControl::Id) {
     ChipLogProgress(DeviceLayer, "HandleWriteLightbulbAttribute: invalid cluster");
-    return EMBER_ZCL_STATUS_FAILURE;
+    return CHIP_ERROR_INTERNAL;
   }
 
   if (clusterId == OnOff::Id) {                                                   // -- OnOff cluster
@@ -397,19 +397,19 @@ EmberAfStatus DeviceLightbulb::HandleWriteEmberAfAttribute(ClusterId clusterId,
     } else if ((attributeId == OnOff::Attributes::StartUpOnOff::Id)) {            // StartUpOnOff
       uint8_t startup_on_off_new = *buffer;
       if (startup_on_off_new > StartupOnOff_t::kToggle && startup_on_off_new != StartupOnOff_t::kNull) {
-        return EMBER_ZCL_STATUS_CONSTRAINT_ERROR;
+        return CHIP_ERROR_INVALID_ARGUMENT;
       }
       this->startup_on_off = startup_on_off_new;
     } else {
       ChipLogProgress(DeviceLayer, "HandleWriteLightbulbAttribute - OnOff: invalid write");
-      return EMBER_ZCL_STATUS_FAILURE;
+      return CHIP_ERROR_INTERNAL;
     }
   }
 
   if (clusterId == LevelControl::Id) {                                                // -- LevelControl cluster
     if ((attributeId == LevelControl::Attributes::CurrentLevel::Id)) {                // CurrentLevel
       if (!this->SetLevel(*buffer)) {
-        return EMBER_ZCL_STATUS_CONSTRAINT_ERROR;
+        return CHIP_ERROR_INVALID_ARGUMENT;
       }
     } else if ((attributeId == LevelControl::Attributes::Options::Id)) {              // Options
       this->SetLevelControlOptions(*buffer);
@@ -419,7 +419,7 @@ EmberAfStatus DeviceLightbulb::HandleWriteEmberAfAttribute(ClusterId clusterId,
       this->SetLevelControlStartupCurrentLevel(*buffer);
     } else {
       ChipLogProgress(DeviceLayer, "HandleWriteLightbulbAttribute - LevelControl: invalid write");
-      return EMBER_ZCL_STATUS_FAILURE;
+      return CHIP_ERROR_INTERNAL;
     }
   }
 
@@ -432,11 +432,11 @@ EmberAfStatus DeviceLightbulb::HandleWriteEmberAfAttribute(ClusterId clusterId,
       this->SetColorControlOptions(*buffer);
     } else {
       ChipLogProgress(DeviceLayer, "HandleWriteLightbulbAttribute - ColorControl: invalid write");
-      return EMBER_ZCL_STATUS_FAILURE;
+      return CHIP_ERROR_INTERNAL;
     }
   }
 
-  return EMBER_ZCL_STATUS_SUCCESS;
+  return CHIP_NO_ERROR;
 }
 
 void DeviceLightbulb::HandleLightbulbDeviceStatusChanged(Changed_t itemChangedMask)

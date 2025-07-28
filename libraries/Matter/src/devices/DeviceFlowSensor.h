@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,10 +42,10 @@ public:
   uint32_t GetFlowSensorClusterFeatureMap();
   uint16_t GetFlowSensorClusterRevision();
 
-  EmberAfStatus HandleReadEmberAfAttribute(ClusterId clusterId,
-                                           chip::AttributeId attributeId,
-                                           uint8_t* buffer,
-                                           uint16_t maxReadLength) override;
+  CHIP_ERROR HandleReadEmberAfAttribute(ClusterId clusterId,
+                                        chip::AttributeId attributeId,
+                                        uint8_t* buffer,
+                                        uint16_t maxReadLength) override;
 
   const uint16_t min_value;
   const uint16_t max_value;

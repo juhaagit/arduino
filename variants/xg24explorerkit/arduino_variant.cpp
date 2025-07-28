@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright 2024 Silicon Laboratories Inc. www.silabs.com
+ * Copyright 2025 Silicon Laboratories Inc. www.silabs.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,64 +26,24 @@
 
 #include "Arduino.h"
 #include "arduino_variant.h"
-#include "arduino_i2c_config.h"
-#include "arduino_spi_config.h"
 
 #ifdef ARDUINO_MATTER
 
-#include "AppConfig.h"
-#include <DeviceInfoProviderImpl.h>
-#include <MatterConfig.h>
-#include <app/server/Server.h>
-#include <platform/silabs/platformAbstraction/SilabsPlatform.h>
-#include <provision/ProvisionManager.h>
-
-#ifdef BLE_DEV_NAME
-#undef BLE_DEV_NAME
-#endif
-#define BLE_DEV_NAME "Arduino Matter device"
-
-static chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
-
+#include "AppTask.h"
 using namespace ::chip;
-using namespace ::chip::DeviceLayer;
-using namespace ::chip::Credentials;
-using namespace chip::DeviceLayer::Silabs;
 
-#else //ARDUINO_MATTER
+AppTask AppTask::sAppTask;
 
-extern "C" {
-  #include "sl_system_init.h"
+CHIP_ERROR AppTask::StartAppTask()
+{
+  return CHIP_NO_ERROR;
 }
 
-#endif //ARDUINO_MATTER
+#endif // ARDUINO_MATTER
 
 void init_arduino_variant()
 {
-  #ifdef ARDUINO_MATTER
-  // Initialize the Matter stack
-  GetPlatform().Init();
-
-  if (Provision::Manager::GetInstance().ProvisionRequired()) {
-    Provision::Manager::GetInstance().Start();
-  } else {
-    if (SilabsMatterConfig::InitMatter(BLE_DEV_NAME) != CHIP_NO_ERROR) {
-      appError(CHIP_ERROR_INTERNAL);
-    }
-    gExampleDeviceInfoProvider.SetStorageDelegate(&chip::Server::GetInstance().GetPersistentStorage());
-    chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
-
-    chip::DeviceLayer::PlatformMgr().LockChipStack();
-    // Initialize device attestation config
-    SetDeviceAttestationCredentialsProvider(&Provision::Manager::GetInstance().GetStorage());
-    chip::DeviceLayer::PlatformMgr().UnlockChipStack();
-  }
-
-  #else //ARDUINO_MATTER
-
-  sl_system_init();
-
-  #endif //ARDUINO_MATTER
+  ;
 }
 
 // Variant pin mapping - maps Arduino pin numbers to Silabs ports/pins
@@ -96,14 +56,14 @@ PinName gPinNames[] = {
   PC0, // D4 - SPI CS - WU
   PC8, // D5 - SPI1 SS
   PB0, // D6 - SPI1 SCK - DAC0
-  PD2, // A0 - WU
-  PD3, // A1
-  PB5, // A2 - SDA
-  PB4, // A3 - SCL
-  PD4, // A4 - 11
-  PD5, // A5 - 12 - WU
-  PB1, // A6 - SPI1 SDO - Tx1 - DAC1 - WU
-  PA0, // A7 - SPI1 SDI - Rx1
+  PD2, // A0 - WU - 7
+  PD3, // A1 - 8
+  PB5, // A2 - SDA - 9
+  PB4, // A3 - SCL - 10
+  PD4, // A4 - SPI1 SDO - Tx1 - 11
+  PD5, // A5 - SPI1 SDI - Rx1 - WU - 12
+  PB1, // A6 - DAC1 - WU - 13
+  PA0, // A7 - SPI1 SCK - 14
   PA4, // LED - 15
   PA7, // LED - 16
   PB2, // Button - DAC2 - 17

@@ -73,10 +73,11 @@ See the docs for the Matter library [here](libraries/Matter/readme.md).
  - **ezBLE 🛜** - send and receive data over BLE in a simple and user-friendly way on '*BLE (Silabs)*' variants [[docs](libraries/ezBLE/readme.md)]
  - **ezWS2812 💡** - driver for WS2812 LEDs using the hardware SPI or GPIO
  - **Matter** ![Matter](doc/matter_logo_icon.png) - [[docs](libraries/Matter/readme.md)]
+ - **OneWire 🧵** - driver for the OneWire protocol for Silicon Labs devices
  - **Si7210_hall** - driver for Si7210 hall sensors
  - **SilabsMicrophoneAnalog 🎙️** - driver for analog microphones [[docs](libraries/SilabsMicrophonerAnalog/readme.md)]
  - **SilabsMicrophonePDM 🎤** - driver for PDM microphones
-  - **SilabsTFLiteMicro 🤖** - TensorFlow Lite for Microcontrollers AI/ML library [[docs](libraries/SilabsTFLiteMicro/readme.md)]
+ - **SilabsTFLiteMicro 🤖** - TensorFlow Lite for Microcontrollers AI/ML library [[docs](libraries/SilabsTFLiteMicro/readme.md)]
  - **SiliconLabs** - various example sketches for Silicon Labs devices
  - **SPI** - the standard Arduino SPI library
  - **WatchdogTimer 🐶** - for keeping an eye on correct behavior - [[docs](libraries/WatchdogTimer/readme.md)]
@@ -97,6 +98,14 @@ There are some additional functions besides the standard Arduino API you can cal
  - `getCPUClock()` - returns the current CPU speed in hertz
  - `getCPUCycleCount()` - returns the current CPU cycle counter value - overflows often - useful for precision timing
  - `analogReferenceDAC()` - selects the voltage reference for the DAC hardware
+ - `getCurrentBoardType()` - returns the current hardware platform (board) the sketch is running on
+ - `getCurrentRadioStackType()` - returns the type of the radio stack the sketch was compiled with
+ - `isBoardAiMlCapable()` - returns whether the board with the currently selected protocol stack is AI/ML capable
+ - `getTotalHeapSize()` - returns the total heap (dynamic memory) size in bytes
+ - `getFreeHeapSize()` - returns the current free heap size in bytes
+ - `getUsedHeapSize()` - returns the current used heap size in bytes
+ - `getHeapHighWatermark()` - returns the highest recorded heap usage in bytes
+ - `resetHeapHighWatermark()` - resets the highest recorded heap usage
 
 
 ## Debugging with J-Link on Silicon Labs boards

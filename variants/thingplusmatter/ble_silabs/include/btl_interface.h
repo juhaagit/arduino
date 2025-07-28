@@ -187,7 +187,11 @@ typedef struct {
   uint32_t (*remainingApplicationUpgrades)(void);
   // ------------------------------
   /// Get the list of the peripheral that is used by the bootloader
+  #if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6)
+  void (*getPeripheralList)(uint32_t *ppusatd0, uint32_t *ppusatd1, uint32_t *ppusatd2);
+  #else
   void (*getPeripheralList)(uint32_t *ppusatd0, uint32_t *ppusatd1);
+  #endif
   // ------------------------------
   /// Get base address of bootloader upgrade image
   uint32_t (*getUpgradeLocation)(void);
@@ -198,10 +202,16 @@ typedef struct {
 typedef struct {
   uint32_t PPUSATD0;
   uint32_t PPUSATD1;
+  #if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6)
+  uint32_t PPUSATD2;
+  #endif
   uint32_t BMPUSATD0;
 #if defined(SMU_NS_CFGNS_BASE)
   uint32_t PPUPATD0;
   uint32_t PPUPATD1;
+  #if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6)
+  uint32_t PPUPATD2;
+  #endif
 #endif
 #if defined(_CMU_CLKEN0_MASK)
   uint32_t CLKEN0;
@@ -408,6 +418,21 @@ typedef struct Bootloader_inOutVec {
 #define BTL_MAIN_STAGE_MAX_SIZE           (BTL_APPLICATION_BASE    \
                                            - (BTL_FIRST_STAGE_BASE \
                                               + BTL_FIRST_STAGE_SIZE))
+#elif defined(_SILICON_LABS_GECKO_INTERNAL_SDID_225)
+// No bootloader area: Place the bootloader in main flash
+#define BTL_FIRST_STAGE_BASE              FLASH_BASE
+#if defined(BOOTLOADER_APPLOADER)
+#if defined(BOOTLOADER_SECURE)
+#define BTL_APPLICATION_BASE              (FLASH_BASE + 0x00014000UL)
+#else
+#define BTL_APPLICATION_BASE              (FLASH_BASE + 0x00012000UL)
+#endif // BOOTLOADER_SECURE
+#else
+#define BTL_APPLICATION_BASE              (FLASH_BASE + 0x00006000UL)
+#endif // BOOTLOADER_APPLOADER
+#define BTL_MAIN_STAGE_MAX_SIZE           (BTL_APPLICATION_BASE    \
+                                           - (BTL_FIRST_STAGE_BASE \
+                                              + BTL_FIRST_STAGE_SIZE))
 #elif defined(_SILICON_LABS_GECKO_INTERNAL_SDID_230)
 // No bootloader area: Place the bootloader in main flash
 #define BTL_FIRST_STAGE_BASE              FLASH_BASE
@@ -424,6 +449,21 @@ typedef struct Bootloader_inOutVec {
                                            - (BTL_FIRST_STAGE_BASE \
                                               + BTL_FIRST_STAGE_SIZE))
 #elif defined(_SILICON_LABS_GECKO_INTERNAL_SDID_235)
+// No bootloader area: Place the bootloader in main flash
+#define BTL_FIRST_STAGE_BASE              FLASH_BASE
+#if defined(BOOTLOADER_APPLOADER)
+#if defined(BOOTLOADER_SECURE)
+#define BTL_APPLICATION_BASE              (FLASH_BASE + 0x00014000UL)
+#else
+#define BTL_APPLICATION_BASE              (FLASH_BASE + 0x00012000UL)
+#endif // BOOTLOADER_SECURE
+#else
+#define BTL_APPLICATION_BASE              (FLASH_BASE + 0x00006000UL)
+#endif // BOOTLOADER_APPLOADER
+#define BTL_MAIN_STAGE_MAX_SIZE           (BTL_APPLICATION_BASE    \
+                                           - (BTL_FIRST_STAGE_BASE \
+                                              + BTL_FIRST_STAGE_SIZE))
+#elif defined(_SILICON_LABS_GECKO_INTERNAL_SDID_240)
 // No bootloader area: Place the bootloader in main flash
 #define BTL_FIRST_STAGE_BASE              FLASH_BASE
 #if defined(BOOTLOADER_APPLOADER)
@@ -460,7 +500,7 @@ typedef struct Bootloader_inOutVec {
 
 #if defined(MAIN_BOOTLOADER_TEST)
 #if defined(BOOTLOADER_HAS_FIRST_STAGE)
-extern FirstBootloaderTable_t *firstBootloaderTable;
+extern FirstBootloaderTable_t * firstBootloaderTable;
 #endif
 extern MainBootloaderTable_t *mainBootloaderTable;
 #else
@@ -577,7 +617,11 @@ bool bootloader_getUpgradeLocation(uint32_t *location);
  *                           which is ordered after the PPUSATD1 register bit
  *                           fields.
  ******************************************************************************/
+#if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6)
+void bootloader_getPeripheralList(uint32_t *ppusatd0, uint32_t *ppusatd1, uint32_t *ppusatd2);
+#else
 void bootloader_getPeripheralList(uint32_t *ppusatd0, uint32_t *ppusatd1);
+#endif
 
 /***************************************************************************//**
  * Save PPUSATDn state in RAM.

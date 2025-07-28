@@ -111,6 +111,6 @@ static const uint8_t SCL1 = D13; // PB2
 
 // Deep Sleep escape pin
 // ---------------------
-#define DEEP_SLEEP_ESCAPE_PIN   D0 // PC0
+#define DEEP_SLEEP_ESCAPE_PIN   D1 // PC1
 
 #endif // PINS_ARDUINO_H

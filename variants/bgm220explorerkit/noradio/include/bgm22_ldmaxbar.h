@@ -3,7 +3,7 @@
  * @brief BGM22 LDMAXBAR register and bit field definitions
  ******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories, Inc. www.silabs.com</b>
+ * <b>Copyright 2025 Silicon Laboratories, Inc. www.silabs.com</b>
  ******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -42,12 +42,12 @@
  *****************************************************************************/
 
 /** LDMAXBAR CH Register Group Declaration. */
-typedef struct {
+typedef struct ldmaxbar_ch_typedef{
   __IOM uint32_t REQSEL;                             /**< Channel Peripheral Request Select Reg...           */
 } LDMAXBAR_CH_TypeDef;
 
 /** LDMAXBAR Register Declaration. */
-typedef struct {
+typedef struct ldmaxbar_typedef{
   LDMAXBAR_CH_TypeDef CH[8U];                   /**< DMA Channel Registers                              */
   uint32_t            RESERVED0[1016U];         /**< Reserved for future use                            */
   LDMAXBAR_CH_TypeDef CH_SET[8U];               /**< DMA Channel Registers                              */

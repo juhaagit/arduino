@@ -15,21 +15,14 @@
  * to define the implementation-defined types of PSA multi-part state objects.
  */
 /*  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
+#if defined(SL_TRUSTZONE_NONSECURE)
 
+/* The NonSecure app must use the crypto_driver_contexts_primitives.h from the trusted-firmware-m repo. */
+#include "../../trusted-firmware-m/interface/include/psa/crypto_driver_contexts_primitives.h"
+
+#else /* SL_TRUSTZONE_NONSECURE */
 #ifndef PSA_CRYPTO_DRIVER_CONTEXTS_PRIMITIVES_H
 #define PSA_CRYPTO_DRIVER_CONTEXTS_PRIMITIVES_H
 
@@ -110,6 +103,10 @@ typedef struct {
   #include "sli_crypto_transparent_types.h"
 #endif
 
+#if defined(SLI_MBEDTLS_DEVICE_HC)
+  #include "sli_hostcrypto_transparent_types.h"
+#endif
+
 #endif /* MBEDTLS_PSA_CRYPTO_DRIVERS */
 
 /* Define the context to be used for an operation that is executed through the
@@ -135,6 +132,9 @@ typedef union {
 #if defined(SLI_MBEDTLS_DEVICE_S1)
     sli_crypto_transparent_hash_operation_t sli_crypto_transparent_ctx;
 #endif /* SLI_MBEDTLS_DEVICE_S1 */
+#if defined(SLI_MBEDTLS_DEVICE_HC)
+    sli_hostcrypto_transparent_hash_operation_t sli_hostcrypto_transparent_ctx;
+#endif /* SLI_MBEDTLS_DEVICE_HC */
 #endif
 } psa_driver_hash_context_t;
 
@@ -158,8 +158,13 @@ typedef union {
 #if defined(SLI_MBEDTLS_DEVICE_S1)
     sli_crypto_transparent_cipher_operation_t sli_crypto_transparent_ctx;
 #endif /* SLI_MBEDTLS_DEVICE_S1 */
+#if defined(SLI_MBEDTLS_DEVICE_HC)
+    sli_hostcrypto_transparent_cipher_operation_t sli_hostcrypto_transparent_ctx;
+#endif /* SLI_MBEDTLS_DEVICE_HC */
 #endif
 } psa_driver_cipher_context_t;
 
 #endif /* PSA_CRYPTO_DRIVER_CONTEXTS_PRIMITIVES_H */
 /* End of automatically generated file. */
+
+#endif /* SL_TRUSTZONE_NONSECURE */

@@ -73,9 +73,12 @@ extern "C" {
  ******************************************************************************/
 
 /** @brief Macros to concatenate. */
-#define SL_CONCAT_PASTER_2(first, second)                 first ##  second                      ///< sl concat paster 2.
-#define SL_CONCAT_PASTER_3(first, second, third)          first ##  second ## third             ///< sl concat paster 3.
-#define SL_CONCAT_PASTER_4(first, second, third, fourth)  first ##  second ## third ## fourth   ///< sl concat paster 4.
+#define _CONCAT_2(first, second)                          first ## second
+#define SL_CONCAT_PASTER_2(first, second)                 _CONCAT_2(first, second)                ///< sl concat paster 2.
+#define _CONCAT_3(first, second, third)                   first ## second ## third
+#define SL_CONCAT_PASTER_3(first, second, third)          _CONCAT_3(first, second, third)         ///< sl concat paster 3.
+#define _CONCAT_4(first, second, third, fourth)           first ## second ## third ## fourth
+#define SL_CONCAT_PASTER_4(first, second, third, fourth)  _CONCAT_4(first, second, third, fourth) ///< sl concat paster 4.
 
 /** @brief Round n up to closest interval of i. */
 #define SL_CEILING(n, i)   ((((n) + (i) - 1U) / (i)) * (i))
@@ -88,6 +91,10 @@ extern "C" {
 
 #if !defined(__GNUC__)
 /* Not GCC compilers */
+
+/** @brief Macros for giving the compiler hints about the likelihood of a branch. */
+#define SL_BRANCH_LIKELY(x)   (x)
+#define SL_BRANCH_UNLIKELY(x) (x)
 
 /** @brief Macro for getting minimum value. */
 #define SL_MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -150,6 +157,10 @@ extern "C" {
 
 #else // !defined(__GNUC__)
 /* GCC compilers */
+
+/** @brief Macros for giving the compiler hints about the likelihood of a branch. */
+#define SL_BRANCH_LIKELY(x)   __builtin_expect(!!(x), 1)
+#define SL_BRANCH_UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 /** @brief A macro for getting the minimum value. No side-effects, a and b are evaluated one time only. */
 #define SL_MIN(a, b) __extension__({ __typeof__(a)_a = (a); __typeof__(b)_b = (b); _a < _b ? _a : _b; })
@@ -266,6 +277,12 @@ extern "C" {
 #else
 #define SL_DEPRECATED_API_SDK_4_4 __attribute__ ((deprecated))
 #endif
+
+#ifdef SL_SUPPRESS_DEPRECATION_WARNINGS_SDK_2024_6
+#define SL_DEPRECATED_API_SDK_2024_6
+#else
+#define SL_DEPRECATED_API_SDK_2024_6 __attribute__ ((deprecated))
+#endif
 /** @endcond */
 
 /***************************************************************************//**
@@ -374,6 +391,24 @@ __STATIC_INLINE uint32_t SL_Log2ToDiv(uint32_t log2)
 {
   EFM_ASSERT(log2 < 32U);
   return 1UL << log2;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Count the number of bits that are set to 1 in a 32-bit bitfield.
+ *
+ * @param[in] bitfield
+ *   32-bit bitfield.
+ *
+ * @return
+ *   The number of bits that are set to 1 in the bitfield.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t SL_POPCOUNT32(uint32_t bitfield)
+{
+  bitfield = bitfield - ((bitfield >> 1) & 0x55555555);
+  bitfield = (bitfield & 0x33333333) + ((bitfield >> 2) & 0x33333333);
+  bitfield = (bitfield + (bitfield >> 4)) & 0x0F0F0F0F;
+  return (bitfield * 0x01010101) >> 24;
 }
 
 /** @} (end addtogroup common) */

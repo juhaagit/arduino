@@ -32,7 +32,16 @@ typedef struct {
 /** Flag indicating Bluetooth can allow EM2 with inaccurate LF clock */
 #define SL_BT_CONFIG_FLAG_INACCURATE_LFCLK_EM2           512
 
+/**
+ * <b>Deprecated</b> and replaced by @ref sli_bt_linklayer_wakeup_t implemented
+ * by the bluetooth_host_adaptation component.
+ */
 typedef void (*sl_bt_priority_schedule_callback)(void);
+
+/**
+ * <b>Deprecated</b> and replaced by @ref sli_bt_host_wakeup_t implemented
+ * by the bluetooth_host_adaptation component.
+ */
 typedef void (*sl_bt_stack_schedule_callback)(void);
 
 #define SL_BT_RF_CONFIG_ANTENNA                        (1 << 0)
@@ -54,12 +63,20 @@ typedef struct {
   // GATT database (pointer of "sli_bt_gattdb_t*" type)
   const void* gattdb;
 
-  //Callback for priority scheduling, used for RTOS support. If NULL uses pendsv irq.
-  //This is called from Interrupt context
+  /**
+   * <b>Deprecated</b> and replaced by @ref sli_bt_host_adaptation_linklayer_wakeup
+   * implemented by the bluetooth_host_adaptation component.
+   *
+   * Callback for priority scheduling, used for RTOS support.
+   */
   sl_bt_priority_schedule_callback scheduler_callback;
 
-  //Callback for requesting Bluetooth stack scheduling, used for RTOS support
-  //This is called from Interrupt context
+  /**
+   * <b>Deprecated</b> and replaced by @ref sli_bt_host_adaptation_host_wakeup
+   * implemented by the bluetooth_host_adaptation component.
+   *
+   * Callback for requesting Bluetooth stack scheduling, used for RTOS support.
+   */
   sl_bt_stack_schedule_callback stack_schedule_callback;
 
   uint8_t max_timers;  // Max number of soft timers, up to 16, the application will use through SL_BT_API. Default: 4

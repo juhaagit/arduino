@@ -39,6 +39,30 @@ extern "C" {
 #define SL_BT_MSG_ENCRYPTED(HDR) SL_BGAPI_MSG_ENCRYPTED(HDR)
 
 /**
+ * @addtogroup bluetooth_event_system
+ * @{
+ *
+ * @addtogroup sl_bt_event_masks BT Event System Event Masks
+ * @{
+ *
+ * @brief Event Mask values used with Event System
+ *
+ * When the component `bluetooth_event_system_ipc` is included in the
+ * application, the Bluetooth host stack events are published using the Event
+ * System provided by the `event_system` component. The constants in this group
+ * define the event masks used for Bluetooth host stack events.
+ */
+
+/**
+ * @brief Event mask bit set in all public Bluetooth host events
+ */
+#define SL_BT_EVENT_MASK_PUBLIC ((uint32_t) 0x01)
+
+/** @} */ // end addtogroup bluetooth_event_system
+
+/** @} */ // end addtogroup sl_bt_event_masks
+
+/**
  * @addtogroup sl_bt_common_types BT Common Types
  * @{
  *
@@ -74,10 +98,10 @@ extern "C" {
 
 
 /**
- * @brief ABR subevent length
+ * @brief CS subevent length
  */
 typedef struct {
-  uint8_t data[3]; /**< ABR subevent length */
+  uint8_t data[3]; /**< CS subevent length */
 } sl_bt_cs_subevent_length_t;
 
 /**
@@ -88,10 +112,10 @@ typedef struct {
 } sl_bt_drbg_key_t;
 
 /**
- * @brief 79 1-bit fields containing the values of the ABR channel index
+ * @brief 79 1-bit fields containing the values of the CS channel index
  */
 typedef struct {
-  uint8_t data[10]; /**< 79 1-bit fields containing the values of the ABR channel index */
+  uint8_t data[10]; /**< 79 1-bit fields containing the values of the CS channel index */
 } sl_bt_cs_channel_map_t;
 
 /**
@@ -120,7 +144,7 @@ typedef struct {
  *      data is uploaded
  *   5. Send @ref sl_bt_dfu_flash_upload_finish command when all data is
  *      uploaded
- *   6. Finalize DFU firmware update with @ref sl_bt_system_reset command
+ *   6. Finalize DFU firmware update with @ref sl_bt_system_reboot command
  *
  * DFU mode is using the UART baudrate set in bootloader.
  */
@@ -170,7 +194,7 @@ typedef struct sl_bt_evt_dfu_boot_s sl_bt_evt_dfu_boot_t;
  ******************************************************************************/
 PACKSTRUCT( struct sl_bt_evt_dfu_boot_failure_s
 {
-  uint16_t reason; /**< The reason for boot failure. */
+  uint16_t reason; /**< An sl_status_t code describing the error that occurred */
 });
 
 typedef struct sl_bt_evt_dfu_boot_failure_s sl_bt_evt_dfu_boot_failure_t;
@@ -210,7 +234,7 @@ sl_status_t sl_bt_dfu_flash_upload(size_t data_len, const uint8_t* data);
 /***************************************************************************//**
  *
  * Inform the device that the DFU file is fully uploaded. To return the device
- * back to normal mode, issue the command @ref sl_bt_system_reset.
+ * back to user application mode, issue command @ref sl_bt_system_reboot.
  *
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -236,7 +260,7 @@ sl_status_t sl_bt_dfu_flash_upload_finish();
 #define sl_bt_cmd_system_stop_bluetooth_id                           0x1d010020
 #define sl_bt_cmd_system_forcefully_stop_bluetooth_id                0x1e010020
 #define sl_bt_cmd_system_get_version_id                              0x1b010020
-#define sl_bt_cmd_system_reset_id                                    0x01010020
+#define sl_bt_cmd_system_reboot_id                                   0x1f010020
 #define sl_bt_cmd_system_halt_id                                     0x0c010020
 #define sl_bt_cmd_system_linklayer_configure_id                      0x0e010020
 #define sl_bt_cmd_system_set_tx_power_id                             0x17010020
@@ -248,12 +272,13 @@ sl_status_t sl_bt_dfu_flash_upload_finish();
 #define sl_bt_cmd_system_data_buffer_clear_id                        0x14010020
 #define sl_bt_cmd_system_get_counters_id                             0x0f010020
 #define sl_bt_cmd_system_set_lazy_soft_timer_id                      0x1a010020
+#define sl_bt_cmd_system_reset_id                                    0x01010020
 #define sl_bt_rsp_system_hello_id                                    0x00010020
 #define sl_bt_rsp_system_start_bluetooth_id                          0x1c010020
 #define sl_bt_rsp_system_stop_bluetooth_id                           0x1d010020
 #define sl_bt_rsp_system_forcefully_stop_bluetooth_id                0x1e010020
 #define sl_bt_rsp_system_get_version_id                              0x1b010020
-#define sl_bt_rsp_system_reset_id                                    0x01010020
+#define sl_bt_rsp_system_reboot_id                                   0x1f010020
 #define sl_bt_rsp_system_halt_id                                     0x0c010020
 #define sl_bt_rsp_system_linklayer_configure_id                      0x0e010020
 #define sl_bt_rsp_system_set_tx_power_id                             0x17010020
@@ -265,503 +290,693 @@ sl_status_t sl_bt_dfu_flash_upload_finish();
 #define sl_bt_rsp_system_data_buffer_clear_id                        0x14010020
 #define sl_bt_rsp_system_get_counters_id                             0x0f010020
 #define sl_bt_rsp_system_set_lazy_soft_timer_id                      0x1a010020
-
-/**
- * @brief Specifies the mode that the system will boot into.
- */
-typedef enum
-{
-  sl_bt_system_boot_mode_normal   = 0x0, /**< (0x0) Boot to normal mode */
-  sl_bt_system_boot_mode_uart_dfu = 0x1, /**< (0x1) Boot to UART DFU mode */
-  sl_bt_system_boot_mode_ota_dfu  = 0x2  /**< (0x2) Boot to OTA DFU mode */
-} sl_bt_system_boot_mode_t;
+#define sl_bt_rsp_system_reset_id                                    0x01010020
 
 /**
  * @brief These Keys are used to configure Link Layer Operation
  */
 typedef enum
 {
-  sl_bt_system_linklayer_config_key_halt                               = 0x1,  /**<
-                                                                                    (0x1)
-                                                                                    Same
-                                                                                    as
-                                                                                    system_halt
-                                                                                    command,
-                                                                                    value-0
-                                                                                    Stop
-                                                                                    Radio
-                                                                                    1-
-                                                                                    Start
-                                                                                    Radio */
-  sl_bt_system_linklayer_config_key_priority_range                     = 0x2,  /**<
-                                                                                    (0x2)
-                                                                                    Sets
-                                                                                    the
-                                                                                    RAIL
-                                                                                    priority_mapping
-                                                                                    offset
-                                                                                    field
-                                                                                    of
-                                                                                    the
-                                                                                    link
-                                                                                    layer
-                                                                                    priority
-                                                                                    configuration
-                                                                                    structure
-                                                                                    to
-                                                                                    the
-                                                                                    first
-                                                                                    byte
-                                                                                    of
-                                                                                    the
-                                                                                    value
-                                                                                    field. */
-  sl_bt_system_linklayer_config_key_scan_channels                      = 0x3,  /**<
-                                                                                    (0x3)
-                                                                                    Sets
-                                                                                    channels
-                                                                                    to
-                                                                                    scan
-                                                                                    on.
-                                                                                    The
-                                                                                    first
-                                                                                    byte
-                                                                                    of
-                                                                                    the
-                                                                                    value
-                                                                                    is
-                                                                                    the
-                                                                                    channel
-                                                                                    map.
-                                                                                    0x1
-                                                                                    =
-                                                                                    Channel
-                                                                                    37,
-                                                                                    0x2
-                                                                                    =
-                                                                                    Channel
-                                                                                    38,
-                                                                                    0x4
-                                                                                    =
-                                                                                    Channel
-                                                                                    39 */
-  sl_bt_system_linklayer_config_key_set_flags                          = 0x4,  /**<
-                                                                                    (0x4)
-                                                                                    Sets
-                                                                                    the
-                                                                                    link
-                                                                                    layer
-                                                                                    configuration
-                                                                                    flags.
-                                                                                    The
-                                                                                    value
-                                                                                    is
-                                                                                    a
-                                                                                    little
-                                                                                    endian
-                                                                                    32-bit
-                                                                                    integer.
-                                                                                    Flag
-                                                                                    Values:
-                                                                                      - 0x00000001
-                                                                                        \-
-                                                                                        Disable
-                                                                                        Feature
-                                                                                        Exchange
-                                                                                        in
-                                                                                        peripheral
-                                                                                        role
-                                                                                        of
+  sl_bt_system_linklayer_config_key_halt                                   = 0x1,  /**<
+                                                                                        (0x1)
+                                                                                        Same
+                                                                                        as
+                                                                                        system_halt
+                                                                                        command,
+                                                                                        value-0
+                                                                                        Stop
+                                                                                        Radio
+                                                                                        1-
+                                                                                        Start
+                                                                                        Radio */
+  sl_bt_system_linklayer_config_key_priority_range                         = 0x2,  /**<
+                                                                                        (0x2)
+                                                                                        Sets
                                                                                         the
-                                                                                        connection
-                                                                                      - 0x00000002
-                                                                                        \-
-                                                                                        Disable
-                                                                                        Feature
-                                                                                        Exchange
-                                                                                        in
-                                                                                        central
-                                                                                        role
-                                                                                        of
-                                                                                        the
-                                                                                        connection */
-  sl_bt_system_linklayer_config_key_clr_flags                          = 0x5,  /**<
-                                                                                    (0x5)
-                                                                                    The
-                                                                                    value
-                                                                                    is
-                                                                                    flags
-                                                                                    to
-                                                                                    clear.
-                                                                                    Flags
-                                                                                    are
-                                                                                    the
-                                                                                    same
-                                                                                    as
-                                                                                    in
-                                                                                    SET_FLAGS
-                                                                                    command. */
-  sl_bt_system_linklayer_config_key_set_afh_interval                   = 0x7,  /**<
-                                                                                    (0x7)
-                                                                                    Set
-                                                                                    the
-                                                                                    afh_scan_interval.
-                                                                                    Value
-                                                                                    is
-                                                                                    in
-                                                                                    units
-                                                                                    of
-                                                                                    10
-                                                                                    ms.
-                                                                                    Setting
-                                                                                    the
-                                                                                    interval
-                                                                                    to
-                                                                                    0
-                                                                                    will
-                                                                                    result
-                                                                                    in
-                                                                                    using
-                                                                                    the
-                                                                                    default
-                                                                                    value
-                                                                                    of
-                                                                                    1
-                                                                                    second. */
-  sl_bt_system_linklayer_config_key_set_priority_table                 = 0x9,  /**<
-                                                                                    (0x9)
-                                                                                    The
-                                                                                    value
-                                                                                    contains
-                                                                                    a
-                                                                                    priority
-                                                                                    table
-                                                                                    to
-                                                                                    be
-                                                                                    copied
-                                                                                    over
-                                                                                    the
-                                                                                    existing
-                                                                                    table.
-                                                                                    If
-                                                                                    the
-                                                                                    value
-                                                                                    is
-                                                                                    smaller
-                                                                                    than
-                                                                                    the
-                                                                                    full
-                                                                                    table,
-                                                                                    only
-                                                                                    those
-                                                                                    values
-                                                                                    are
-                                                                                    updated.
-                                                                                    See
-                                                                                    sl_bt_bluetooth_ll_priorities
-                                                                                    struct
-                                                                                    for
-                                                                                    the
-                                                                                    definition
-                                                                                    of
-                                                                                    a
-                                                                                    priority
-                                                                                    table. */
-  sl_bt_system_linklayer_config_key_set_rx_packet_filtering            = 0xa,  /**<
-                                                                                    (0xa)
-                                                                                    Configure
-                                                                                    and
-                                                                                    enable
-                                                                                    or
-                                                                                    disable
-                                                                                    RX
-                                                                                    packet
-                                                                                    filtering
-                                                                                    feature.
-                                                                                    Value:
-                                                                                    >=
-                                                                                    5
-                                                                                    bytes.
-                                                                                      - Byte
-                                                                                        1
-                                                                                        \-
-                                                                                        The
-                                                                                        filter
-                                                                                        count
-                                                                                      - Byte
-                                                                                        2
-                                                                                        \-
-                                                                                        The
-                                                                                        filter
+                                                                                        RAIL
+                                                                                        priority_mapping
                                                                                         offset
-                                                                                      - Byte
-                                                                                        3
-                                                                                        \-
-                                                                                        The
-                                                                                        length
+                                                                                        field
                                                                                         of
                                                                                         the
-                                                                                        filter
-                                                                                        list
-                                                                                      - Byte
-                                                                                        4
-                                                                                        \-
+                                                                                        link
+                                                                                        layer
+                                                                                        priority
+                                                                                        configuration
+                                                                                        structure
+                                                                                        to
+                                                                                        the
+                                                                                        first
+                                                                                        byte
+                                                                                        of
+                                                                                        the
+                                                                                        value
+                                                                                        field. */
+  sl_bt_system_linklayer_config_key_scan_channels                          = 0x3,  /**<
+                                                                                        (0x3)
+                                                                                        Sets
+                                                                                        channels
+                                                                                        to
+                                                                                        scan
+                                                                                        on.
                                                                                         The
-                                                                                        bitmask
+                                                                                        first
+                                                                                        byte
+                                                                                        of
+                                                                                        the
+                                                                                        value
+                                                                                        is
+                                                                                        the
+                                                                                        channel
+                                                                                        map.
+                                                                                        0x1
+                                                                                        =
+                                                                                        Channel
+                                                                                        37,
+                                                                                        0x2
+                                                                                        =
+                                                                                        Channel
+                                                                                        38,
+                                                                                        0x4
+                                                                                        =
+                                                                                        Channel
+                                                                                        39 */
+  sl_bt_system_linklayer_config_key_set_flags                              = 0x4,  /**<
+                                                                                        (0x4)
+                                                                                        Sets
+                                                                                        the
+                                                                                        link
+                                                                                        layer
+                                                                                        configuration
+                                                                                        flags.
+                                                                                        The
+                                                                                        value
+                                                                                        is
+                                                                                        a
+                                                                                        little
+                                                                                        endian
+                                                                                        32-bit
+                                                                                        integer.
+                                                                                        Flag
+                                                                                        Values:
+                                                                                          - 0x00000001
+                                                                                            \-
+                                                                                            Disable
+                                                                                            Feature
+                                                                                            Exchange
+                                                                                            in
+                                                                                            peripheral
+                                                                                            role
+                                                                                            of
+                                                                                            the
+                                                                                            connection
+                                                                                          - 0x00000002
+                                                                                            \-
+                                                                                            Disable
+                                                                                            Feature
+                                                                                            Exchange
+                                                                                            in
+                                                                                            central
+                                                                                            role
+                                                                                            of
+                                                                                            the
+                                                                                            connection */
+  sl_bt_system_linklayer_config_key_clr_flags                              = 0x5,  /**<
+                                                                                        (0x5)
+                                                                                        The
+                                                                                        value
+                                                                                        is
                                                                                         flags
-                                                                                      - Rest
-                                                                                        of
+                                                                                        to
+                                                                                        clear.
+                                                                                        Flags
+                                                                                        are
                                                                                         the
-                                                                                        data
-                                                                                        \-
-                                                                                        The
-                                                                                        filter
-                                                                                        list */
-  sl_bt_system_linklayer_config_key_set_simultaneous_scanning          = 0xb,  /**<
-                                                                                    (0xb)
-                                                                                    Enable
-                                                                                    or
-                                                                                    disable
-                                                                                    simultaneous
-                                                                                    scanning
-                                                                                    on
-                                                                                    the
-                                                                                    1M
-                                                                                    and
-                                                                                    Coded
-                                                                                    PHYs.
-                                                                                    Value:
-                                                                                    1
-                                                                                    byte.
-                                                                                      - 0
-                                                                                        \-
-                                                                                        Disable
-                                                                                        simultaneous
-                                                                                        scanning.
-                                                                                      - 1
-                                                                                        \-
-                                                                                        Enable
-                                                                                        simultaneous
-                                                                                        scanning. */
-  sl_bt_system_linklayer_config_key_set_channelmap_flags               = 0xc,  /**<
-                                                                                    (0xc)
-                                                                                    Configure
-                                                                                    channelmap
-                                                                                    adaptivity
-                                                                                    flags.
-                                                                                    Value:
-                                                                                    4
-                                                                                    bytes. */
-  sl_bt_system_linklayer_config_key_power_control_golden_range         = 0x10, /**<
-                                                                                    (0x10)
-                                                                                    Set
-                                                                                    Power
-                                                                                    Control
-                                                                                    golden
-                                                                                    range
-                                                                                    parameters.
-                                                                                    The
-                                                                                    value
-                                                                                    is
-                                                                                    a
-                                                                                    8-bytes
-                                                                                    long
-                                                                                    array
-                                                                                    that
-                                                                                    consists
-                                                                                    of
-                                                                                    4
-                                                                                    pairs
-                                                                                    of
-                                                                                    golden
-                                                                                    range
-                                                                                    configurations.
-                                                                                    In
-                                                                                    each
-                                                                                    pair,
-                                                                                    the
-                                                                                    first
-                                                                                    byte
-                                                                                    is
-                                                                                    the
-                                                                                    lower
-                                                                                    RSSI
-                                                                                    boundary
-                                                                                    and
-                                                                                    the
-                                                                                    second
-                                                                                    byte
-                                                                                    is
-                                                                                    the
-                                                                                    upper
-                                                                                    RSSI
-                                                                                    boundary.
-                                                                                    RSSI
-                                                                                    values
-                                                                                    are
-                                                                                    in
-                                                                                    dBm.
-                                                                                    This
-                                                                                    configuration
-                                                                                    is
-                                                                                    not
-                                                                                    allowed
-                                                                                    if
-                                                                                    there
-                                                                                    are
-                                                                                    active
-                                                                                    Bluetooth
-                                                                                    connections.
-                                                                                      - Byte
+                                                                                        same
+                                                                                        as
+                                                                                        in
+                                                                                        SET_FLAGS
+                                                                                        command. */
+  sl_bt_system_linklayer_config_key_set_afh_interval                       = 0x7,  /**<
+                                                                                        (0x7)
+                                                                                        Set
+                                                                                        the
+                                                                                        afh_scan_interval.
+                                                                                        Value
+                                                                                        is
+                                                                                        in
+                                                                                        units
+                                                                                        of
+                                                                                        10
+                                                                                        ms.
+                                                                                        Setting
+                                                                                        the
+                                                                                        interval
+                                                                                        to
+                                                                                        0
+                                                                                        will
+                                                                                        result
+                                                                                        in
+                                                                                        using
+                                                                                        the
+                                                                                        default
+                                                                                        value
+                                                                                        of
                                                                                         1
-                                                                                        \-
-                                                                                        Minimal
-                                                                                        RSSI
+                                                                                        second. */
+  sl_bt_system_linklayer_config_key_set_periodic_advertising_status_report = 0x8,  /**<
+                                                                                        (0x8)
+                                                                                        Enable
+                                                                                        or
+                                                                                        disable
+                                                                                        the
+                                                                                        status
+                                                                                        report
+                                                                                        of
+                                                                                        periodic
+                                                                                        advertising
                                                                                         on
-                                                                                        1M
-                                                                                        PHY
-                                                                                      - Byte
+                                                                                        an
+                                                                                        advertising
+                                                                                        set.
+                                                                                        When
+                                                                                        enabled,
+                                                                                        event
+                                                                                        @ref
+                                                                                        sl_bt_evt_periodic_advertiser_status
+                                                                                        will
+                                                                                        be
+                                                                                        generated
+                                                                                        for
+                                                                                        each
+                                                                                        scheduled
+                                                                                        transmission.
+                                                                                        Value:
                                                                                         2
-                                                                                        \-
-                                                                                        Maximal
-                                                                                        RSSI
+                                                                                        bytes
+                                                                                          - Byte
+                                                                                            1
+                                                                                            \-
+                                                                                            The
+                                                                                            advertising
+                                                                                            set
+                                                                                            handle
+                                                                                          - Byte
+                                                                                            2
+                                                                                            \-
+                                                                                            The
+                                                                                            status
+                                                                                            report
+                                                                                            state
+                                                                                              - 0:
+                                                                                                Disable
+                                                                                                the
+                                                                                                status
+                                                                                                report
+                                                                                              - 1:
+                                                                                                Enable
+                                                                                                the
+                                                                                                status
+                                                                                                report
+
+
+                                                                                        Default:
+                                                                                        The
+                                                                                        status
+                                                                                        report
                                                                                         on
-                                                                                        1M
-                                                                                        PHY
-                                                                                      - Byte
-                                                                                        3
-                                                                                        \-
-                                                                                        Minimal
-                                                                                        RSSI
-                                                                                        on
-                                                                                        2M
-                                                                                        PHY
-                                                                                      - Byte
-                                                                                        4
-                                                                                        \-
-                                                                                        Maximal
-                                                                                        RSSI
-                                                                                        on
-                                                                                        2M
-                                                                                        PHY
-                                                                                      - Byte
+                                                                                        any
+                                                                                        advertising
+                                                                                        sets
+                                                                                        is
+                                                                                        disabled. */
+  sl_bt_system_linklayer_config_key_set_priority_table                     = 0x9,  /**<
+                                                                                        (0x9)
+                                                                                        The
+                                                                                        value
+                                                                                        contains
+                                                                                        a
+                                                                                        priority
+                                                                                        table
+                                                                                        to
+                                                                                        be
+                                                                                        copied
+                                                                                        over
+                                                                                        the
+                                                                                        existing
+                                                                                        table.
+                                                                                        If
+                                                                                        the
+                                                                                        value
+                                                                                        is
+                                                                                        smaller
+                                                                                        than
+                                                                                        the
+                                                                                        full
+                                                                                        table,
+                                                                                        only
+                                                                                        those
+                                                                                        values
+                                                                                        are
+                                                                                        updated.
+                                                                                        See
+                                                                                        sl_bt_bluetooth_ll_priorities
+                                                                                        struct
+                                                                                        for
+                                                                                        the
+                                                                                        definition
+                                                                                        of
+                                                                                        a
+                                                                                        priority
+                                                                                        table. */
+  sl_bt_system_linklayer_config_key_set_rx_packet_filtering                = 0xa,  /**<
+                                                                                        (0xa)
+                                                                                        Configure
+                                                                                        and
+                                                                                        enable
+                                                                                        or
+                                                                                        disable
+                                                                                        RX
+                                                                                        packet
+                                                                                        filtering
+                                                                                        feature.
+                                                                                        Value:
+                                                                                        >=
                                                                                         5
-                                                                                        \-
-                                                                                        Minimal
-                                                                                        RSSI
+                                                                                        bytes.
+                                                                                          - Byte
+                                                                                            1
+                                                                                            \-
+                                                                                            The
+                                                                                            filter
+                                                                                            count
+                                                                                          - Byte
+                                                                                            2
+                                                                                            \-
+                                                                                            The
+                                                                                            filter
+                                                                                            offset
+                                                                                          - Byte
+                                                                                            3
+                                                                                            \-
+                                                                                            The
+                                                                                            length
+                                                                                            of
+                                                                                            the
+                                                                                            filter
+                                                                                            list
+                                                                                          - Byte
+                                                                                            4
+                                                                                            \-
+                                                                                            The
+                                                                                            bitmask
+                                                                                            flags
+                                                                                          - Rest
+                                                                                            of
+                                                                                            the
+                                                                                            data
+                                                                                            \-
+                                                                                            The
+                                                                                            filter
+                                                                                            list */
+  sl_bt_system_linklayer_config_key_set_simultaneous_scanning              = 0xb,  /**<
+                                                                                        (0xb)
+                                                                                        Enable
+                                                                                        or
+                                                                                        disable
+                                                                                        simultaneous
+                                                                                        scanning
                                                                                         on
+                                                                                        the
+                                                                                        1M
+                                                                                        and
                                                                                         Coded
-                                                                                        PHY
-                                                                                        S=8
-                                                                                      - Byte
-                                                                                        6
-                                                                                        \-
-                                                                                        Maximal
+                                                                                        PHYs.
+                                                                                        Value:
+                                                                                        1
+                                                                                        byte.
+                                                                                          - 0
+                                                                                            \-
+                                                                                            Disable
+                                                                                            simultaneous
+                                                                                            scanning.
+                                                                                          - 1
+                                                                                            \-
+                                                                                            Enable
+                                                                                            simultaneous
+                                                                                            scanning. */
+  sl_bt_system_linklayer_config_key_set_channelmap_flags                   = 0xc,  /**<
+                                                                                        (0xc)
+                                                                                        Configure
+                                                                                        channelmap
+                                                                                        adaptivity
+                                                                                        flags.
+                                                                                        Value:
+                                                                                        4
+                                                                                        bytes.
+                                                                                          - 0
+                                                                                            \-
+                                                                                            Disable
+                                                                                            the
+                                                                                            adaptivity
+                                                                                            in
+                                                                                            the
+                                                                                            AFH
+                                                                                            feature.
+                                                                                          - 1
+                                                                                            \-
+                                                                                            Enable
+                                                                                            the
+                                                                                            adaptivity
+                                                                                            in
+                                                                                            the
+                                                                                            AFH
+                                                                                            feature. */
+  sl_bt_system_linklayer_config_key_low_power_mode_power_limit             = 0xd,  /**<
+                                                                                        (0xd)
+                                                                                        Set
+                                                                                        power
+                                                                                        limits
+                                                                                        for
+                                                                                        the
+                                                                                        low
+                                                                                        power
+                                                                                        mode
+                                                                                        where
+                                                                                        the
+                                                                                        frequency
+                                                                                        adaptivity
+                                                                                        is
+                                                                                        disabled
+                                                                                        or
+                                                                                        the
+                                                                                        current
+                                                                                        channel
+                                                                                        mapping
+                                                                                        with
+                                                                                        adaptivity
+                                                                                        enabled
+                                                                                        does
+                                                                                        not
+                                                                                        allow
+                                                                                        to
+                                                                                        use
+                                                                                        a
+                                                                                        high
+                                                                                        transmission
+                                                                                        power.
+                                                                                        A
+                                                                                        limit
+                                                                                        value
+                                                                                        must
+                                                                                        not
+                                                                                        exceed
+                                                                                        the
+                                                                                        maximum
+                                                                                        that
+                                                                                        the
+                                                                                        regulations
+                                                                                        in
+                                                                                        the
+                                                                                        region
+                                                                                        of
+                                                                                        use
+                                                                                        allow.
+                                                                                        The
+                                                                                        value
+                                                                                        is
+                                                                                        an
+                                                                                        8-bytes
+                                                                                        long
+                                                                                        array
+                                                                                        consisting
+                                                                                        of
+                                                                                        4
+                                                                                        int16_t
+                                                                                        items
+                                                                                        specifying
+                                                                                        the
+                                                                                        power
+                                                                                        limits
+                                                                                        in
+                                                                                        0.1
+                                                                                        dBm
+                                                                                        unit
+                                                                                        for
+                                                                                        different
+                                                                                        PHYs
+                                                                                        in
+                                                                                        the
+                                                                                        following
+                                                                                        order,
+                                                                                          - Item
+                                                                                            1
+                                                                                            \-
+                                                                                            The
+                                                                                            power
+                                                                                            limit
+                                                                                            for
+                                                                                            1M
+                                                                                            PHY
+                                                                                          - Item
+                                                                                            2
+                                                                                            \-
+                                                                                            The
+                                                                                            power
+                                                                                            limit
+                                                                                            for
+                                                                                            2M
+                                                                                            PHY
+                                                                                          - Item
+                                                                                            3
+                                                                                            \-
+                                                                                            The
+                                                                                            power
+                                                                                            limit
+                                                                                            for
+                                                                                            Coded
+                                                                                            PHY
+                                                                                            S=8
+                                                                                          - Item
+                                                                                            4
+                                                                                            \-
+                                                                                            The
+                                                                                            power
+                                                                                            limit
+                                                                                            for
+                                                                                            Coded
+                                                                                            PHY
+                                                                                            S=2 */
+  sl_bt_system_linklayer_config_key_power_control_golden_range             = 0x10, /**<
+                                                                                        (0x10)
+                                                                                        Set
+                                                                                        Power
+                                                                                        Control
+                                                                                        golden
+                                                                                        range
+                                                                                        parameters.
+                                                                                        The
+                                                                                        value
+                                                                                        is
+                                                                                        a
+                                                                                        8-bytes
+                                                                                        long
+                                                                                        array
+                                                                                        that
+                                                                                        consists
+                                                                                        of
+                                                                                        4
+                                                                                        pairs
+                                                                                        of
+                                                                                        golden
+                                                                                        range
+                                                                                        configurations.
+                                                                                        In
+                                                                                        each
+                                                                                        pair,
+                                                                                        the
+                                                                                        first
+                                                                                        byte
+                                                                                        is
+                                                                                        the
+                                                                                        lower
                                                                                         RSSI
-                                                                                        on
-                                                                                        Coded
-                                                                                        PHY
-                                                                                        S=8
-                                                                                      - Byte
-                                                                                        7
-                                                                                        \-
-                                                                                        Minimal
+                                                                                        boundary
+                                                                                        and
+                                                                                        the
+                                                                                        second
+                                                                                        byte
+                                                                                        is
+                                                                                        the
+                                                                                        upper
                                                                                         RSSI
-                                                                                        on
-                                                                                        Coded
-                                                                                        PHY
-                                                                                        S=2
-                                                                                      - Byte
-                                                                                        8
-                                                                                        \-
-                                                                                        Maximal
+                                                                                        boundary.
                                                                                         RSSI
+                                                                                        values
+                                                                                        are
+                                                                                        in
+                                                                                        dBm.
+                                                                                        This
+                                                                                        configuration
+                                                                                        is
+                                                                                        not
+                                                                                        allowed
+                                                                                        if
+                                                                                        there
+                                                                                        are
+                                                                                        active
+                                                                                        Bluetooth
+                                                                                        connections.
+                                                                                          - Byte
+                                                                                            1
+                                                                                            \-
+                                                                                            Minimal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            1M
+                                                                                            PHY
+                                                                                          - Byte
+                                                                                            2
+                                                                                            \-
+                                                                                            Maximal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            1M
+                                                                                            PHY
+                                                                                          - Byte
+                                                                                            3
+                                                                                            \-
+                                                                                            Minimal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            2M
+                                                                                            PHY
+                                                                                          - Byte
+                                                                                            4
+                                                                                            \-
+                                                                                            Maximal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            2M
+                                                                                            PHY
+                                                                                          - Byte
+                                                                                            5
+                                                                                            \-
+                                                                                            Minimal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            Coded
+                                                                                            PHY
+                                                                                            S=8
+                                                                                          - Byte
+                                                                                            6
+                                                                                            \-
+                                                                                            Maximal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            Coded
+                                                                                            PHY
+                                                                                            S=8
+                                                                                          - Byte
+                                                                                            7
+                                                                                            \-
+                                                                                            Minimal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            Coded
+                                                                                            PHY
+                                                                                            S=2
+                                                                                          - Byte
+                                                                                            8
+                                                                                            \-
+                                                                                            Maximal
+                                                                                            RSSI
+                                                                                            on
+                                                                                            Coded
+                                                                                            PHY
+                                                                                            S=2 */
+  sl_bt_system_linklayer_config_key_active_scanner_backoff_upper_limit     = 0x11, /**<
+                                                                                        (0x11)
+                                                                                        Value:
+                                                                                        uint16_t
+                                                                                        Adjust
+                                                                                        upper
+                                                                                        limit
+                                                                                        for
+                                                                                        backoff
+                                                                                        counter.
+                                                                                        If
+                                                                                        0
+                                                                                        restores
+                                                                                        default
+                                                                                        value
+                                                                                        of
+                                                                                        256
+                                                                                        Value
+                                                                                        must
+                                                                                        be
+                                                                                        between
+                                                                                        16
+                                                                                        \-
+                                                                                        256 */
+  sl_bt_system_linklayer_config_key_afh_rssi_threshold                     = 0x12, /**<
+                                                                                        (0x12)
+                                                                                        Value:
+                                                                                        int8_t
+                                                                                        Configures
+                                                                                        RSSI
+                                                                                        limit
+                                                                                        for
+                                                                                        AFH
+                                                                                        channel
+                                                                                        blocking */
+  sl_bt_system_linklayer_config_key_afh_channel_cooldown                   = 0x13, /**<
+                                                                                        (0x13)
+                                                                                        Value:
+                                                                                        int16_t
+                                                                                        Configures
+                                                                                        how
+                                                                                        long
+                                                                                        channel
+                                                                                        is
+                                                                                        blocked
+                                                                                        after
+                                                                                        activity
+                                                                                        is
+                                                                                        detected
+                                                                                        Default:
+                                                                                        8000 */
+  sl_bt_system_linklayer_config_key_set_report_all_scan_rsps               = 0x14  /**<
+                                                                                        (0x14)
+                                                                                        Value:
+                                                                                        uint8_t
+                                                                                        0
+                                                                                        \-
+                                                                                        default,
+                                                                                        only
+                                                                                        reports
+                                                                                        scan
+                                                                                        responses
+                                                                                        that
+                                                                                        is
+                                                                                        received
+                                                                                        after
+                                                                                        sending
+                                                                                        scan_req
+                                                                                        nonzero
+                                                                                        \-
+                                                                                        Will
+                                                                                        report
+                                                                                        all
+                                                                                        scan
+                                                                                        responses
+                                                                                        that
+                                                                                        are
+                                                                                        received
                                                                                         on
-                                                                                        Coded
-                                                                                        PHY
-                                                                                        S=2 */
-  sl_bt_system_linklayer_config_key_active_scanner_backoff_upper_limit = 0x11, /**<
-                                                                                    (0x11)
-                                                                                    Value:
-                                                                                    uint16_t
-                                                                                    Adjust
-                                                                                    upper
-                                                                                    limit
-                                                                                    for
-                                                                                    backoff
-                                                                                    counter.
-                                                                                    If
-                                                                                    0
-                                                                                    restores
-                                                                                    default
-                                                                                    value
-                                                                                    of
-                                                                                    256
-                                                                                    Value
-                                                                                    must
-                                                                                    be
-                                                                                    between
-                                                                                    16
-                                                                                    \-
-                                                                                    256 */
-  sl_bt_system_linklayer_config_key_afh_rssi_threshold                 = 0x12, /**<
-                                                                                    (0x12)
-                                                                                    Value:
-                                                                                    int8_t
-                                                                                    Configures
-                                                                                    RSSI
-                                                                                    limit
-                                                                                    for
-                                                                                    AFH
-                                                                                    channel
-                                                                                    blocking */
-  sl_bt_system_linklayer_config_key_afh_channel_cooldown               = 0x13, /**<
-                                                                                    (0x13)
-                                                                                    Value:
-                                                                                    int16_t
-                                                                                    Configures
-                                                                                    how
-                                                                                    long
-                                                                                    channel
-                                                                                    is
-                                                                                    blocked
-                                                                                    after
-                                                                                    activity
-                                                                                    is
-                                                                                    detected
-                                                                                    Default:
-                                                                                    8000 */
-  sl_bt_system_linklayer_config_key_set_report_all_scan_rsps           = 0x14  /**<
-                                                                                    (0x14)
-                                                                                    Value:
-                                                                                    uint8_t
-                                                                                    0
-                                                                                    \-
-                                                                                    default,
-                                                                                    only
-                                                                                    reports
-                                                                                    scan
-                                                                                    responses
-                                                                                    that
-                                                                                    is
-                                                                                    received
-                                                                                    after
-                                                                                    sending
-                                                                                    scan_req
-                                                                                    nonzero
-                                                                                    \-
-                                                                                    Will
-                                                                                    report
-                                                                                    all
-                                                                                    scan
-                                                                                    responses
-                                                                                    that
-                                                                                    are
-                                                                                    received
-                                                                                    on
-                                                                                    primary
-                                                                                    advertising
-                                                                                    channels */
+                                                                                        primary
+                                                                                        advertising
+                                                                                        channels */
 } sl_bt_system_linklayer_config_key_t;
 
 /**
@@ -785,7 +1000,8 @@ PACKSTRUCT( struct sl_bt_evt_system_boot_s
   uint16_t minor;      /**< Minor release version */
   uint16_t patch;      /**< Patch release number */
   uint16_t build;      /**< Build number */
-  uint32_t bootloader; /**< Unused. Ignore this field. */
+  uint32_t bootloader; /**< Bootloader version if a bootloader is present in the
+                            application. Set to 0 if bootloader is not present. */
   uint16_t hw;         /**< Hardware type: the major chip revision number in the
                             most significant byte and the minor revision in the
                             least significant byte */
@@ -835,27 +1051,6 @@ typedef struct sl_bt_evt_system_error_s sl_bt_evt_system_error_t;
 /** @} */ // end addtogroup sl_bt_evt_system_error
 
 /**
- * @addtogroup sl_bt_evt_system_hardware_error sl_bt_evt_system_hardware_error
- * @{
- * @brief Indicates that a hardware-related error has occurred.
- */
-
-/** @brief Identifier of the hardware_error event */
-#define sl_bt_evt_system_hardware_error_id                           0x050100a0
-
-/***************************************************************************//**
- * @brief Data structure of the hardware_error event
- ******************************************************************************/
-PACKSTRUCT( struct sl_bt_evt_system_hardware_error_s
-{
-  uint16_t status; /**< SL_STATUS_OK if successful. Error code otherwise. */
-});
-
-typedef struct sl_bt_evt_system_hardware_error_s sl_bt_evt_system_hardware_error_t;
-
-/** @} */ // end addtogroup sl_bt_evt_system_hardware_error
-
-/**
  * @addtogroup sl_bt_evt_system_resource_exhausted sl_bt_evt_system_resource_exhausted
  * @{
  * @brief Indicates that a system resource has been exhausted during the
@@ -882,34 +1077,38 @@ typedef struct sl_bt_evt_system_hardware_error_s sl_bt_evt_system_hardware_error
  ******************************************************************************/
 PACKSTRUCT( struct sl_bt_evt_system_resource_exhausted_s
 {
-  uint8_t num_buffers_discarded;          /**< The system has temporarily run
-                                               out of the pre-allocated data
-                                               buffers that are allocated based
-                                               on SL_BT_CONFIG_BUFFER_SIZE
-                                               configuration and some expendable
-                                               data or event had to be discarded
-                                               to satisfy a non-expendble buffer
-                                               allocation. A typical case is
-                                               discarding scan reports when a
-                                               large inflow of scan reports
-                                               exceeds the speed at which the
-                                               application drains the BGAPI
-                                               event queue. */
-  uint8_t num_buffer_allocation_failures; /**< The system has run out of the
-                                               pre-allocated data buffers that
-                                               are allocated based on
-                                               SL_BT_CONFIG_BUFFER_SIZE
-                                               configuration and a buffer
-                                               allocation has failed. */
-  uint8_t num_heap_allocation_failures;   /**< The Bluetooth stack has failed to
-                                               make an allocation from the heap.
-                                               Note that only allocations made
-                                               by the Bluetooth stack are
-                                               detected and reported by this
-                                               field. Allocation failures in
-                                               other components that use
-                                               sl_malloc() or malloc() are not
-                                               included in this count. */
+  uint8_t num_buffers_discarded;           /**< The system has temporarily run
+                                                out of the pre-allocated data
+                                                buffers that are allocated based
+                                                on SL_BT_CONFIG_BUFFER_SIZE
+                                                configuration and some
+                                                expendable data or event had to
+                                                be discarded to satisfy a
+                                                non-expendble buffer allocation.
+                                                A typical case is discarding
+                                                scan reports when a large inflow
+                                                of scan reports exceeds the
+                                                speed at which the application
+                                                drains the BGAPI event queue. */
+  uint8_t num_buffer_allocation_failures;  /**< The system has run out of the
+                                                pre-allocated data buffers that
+                                                are allocated based on
+                                                SL_BT_CONFIG_BUFFER_SIZE
+                                                configuration and a buffer
+                                                allocation has failed. */
+  uint8_t num_heap_allocation_failures;    /**< The Bluetooth stack has failed
+                                                to make an allocation from the
+                                                heap. Note that only allocations
+                                                made by the Bluetooth stack are
+                                                detected and reported by this
+                                                field. Allocation failures in
+                                                other components that use
+                                                sl_malloc() or malloc() are not
+                                                included in this count. */
+  uint8_t num_message_allocation_failures; /**< The system has run out of
+                                                internal pre-allocated message
+                                                items and the creation of an
+                                                internal message has failed. */
 });
 
 typedef struct sl_bt_evt_system_resource_exhausted_s sl_bt_evt_system_resource_exhausted_t;
@@ -1127,37 +1326,27 @@ sl_status_t sl_bt_system_get_version(uint16_t *major,
 
 /***************************************************************************//**
  *
- * Reset the system. This command does not have a response.
- *
- * On EFR series 1 devices, this command boots into the given mode and triggers
- * one of the boot events (normal reset or boot to DFU mode) depending on the
- * given boot mode.
- *
- * On EFR series 2 devices, the @p dfu parameter is ignored and this command
- * always boots the user application. To boot into a DFU mode on series 2, use
- * the Bootloader API @c bootloader_rebootAndInstall.
+ * Reset the system into user application mode, i.e., reboot the user
+ * application. This command does not have a response. To boot into a DFU mode,
+ * use the Bootloader API @c bootloader_rebootAndInstall.
  *
  * <b>NOTE:</b> This command is available even if the Bluetooth stack has not
  * been started. See @ref sl_bt_system_start_bluetooth for description of how
  * the Bluetooth stack is started.
  *
- * @param[in] dfu @parblock
- *   Enum @ref sl_bt_system_boot_mode_t. Boot mode. Values:
- *     - <b>sl_bt_system_boot_mode_normal (0x0):</b> Boot to normal mode
- *     - <b>sl_bt_system_boot_mode_uart_dfu (0x1):</b> Boot to UART DFU mode
- *     - <b>sl_bt_system_boot_mode_ota_dfu (0x2):</b> Boot to OTA DFU mode
- *
- *   This parameter is ignored on EFR series 2 devices.
- *   @endparblock
  *
  * @b Events
- *   - @ref sl_bt_evt_system_boot - Sent after the device has booted in normal
- *     mode.
- *   - @ref sl_bt_evt_dfu_boot - Sent after the device has booted in UART DFU
- *     mode.
+ *   - @ref sl_bt_evt_system_boot -
+ *
+ *     Sent after the device has booted in user application mode and Bluetooth
+ *     stack has started.
+ *
+ *     <b>Note:</b> This event will not be sent when the Bluetooth on-demand
+ *     start feature is used because Bluetooth stack will not start
+ *     automatically.
  *
  ******************************************************************************/
-void sl_bt_system_reset(uint8_t dfu);
+void sl_bt_system_reboot();
 
 /***************************************************************************//**
  *
@@ -1211,6 +1400,17 @@ sl_status_t sl_bt_system_halt(uint8_t halt);
  *     - <b>sl_bt_system_linklayer_config_key_set_afh_interval (0x7):</b> Set
  *       the afh_scan_interval. Value is in units of 10 ms. Setting the interval
  *       to 0 will result in using the default value of 1 second.
+ *     - <b>sl_bt_system_linklayer_config_key_set_periodic_advertising_status_report
+ *       (0x8):</b> Enable or disable the status report of periodic advertising
+ *       on an advertising set. When enabled, event @ref
+ *       sl_bt_evt_periodic_advertiser_status will be generated for each
+ *       scheduled transmission. Value: 2 bytes
+ *         - Byte 1 - The advertising set handle
+ *         - Byte 2 - The status report state
+ *             - 0: Disable the status report
+ *             - 1: Enable the status report
+ *
+ *       Default: The status report on any advertising sets is disabled.
  *     - <b>sl_bt_system_linklayer_config_key_set_priority_table (0x9):</b> The
  *       value contains a priority table to be copied over the existing table.
  *       If the value is smaller than the full table, only those values are
@@ -1233,6 +1433,22 @@ sl_status_t sl_bt_system_halt(uint8_t halt);
  *
  *     - <b>sl_bt_system_linklayer_config_key_set_channelmap_flags (0xc):</b>
  *       Configure channelmap adaptivity flags. Value: 4 bytes.
+ *         - 0 - Disable the adaptivity in the AFH feature.
+ *         - 1 - Enable the adaptivity in the AFH feature.
+ *
+ *     - <b>sl_bt_system_linklayer_config_key_low_power_mode_power_limit
+ *       (0xd):</b> Set power limits for the low power mode where the frequency
+ *       adaptivity is disabled or the current channel mapping with adaptivity
+ *       enabled does not allow to use a high transmission power. A limit value
+ *       must not exceed the maximum that the regulations in the region of use
+ *       allow. The value is an 8-bytes long array consisting of 4 int16_t items
+ *       specifying the power limits in 0.1 dBm unit for different PHYs in the
+ *       following order,
+ *         - Item 1 - The power limit for 1M PHY
+ *         - Item 2 - The power limit for 2M PHY
+ *         - Item 3 - The power limit for Coded PHY S=8
+ *         - Item 4 - The power limit for Coded PHY S=2
+ *
  *     - <b>sl_bt_system_linklayer_config_key_power_control_golden_range
  *       (0x10):</b> Set Power Control golden range parameters. The value is a
  *       8-bytes long array that consists of 4 pairs of golden range
@@ -1342,21 +1558,28 @@ sl_status_t sl_bt_system_get_tx_power_setting(int16_t *support_min,
 
 /***************************************************************************//**
  *
- * Store the device's Bluetooth identity address in persistent storage using NVM
- * keys. The address can be a public device address or a static device address.
- * The stack returns an error if the static device address does not conform to
- * the Bluetooth specification.
+ * <b>Deprecated</b> . The Bluetooth stack does not provide a replacement for
+ * storing an address persistently. User application can implement its own logic
+ * of retrieving the address from persistent storage or with other means and use
+ * it as the identity address in Bluetooth stack with command @ref
+ * sl_bt_gap_set_identity_address.
+ *
+ * Store a custom Bluetooth identity address in the Bluetooth region of NVM3.
+ * The address can be a public device address or a static device address. NVM3
+ * keys used for the address and its type are in the key range owned by the
+ * Bluetooth stack. The stack returns an error if the static device address does
+ * not conform to the Bluetooth specification.
  *
  * The new address will be effective in the next system reboot. The stack will
- * use the address in the NVM keys when present. Otherwise, it uses the default
+ * use the address in the NVM3 keys when present. Otherwise, it uses the default
  * Bluetooth public device address which is programmed at production.
  *
  * The stack treats 00:00:00:00:00:00 and ff:ff:ff:ff:ff:ff as invalid
  * addresses. Therefore, passing one of them into this command will cause the
- * stack to delete the NVM keys and use the default address in the next system
+ * stack to delete the NVM3 keys and use the default address in the next system
  * reboot.
  *
- * <b>Note:</b> Because the NVM keys are located in flash and flash wearing can
+ * <b>Note:</b> Because the NVM3 keys are located in flash and flash wearing can
  * occur, avoid calling this command regularly.
  *
  * @param[in] address Bluetooth identity address in little endian format
@@ -1371,6 +1594,8 @@ sl_status_t sl_bt_system_get_tx_power_setting(int16_t *support_min,
 sl_status_t sl_bt_system_set_identity_address(bd_addr address, uint8_t type);
 
 /***************************************************************************//**
+ *
+ * <b>Deprecated</b> and replaced by @ref sl_bt_gap_get_identity_address.
  *
  * Read the Bluetooth identity address used by the device, which can be a public
  * or random static device address.
@@ -1492,6 +1717,34 @@ sl_status_t sl_bt_system_set_lazy_soft_timer(uint32_t time,
                                              uint32_t slack,
                                              uint8_t handle,
                                              uint8_t single_shot);
+
+/***************************************************************************//**
+ *
+ * <b>Deprecated</b> and replaced by @ref sl_bt_system_reboot.
+ *
+ * Reset the system into user application mode, i.e., reboot the user
+ * application. This command does not have a response. To boot into a DFU mode,
+ * use the Bootloader API @c bootloader_rebootAndInstall.
+ *
+ * <b>NOTE:</b> This command is available even if the Bluetooth stack has not
+ * been started. See @ref sl_bt_system_start_bluetooth for description of how
+ * the Bluetooth stack is started.
+ *
+ * @param[in] dfu This parameter is unused and is ignored by the Bluetooth
+ *   stack.
+ *
+ * @b Events
+ *   - @ref sl_bt_evt_system_boot -
+ *
+ *     Sent after the device has booted in user application mode and Bluetooth
+ *     stack has started.
+ *
+ *     <b>Note:</b> This event will not be sent when the Bluetooth on-demand
+ *     start feature is used because Bluetooth stack will not start
+ *     automatically.
+ *
+ ******************************************************************************/
+SL_BGAPI_DEPRECATED void sl_bt_system_reset(uint8_t dfu);
 
 /** @} */ // end addtogroup sl_bt_system
 
@@ -1684,12 +1937,12 @@ sl_status_t sl_bt_resource_disable_connection_tx_report();
 /* Command and Response IDs */
 #define sl_bt_cmd_gap_set_privacy_mode_id                            0x01020020
 #define sl_bt_cmd_gap_set_data_channel_classification_id             0x02020020
-#define sl_bt_cmd_gap_enable_whitelisting_id                         0x03020020
 #define sl_bt_cmd_gap_set_identity_address_id                        0x04020020
+#define sl_bt_cmd_gap_get_identity_address_id                        0x05020020
 #define sl_bt_rsp_gap_set_privacy_mode_id                            0x01020020
 #define sl_bt_rsp_gap_set_data_channel_classification_id             0x02020020
-#define sl_bt_rsp_gap_enable_whitelisting_id                         0x03020020
 #define sl_bt_rsp_gap_set_identity_address_id                        0x04020020
+#define sl_bt_rsp_gap_get_identity_address_id                        0x05020020
 
 /**
  * @brief These values define Bluetooth device address types. Commands and
@@ -1831,38 +2084,6 @@ sl_status_t sl_bt_gap_set_data_channel_classification(size_t channel_map_len,
 
 /***************************************************************************//**
  *
- * <b>Deprecated</b> and replaced by functionality-specific settings provided by
- * the bluetooth_feature_accept_list component. For advertising, use the command
- * @ref sl_bt_advertiser_configure and @p flags bits @ref
- * SL_BT_ADVERTISER_USE_FILTER_FOR_SCAN_REQUESTS and @ref
- * SL_BT_ADVERTISER_USE_FILTER_FOR_CONNECTION_REQUESTS to configure the
- * advertising filter policy. For scanning, use the command @ref
- * sl_bt_scanner_set_parameters_and_filter to control the scanning filter
- * policy.
- *
- * Enable or disable accept list filtering. The setting will be effective the
- * next time that scanning is enabled. Use command @ref
- * sl_bt_sm_add_to_whitelist to add devices to the accept list.
- *
- * When the built-in bonding database
- * (bluetooth_feature_builtin_bonding_database) is used, bonded devices are
- * added into the accept list automatically by the stack. Note that the
- * Bluetooth stack uses the built-in bonding database by default.
- *
- * When the application specifically uses the external bonding database
- * (bluetooth_feature_external_bonding_database), the application is fully
- * responsible for managing the accept list using @ref sl_bt_sm_add_to_whitelist
- * and @ref sl_bt_sm_delete_bondings commands.
- *
- * @param[in] enable 1 enable, 0 disable accept list filtering.
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_gap_enable_whitelisting(uint8_t enable);
-
-/***************************************************************************//**
- *
  * Set the device's Bluetooth identity address to be used in advertising,
  * scanning, connection initiation, and identity address exchange in bonding.
  * The address is stored in RAM only and does not change the identity address in
@@ -1886,6 +2107,22 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_gap_enable_whitelisting(uint8_t enable);
  *
  ******************************************************************************/
 sl_status_t sl_bt_gap_set_identity_address(bd_addr address, uint8_t addr_type);
+
+/***************************************************************************//**
+ *
+ * Get the Bluetooth identity address used by the device, which can be a public
+ * or random static device address.
+ *
+ * @param[out] address Bluetooth identity address in little endian format
+ * @param[out] type Enum @ref sl_bt_gap_address_type_t. Identity address type.
+ *   Values:
+ *     - <b>sl_bt_gap_public_address (0x0):</b> Public device address
+ *     - <b>sl_bt_gap_static_address (0x1):</b> Static device address
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_gap_get_identity_address(bd_addr *address, uint8_t *type);
 
 /** @} */ // end addtogroup sl_bt_gap
 
@@ -1918,19 +2155,6 @@ sl_status_t sl_bt_gap_set_identity_address(bd_addr address, uint8_t addr_type);
  * ensure that scanners can find the periodic advertising information and
  * establish a synchronization, the extended advertising must be enabled
  * simultaneously with the periodic advertising.
- *
- * When the bluetooth_feature_legacy_advertiser,
- * bluetooth_feature_extended_advertiser or
- * bluetooth_feature_periodic_advertiser component is included by the
- * application, commands that have been superseded by the new classes are no
- * longer available for use in the advertiser class. Calling them will receive
- * SL_STATUS_NOT_SUPPORTED error code. These commands are as follows: @ref
- * sl_bt_advertiser_set_phy, @ref sl_bt_advertiser_set_configuration, @ref
- * sl_bt_advertiser_clear_configuration, @ref sl_bt_advertiser_set_data, @ref
- * sl_bt_advertiser_set_long_data, @ref sl_bt_advertiser_start, @ref
- * sl_bt_advertiser_start_periodic_advertising, and @ref
- * sl_bt_advertiser_stop_periodic_advertising. See the command descriptions for
- * the replacements.
  */
 
 /* Command and Response IDs */
@@ -1944,14 +2168,6 @@ sl_status_t sl_bt_gap_set_identity_address(bd_addr address, uint8_t addr_type);
 #define sl_bt_cmd_advertiser_clear_random_address_id                 0x11040020
 #define sl_bt_cmd_advertiser_stop_id                                 0x0a040020
 #define sl_bt_cmd_advertiser_delete_set_id                           0x02040020
-#define sl_bt_cmd_advertiser_set_phy_id                              0x06040020
-#define sl_bt_cmd_advertiser_set_configuration_id                    0x07040020
-#define sl_bt_cmd_advertiser_clear_configuration_id                  0x08040020
-#define sl_bt_cmd_advertiser_set_data_id                             0x0f040020
-#define sl_bt_cmd_advertiser_set_long_data_id                        0x0e040020
-#define sl_bt_cmd_advertiser_start_id                                0x09040020
-#define sl_bt_cmd_advertiser_start_periodic_advertising_id           0x0c040020
-#define sl_bt_cmd_advertiser_stop_periodic_advertising_id            0x0d040020
 #define sl_bt_rsp_advertiser_create_set_id                           0x01040020
 #define sl_bt_rsp_advertiser_configure_id                            0x12040020
 #define sl_bt_rsp_advertiser_set_timing_id                           0x03040020
@@ -1962,40 +2178,6 @@ sl_status_t sl_bt_gap_set_identity_address(bd_addr address, uint8_t addr_type);
 #define sl_bt_rsp_advertiser_clear_random_address_id                 0x11040020
 #define sl_bt_rsp_advertiser_stop_id                                 0x0a040020
 #define sl_bt_rsp_advertiser_delete_set_id                           0x02040020
-#define sl_bt_rsp_advertiser_set_phy_id                              0x06040020
-#define sl_bt_rsp_advertiser_set_configuration_id                    0x07040020
-#define sl_bt_rsp_advertiser_clear_configuration_id                  0x08040020
-#define sl_bt_rsp_advertiser_set_data_id                             0x0f040020
-#define sl_bt_rsp_advertiser_set_long_data_id                        0x0e040020
-#define sl_bt_rsp_advertiser_start_id                                0x09040020
-#define sl_bt_rsp_advertiser_start_periodic_advertising_id           0x0c040020
-#define sl_bt_rsp_advertiser_stop_periodic_advertising_id            0x0d040020
-
-/**
- * @brief These values define the available connection modes, which indicate
- * whether the device accepts connection requests or scan requests.
- */
-typedef enum
-{
-  sl_bt_advertiser_non_connectable           = 0x0, /**< (0x0) Non-connectable
-                                                         non-scannable */
-  sl_bt_advertiser_connectable_scannable     = 0x2, /**< (0x2) Undirected
-                                                         connectable scannable.
-                                                         This mode can only be
-                                                         used in legacy
-                                                         advertising PDUs. */
-  sl_bt_advertiser_scannable_non_connectable = 0x3, /**< (0x3) Undirected
-                                                         scannable
-                                                         (Non-connectable but
-                                                         responds to scan
-                                                         requests) */
-  sl_bt_advertiser_connectable_non_scannable = 0x4  /**< (0x4) Undirected
-                                                         connectable
-                                                         non-scannable. This
-                                                         mode can only be used
-                                                         in extended advertising
-                                                         PDUs. */
-} sl_bt_advertiser_connection_mode_t;
 
 /**
  * @brief These values define the available discovery modes, which dictate how
@@ -2008,19 +2190,8 @@ typedef enum
   sl_bt_advertiser_limited_discoverable = 0x1, /**< (0x1) Discoverable by both
                                                     limited and general
                                                     discovery procedures */
-  sl_bt_advertiser_general_discoverable = 0x2, /**< (0x2) Discoverable by the
+  sl_bt_advertiser_general_discoverable = 0x2  /**< (0x2) Discoverable by the
                                                     general discovery procedure */
-  sl_bt_advertiser_broadcast            = 0x3, /**< (0x3) Device is not
-                                                    discoverable in either
-                                                    limited or generic discovery
-                                                    procedure but may be
-                                                    discovered using the
-                                                    Observation procedure. */
-  sl_bt_advertiser_user_data            = 0x4  /**< (0x4) Send advertising
-                                                    and/or scan response data
-                                                    defined by the user. The
-                                                    discovery mode is defined by
-                                                    the user. */
 } sl_bt_advertiser_discovery_mode_t;
 
 /**
@@ -2136,8 +2307,6 @@ typedef struct sl_bt_evt_advertiser_timeout_s sl_bt_evt_advertiser_timeout_t;
  * @{
  * @brief Reports a scan request received during the legacy or extended
  * advertising advertising if the scan request notification is enabled
- *
- * Do not confuse this event with the @ref sl_bt_evt_scanner_scan_report event.
  */
 
 /** @brief Identifier of the scan_request event */
@@ -2218,7 +2387,7 @@ sl_status_t sl_bt_advertiser_create_set(uint8_t *handle);
  * @param[in] flags @parblock
  *   Configuration flags. Value: 0 or bitmask of @ref sl_bt_advertiser_flags
  *
- *   Default value: 0
+ *     - <b>Default</b> : 0
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -2235,36 +2404,35 @@ sl_status_t sl_bt_advertiser_configure(uint8_t advertising_set, uint32_t flags);
  * @param[in] advertising_set Advertising set handle
  * @param[in] interval_min @parblock
  *   Minimum advertising interval. Value in units of 0.625 ms
- *     - Range: 0x20 to 0xFFFFFF
- *     - Time range: 20 ms to 10485.759375 s
+ *     - <b>Range:</b> 0x20 to 0xFFFF
  *
- *   Default value: 100 ms
+ *     - Time range: 20 ms to 40.96 s
+ *
+ *     - <b>Default</b> : 100 ms
  *   @endparblock
  * @param[in] interval_max @parblock
  *   Maximum advertising interval. Value in units of 0.625 ms
- *     - Range: 0x20 to 0xFFFFFF
- *     - Time range: 20 ms to 10485.759375 s
+ *     - <b>Range:</b> 0x20 to 0xFFFF
+ *
+ *     - Time range: 20 ms to 40.96 s
  *     - Note: interval_max should be bigger than interval_min
  *
- *   Default value: 200 ms
+ *     - <b>Default</b> : 200 ms
  *   @endparblock
  * @param[in] duration @parblock
  *   Advertising duration for this advertising set. Value 0 indicates no
  *   advertising duration limit and advertising continues until it is disabled.
  *   A non-zero value sets the duration in units of 10 ms. The duration begins
  *   at the start of the first advertising event of this advertising set.
- *     - Range: 0x0001 to 0xFFFF
+ *     - <b>Range:</b> 0x0001 to 0xFFFF
+ *
  *     - Time range: 10 ms to 655.35 s
  *
- *   Default value: 0
+ *     - <b>Default</b> : 0
  *   @endparblock
- * @param[in] maxevents @parblock
- *   If non-zero, indicates the maximum number of advertising events to send
- *   before the advertiser is stopped. Value 0 indicates no maximum number
- *   limit.
- *
- *   Default value: 0
- *   @endparblock
+ * @param[in] maxevents If non-zero, indicates the maximum number of advertising
+ *   events to send before the advertiser is stopped. Value 0 indicates no
+ *   maximum number limit.
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -2295,7 +2463,7 @@ sl_status_t sl_bt_advertiser_set_timing(uint8_t advertising_set,
  *
  *   Recommended value: 7
  *
- *   Default value: 7
+ *     - <b>Default</b> : 7
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -2338,12 +2506,9 @@ sl_status_t sl_bt_advertiser_set_tx_power(uint8_t advertising_set,
  * enabled.
  *
  * @param[in] advertising_set Advertising set handle
- * @param[in] report_scan_req @parblock
- *   If non-zero, enables scan request notification and scan requests will be
- *   reported as events.
- *
- *   Default value: 0
- *   @endparblock
+ * @param[in] report_scan_req If non-zero, enables scan request notification and
+ *   scan requests will be reported as events.
+ *     - <b>Default</b> : 0
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -2449,370 +2614,6 @@ sl_status_t sl_bt_advertiser_stop(uint8_t advertising_set);
  *
  ******************************************************************************/
 sl_status_t sl_bt_advertiser_delete_set(uint8_t advertising_set);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_extended_advertiser_set_phy.
- *
- * Set the primary and secondary advertising PHYs used for extended and periodic
- * advertising on an advertising set. This setting will take effect next time
- * extended or periodic advertising is enabled. When advertising on the LE Coded
- * PHY, coding scheme S=8 is used. The SL_STATUS_INVALID_PARAMETER error is
- * returned if a PHY value is invalid or the device does not support a given
- * PHY.
- *
- * @param[in] advertising_set Advertising set handle
- * @param[in] primary_phy @parblock
- *   Enum @ref sl_bt_gap_phy_t. The PHY on which the advertising packets are
- *   transmitted on the primary advertising channel. If legacy advertising PDUs
- *   are used, 1M PHY must be used. Values:
- *     - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
- *     - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY, 125k (S=8)
- *
- *   Default value: @ref sl_bt_gap_phy_1m
- *   @endparblock
- * @param[in] secondary_phy @parblock
- *   Enum @ref sl_bt_gap_phy_t. The PHY on which the advertising packets are
- *   transmitted on the secondary advertising channel. Values:
- *     - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
- *     - <b>sl_bt_gap_phy_2m (0x2):</b> 2M PHY
- *     - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY, 125k (S=8)
- *
- *   Default value: @ref sl_bt_gap_phy_1m
- *   @endparblock
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_set_phy(uint8_t advertising_set,
-                                     uint8_t primary_phy,
-                                     uint8_t secondary_phy);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_advertiser_configure command.
- *
- * Enable advertising configuration flags on an advertising set. The
- * configuration change will take effect next time the legacy or extended
- * advertising is enabled.
- *
- * @param[in] advertising_set Advertising set handle
- * @param[in] configurations @parblock
- *   Advertising configuration flags to enable. This value can be a bitmask of
- *   multiple flags. Flags:
- *     - <b>1 (Bit 0):</b> Use legacy advertising PDUs.
- *     - <b>2 (Bit 1):</b> Omit advertiser's address from all PDUs (anonymous
- *       advertising). This flag is effective only in extended advertising.
- *     - <b>4 (Bit 2):</b> Use a non-resolvable private address. When this
- *       configuration is enabled, the advertising must use non-connectable
- *       mode. The stack generates a non-resolvable private address for the
- *       advertising set and the stack will update the address periodically when
- *       the privacy mode is enabled. This configuration is ignored if the
- *       advertiser address has been set with the @ref
- *       sl_bt_advertiser_set_random_address command.
- *     - <b>8 (Bit 3):</b> Include TX power in advertising packets. This flag is
- *       effective only in extended advertising.
- *     - <b>16 (Bit 4):</b> Use the device identity address when the privacy
- *       mode is enabled in the stack. This configuration is ignored if the
- *       configuration of using non-resolvable private address is enabled or the
- *       advertising address has been set with the @ref
- *       sl_bt_advertiser_set_random_address command.
- *
- *   Default value: 1
- *   @endparblock
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_set_configuration(uint8_t advertising_set,
-                                               uint32_t configurations);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_advertiser_configure command.
- *
- * Disable advertising configuration flags on an advertising set. The
- * configuration change will take effect next time the legacy or extended
- * advertising is enabled.
- *
- * @param[in] advertising_set Advertising set handle
- * @param[in] configurations Advertising configuration flags to disable. This
- *   value can be a bitmask of multiple flags. See @ref
- *   sl_bt_advertiser_set_configuration for possible flags.
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_clear_configuration(uint8_t advertising_set,
-                                                 uint32_t configurations);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_legacy_advertiser_set_data for
- * legacy advertising PDUs, @ref sl_bt_extended_advertiser_set_data for extended
- * advertising PDUs, and @ref sl_bt_periodic_advertiser_set_data for periodic
- * advertising PDUs.
- *
- * Set user-defined data in advertising packets, scan response packets, or
- * periodic advertising packets. Maximum 31 bytes of data can be set for legacy
- * advertising. Maximum 191 bytes of data can be set for connectable extended
- * advertising. Maximum 253 bytes of data can be set for periodic and
- * non-connectable extended advertising. For setting longer advertising data,
- * use command @ref sl_bt_advertiser_set_long_data.
- *
- * If advertising mode is currently enabled, the new advertising data will be
- * used immediately. Advertising mode can be enabled using command @ref
- * sl_bt_advertiser_start. Periodic advertising mode can be enabled using
- * command @ref sl_bt_advertiser_start_periodic_advertising.
- *
- * The invalid parameter error will be returned in the following situations:
- *   - Data length is more than 31 bytes but the advertiser can only advertise
- *     using legacy advertising PDUs.
- *   - Data is too long to fit into a single advertisement.
- *   - Set data of the advertising data packet when the scannable advertising is
- *     enabled using extended advertising PDUs.
- *   - Set data of the scan response data packet when the connectable
- *     advertising is enabled using extended advertising PDUs.
- *
- * Note that the user-defined data may be overwritten by the system when the
- * advertising is later enabled in a discovery mode other than user_data.
- *
- * @param[in] advertising_set Advertising set handle
- * @param[in] packet_type This value selects whether data is intended for
- *   advertising packets, scan response packets, or periodic advertising
- *   packets.
- *     - <b>0:</b> Advertising packets
- *     - <b>1:</b> Scan response packets
- *     - <b>8:</b> Periodic advertising packets
- * @param[in] adv_data_len Length of data in @p adv_data
- * @param[in] adv_data Data to be set
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_set_data(uint8_t advertising_set,
-                                      uint8_t packet_type,
-                                      size_t adv_data_len,
-                                      const uint8_t* adv_data);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref
- * sl_bt_extended_advertiser_set_long_data for extended advertising PDUs and
- * @ref sl_bt_periodic_advertiser_set_long_data for periodic advertising PDUs.
- *
- * Set advertising data for a specified packet type and advertising set. Data
- * currently in the system data buffer will be extracted as the advertising
- * data. The buffer will be emptied after this command regardless of the
- * completion status.
- *
- * Prior to calling this command, add data to the buffer with one or multiple
- * calls to @ref sl_bt_system_data_buffer_write.
- *
- * Maximum 31 bytes of data can be set for legacy advertising. Maximum 191 bytes
- * of data can be set for connectable extended advertising. Maximum 1650 bytes
- * of data can be set for periodic and non-connectable extended advertising, but
- * advertising parameters may limit the amount of data that can be sent in a
- * single advertisement.
- *
- * See @ref sl_bt_advertiser_set_data for more details on advertising data.
- *
- * @param[in] advertising_set Advertising set handle
- * @param[in] packet_type This value selects whether data is intended for
- *   advertising packets, scan response packets, or periodic advertising
- *   packets. Values:
- *     - <b>0:</b> Advertising packets
- *     - <b>1:</b> Scan response packets
- *     - <b>8:</b> Periodic advertising packets
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_set_long_data(uint8_t advertising_set,
-                                           uint8_t packet_type);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_legacy_advertiser_start and @ref
- * sl_bt_extended_advertiser_start commands.
- *
- * Start the legacy or extended advertising on an advertising set with specified
- * discovery and connection modes.
- *
- * The number of concurrent connectable advertisings is limited by the number of
- * connections reserved by the user application (the
- * SL_BT_CONFIG_MAX_CONNECTIONS configuration) and the number reserved by other
- * software components (the SL_BT_COMPONENT_CONNECTIONS configuration). This
- * command fails with the connection limit exceeded error if it may cause the
- * number of connections exceeding the configured value in future. For example,
- * only one connectable advertising can be enabled if the device has
- * (SL_BT_CONFIG_MAX_CONNECTIONS + SL_BT_COMPONENT_CONNECTIONS - 1) connections.
- * This limitation does not apply to non-connectable advertising.
- *
- * The default advertising configuration in the stack is set to using legacy
- * advertising PDUs on 1M PHY. The stack will automatically select extended
- * advertising PDUs if either of the following has occurred with the default
- * configuration:
- *   1. The connection mode is set to @ref
- *      sl_bt_advertiser_connectable_non_scannable.
- *   2. The primary advertising PHY is set to Coded PHY by @ref
- *      sl_bt_extended_advertiser_set_phy.
- *   3. The user advertising data length is more than 31 bytes.
- *   4. Periodic advertising is enabled.
- *
- * This command fails with the invalid parameter error if one of the following
- * cases occurs:
- *   1. Non-resolvable random address is used but the connection mode is
- *      advertiser_connectable_scannable or
- *      advertiser_connectable_non_scannable.
- *   2. advertiser_connectable_non_scannable is the connection mode but using
- *      legacy advertising PDUs has been explicitly enabled with command @ref
- *      sl_bt_advertiser_set_configuration.
- *   3. Coded PHY is the primary advertising PHY but using legacy advertising
- *      PDUs has been explicitly enabled with command @ref
- *      sl_bt_advertiser_set_configuration.
- *   4. advertiser_connectable_scannable is the connection mode but using
- *      extended advertising PDUs has been explicitly enabled or the primary
- *      advertising PHY is set to Coded PHY.
- *
- * If advertising is enabled in user_data mode, use @ref
- * sl_bt_advertiser_set_data to set advertising and scan response data before
- * issuing this command. When advertising is enabled in modes other than
- * user_data, advertising and scan response data is generated by the stack using
- * the following procedure:
- *   1. Add a flags field to advertising data.
- *   2. Add a TX power level field to advertising data if the TX power service
- *      exists in the local GATT database.
- *   3. Add a peripheral connection interval range field to advertising data if
- *      the GAP peripheral preferred connection parameters characteristic exists
- *      in the local GATT database.
- *   4. Add a list of 16-bit service UUIDs to advertising data if there are one
- *      or more 16-bit service UUIDs to advertise. The list is complete if all
- *      advertised 16-bit UUIDs are in advertising data. Otherwise, the list is
- *      incomplete.
- *   5. Add a list of 128-bit service UUIDs to advertising data if there are one
- *      or more 128-bit service UUIDs to advertise and there is still free space
- *      for this field. The list is complete if all advertised 128-bit UUIDs are
- *      in advertising data. Otherwise, the list is incomplete. Note that an
- *      advertising data packet can contain at most one 128-bit service UUID.
- *   6. Try to add the full local name to advertising data if the device is not
- *      in privacy mode. If the full local name does not fit into the remaining
- *      free space, the advertised name is a shortened version by cutting off
- *      the end if the free space has at least 6 bytes. Otherwise, the local
- *      name is added to scan response data.
- *
- * Event @ref sl_bt_evt_connection_opened will be received when a remote device
- * opens a connection to the advertiser on this advertising set. As a result,
- * the advertising stops.
- *
- * Event @ref sl_bt_evt_advertiser_timeout will be received when the number of
- * advertising events set by @ref sl_bt_advertiser_set_timing command is done
- * and the advertising has stopped.
- *
- * @param[in] advertising_set Advertising set handle
- * @param[in] discover Enum @ref sl_bt_advertiser_discovery_mode_t. Discovery
- *   mode. Values:
- *     - <b>sl_bt_advertiser_non_discoverable (0x0):</b> Not discoverable
- *     - <b>sl_bt_advertiser_limited_discoverable (0x1):</b> Discoverable by
- *       both limited and general discovery procedures
- *     - <b>sl_bt_advertiser_general_discoverable (0x2):</b> Discoverable by the
- *       general discovery procedure
- *     - <b>sl_bt_advertiser_broadcast (0x3):</b> Device is not discoverable in
- *       either limited or generic discovery procedure but may be discovered
- *       using the Observation procedure.
- *     - <b>sl_bt_advertiser_user_data (0x4):</b> Send advertising and/or scan
- *       response data defined by the user. The discovery mode is defined by the
- *       user.
- * @param[in] connect Enum @ref sl_bt_advertiser_connection_mode_t. Connection
- *   mode. Values:
- *     - <b>sl_bt_advertiser_non_connectable (0x0):</b> Non-connectable
- *       non-scannable
- *     - <b>sl_bt_advertiser_connectable_scannable (0x2):</b> Undirected
- *       connectable scannable. This mode can only be used in legacy advertising
- *       PDUs.
- *     - <b>sl_bt_advertiser_scannable_non_connectable (0x3):</b> Undirected
- *       scannable (Non-connectable but responds to scan requests)
- *     - <b>sl_bt_advertiser_connectable_non_scannable (0x4):</b> Undirected
- *       connectable non-scannable. This mode can only be used in extended
- *       advertising PDUs.
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- * @b Events
- *   - @ref sl_bt_evt_advertiser_timeout - Triggered when the number of
- *     advertising events set by @ref sl_bt_advertiser_set_timing command is
- *     done and advertising has stopped on an advertising set.
- *   - @ref sl_bt_evt_connection_opened - Triggered when a remote device opens a
- *     connection to the advertiser and the advertising has stopped.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_start(uint8_t advertising_set,
-                                   uint8_t discover,
-                                   uint8_t connect);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_periodic_advertiser_start
- * command.
- *
- * Start periodic advertising on an advertising set. The stack enables the
- * advertising set automatically if the set was not enabled and the set can
- * advertise using extended advertising PDUs beside the syncInfo, which is
- * needed for the periodic advertising.
- *
- * The invalid parameter error is returned if the application has configured
- * legacy advertising PDUs or anonymous advertising, or the advertising set is
- * enabled using legacy advertising PDUs.
- *
- * To stop periodic advertising, use @ref
- * sl_bt_advertiser_stop_periodic_advertising command with the handle received
- * in response from this command.
- *
- * @param[in] advertising_set Advertising set handle
- * @param[in] interval_min @parblock
- *   Minimum periodic advertising interval. Value in units of 1.25 ms
- *     - Range: 0x06 to 0xFFFF
- *     - Time range: 7.5 ms to 81.92 s
- *
- *   Default value: 100 ms
- *   @endparblock
- * @param[in] interval_max @parblock
- *   Maximum periodic advertising interval. Value in units of 1.25 ms
- *     - Range: 0x06 to 0xFFFF
- *     - Time range: 7.5 ms to 81.92 s
- *     - Note: interval_max should be bigger than interval_min
- *
- *   Default value: 200 ms
- *   @endparblock
- * @param[in] flags Periodic advertising configurations. Bitmask of the
- *   following:
- *     - <b>Bit 0:</b> Include TX power in advertising PDU
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_start_periodic_advertising(uint8_t advertising_set,
-                                                        uint16_t interval_min,
-                                                        uint16_t interval_max,
-                                                        uint32_t flags);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_periodic_advertiser_stop
- * command.
- *
- * Stop periodic advertising on an advertising set. Counterpart with @ref
- * sl_bt_advertiser_start_periodic_advertising.
- *
- * This command does not affect the enable state of the advertising set, i.e.,
- * legacy or extended advertising is not stopped.
- *
- * @param[in] advertising_set Advertising set handle
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_stop_periodic_advertising(uint8_t advertising_set);
 
 /** @} */ // end addtogroup sl_bt_advertiser
 
@@ -3160,7 +2961,7 @@ typedef enum
  *     - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
  *     - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY, 125k (S=8)
  *
- *   Default value: @ref sl_bt_gap_phy_1m
+ *     - <b>Default</b> : @ref sl_bt_gap_phy_1m
  *   @endparblock
  * @param[in] secondary_phy @parblock
  *   Enum @ref sl_bt_gap_phy_t. The PHY on which the advertising packets are
@@ -3169,7 +2970,7 @@ typedef enum
  *     - <b>sl_bt_gap_phy_2m (0x2):</b> 2M PHY
  *     - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY, 125k (S=8)
  *
- *   Default value: @ref sl_bt_gap_phy_1m
+ *     - <b>Default</b> : @ref sl_bt_gap_phy_1m
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -3284,6 +3085,10 @@ sl_status_t sl_bt_extended_advertiser_generate_data(uint8_t advertising_set,
  * This command fails with the invalid parameter error if the advertising uses a
  * non-resolvable random address but the connection mode is @ref
  * sl_bt_extended_advertiser_connectable.
+ *
+ * This command returns the error SL_STATUS_BT_CONTROLLER_COMMAND_DISALLOWED
+ * when the connection mode is @ref sl_bt_extended_advertiser_scannable but no
+ * scan response data is provided.
  *
  * Event @ref sl_bt_evt_connection_opened will be received when a remote device
  * opens a connection to the advertiser on this advertising set. As a result,
@@ -3434,33 +3239,41 @@ sl_status_t sl_bt_extended_advertiser_start_directed(uint8_t advertising_set,
 /** @} */ // end Periodic Advertising Configuration Flags
 
 /**
- * @cond RESTRICTED
- *
  * @addtogroup sl_bt_evt_periodic_advertiser_status sl_bt_evt_periodic_advertiser_status
  * @{
- * Restricted/experimental API. Contact Silicon Labs sales for more information.
+ * @brief This event reports the latest status of periodic advertising on an
+ * advertising set
  *
- * @brief This event indicates a status update in the periodic advertising.
+ * It is generated for each scheduled periodic advertising transmission when the
+ * status report has been enabled. By default, this event is disabled in the
+ * Bluetooth stack. Use command @ref sl_bt_system_linklayer_configure and key
+ * @ref sl_bt_system_linklayer_config_key_set_periodic_advertising_status_report
+ * to enable or disable it.
  */
 
 /** @brief Identifier of the status event */
 #define sl_bt_evt_periodic_advertiser_status_id                      0x005800a0
 
 /***************************************************************************//**
- * Restricted/experimental API. Contact Silicon Labs sales for more information.
- *
  * @brief Data structure of the status event
  ******************************************************************************/
 PACKSTRUCT( struct sl_bt_evt_periodic_advertiser_status_s
 {
-  uint8_t  advertising_set; /**< The advertising set handle */
-  uint32_t status;          /**< Reserved for future */
+  uint8_t  advertising_set; /**< The advertising set handle that the periodic
+                                 advertising is from */
+  uint32_t status;          /**< The status value.
+
+                                 Bit 0:
+                                   - <b>0:</b> The transmission was successful.
+                                   - <b>1:</b> The transmission failed.
+
+                                 Other bits: Unused and reserved for future */
+  uint16_t event_counter;   /**< The event counter of the transmission */
 });
 
 typedef struct sl_bt_evt_periodic_advertiser_status_s sl_bt_evt_periodic_advertiser_status_t;
 
 /** @} */ // end addtogroup sl_bt_evt_periodic_advertiser_status
-/** @endcond */ // end restricted event
 
 /***************************************************************************//**
  *
@@ -3546,18 +3359,20 @@ sl_status_t sl_bt_periodic_advertiser_set_long_data(uint8_t advertising_set);
  * @param[in] advertising_set Advertising set handle
  * @param[in] interval_min @parblock
  *   Minimum periodic advertising interval. Value in units of 1.25 ms
- *     - Range: 0x06 to 0xFFFF
+ *     - <b>Range:</b> 0x06 to 0xFFFF
+ *
  *     - Time range: 7.5 ms to 81.92 s
  *
- *   Default value: 100 ms
+ *     - <b>Default</b> : 100 ms
  *   @endparblock
  * @param[in] interval_max @parblock
  *   Maximum periodic advertising interval. Value in units of 1.25 ms
- *     - Range: 0x06 to 0xFFFF
+ *     - <b>Range:</b> 0x06 to 0xFFFF
+ *
  *     - Time range: 7.5 ms to 81.92 s
  *     - Note: interval_max should be bigger than interval_min
  *
- *   Default value: 200 ms
+ *     - <b>Default</b> : 200 ms
  *   @endparblock
  * @param[in] flags Additional periodic advertising options. Value: 0 or bitmask
  *   of @ref sl_bt_periodic_advertiser_flags
@@ -3577,7 +3392,7 @@ sl_status_t sl_bt_periodic_advertiser_start(uint8_t advertising_set,
  *
  * This command does not affect the enable state of the legacy or extended
  * advertising on the advertising set, i.e., the legacy or extended advertising
- * is not stopped..
+ * is not stopped.
  *
  * @param[in] advertising_set Advertising set handle
  *
@@ -3594,55 +3409,34 @@ sl_status_t sl_bt_periodic_advertiser_stop(uint8_t advertising_set);
  *
  * @brief Scanner
  *
- * This is the scanning feature that is brought in when the application includes
- * a software component for the scanning functionality. The functionality
- * differences are listed below for various component inclusion scenario:
- *   - The bluetooth_feature_scanner component is included but neither
- *     bluetooth_feature_legacy_scanner nor bluetooth_feature_extended_scanner
- *     is included:
- *       - The scanner can scan advertising devices that use legacy or extended
- *         advertising PDUs.
- *       - The @ref sl_bt_evt_scanner_scan_report event is used to report the
- *         received advertisements.
+ * The commands and events in this class provides scanning functionality. There
+ * are functionality differences depending on included components:
  *
- *   - The bluetooth_feature_legacy_scanner component is included but the
- *     bluetooth_feature_extended_scanner is not:
- *       - The scanner can only scan advertising devices that use legacy
- *         advertising PDUs.
- *       - The @ref sl_bt_evt_scanner_legacy_advertisement_report event is used
- *         to report the received advertisements.
+ * The bluetooth_feature_legacy_scanner component is included but the
+ * bluetooth_feature_extended_scanner is not:
+ *   - The scanner can only scan advertising devices that use legacy advertising
+ *     PDUs.
+ *   - Received advertisements are reported in @ref
+ *     sl_bt_evt_scanner_legacy_advertisement_report events.
  *
- *   - The bluetooth_feature_extended_scanner component is included:
- *       - The scanner can scan advertising devices that use legacy or extended
- *         advertising PDUs.
- *       - The @ref sl_bt_evt_scanner_legacy_advertisement_report event is used
- *         to report the received advertisements that use legacy advertising
- *         PDUs, and the @ref sl_bt_evt_scanner_extended_advertisement_report
- *         event is used to report the received advertisements that use extended
- *         advertising PDUs.
- *
- *   - Either the bluetooth_feature_legacy_scanner or
- *     bluetooth_feature_extended_scanner component is included:
- *       - The @ref sl_bt_scanner_set_timing and @ref sl_bt_scanner_set_mode
- *         commands are not available to use. They are superseded by the @ref
- *         sl_bt_scanner_set_parameters command.
- *       - Calling a superseded command receives SL_STATUS_NOT_SUPPORTED error
- *         code.
+ * The bluetooth_feature_extended_scanner component is included:
+ *   - The scanner can scan advertising devices that use legacy or extended
+ *     advertising PDUs.
+ *   - Received advertisements that use legacy advertising PDUs are reported in
+ *     @ref sl_bt_evt_scanner_legacy_advertisement_report events.
+ *   - Received advertisements that use extended advertising PDUs are reported
+ *     in @ref sl_bt_evt_scanner_extended_advertisement_report events.
  */
 
 /* Command and Response IDs */
 #define sl_bt_cmd_scanner_set_parameters_id                          0x06050020
 #define sl_bt_cmd_scanner_set_parameters_and_filter_id               0x07050020
-#define sl_bt_cmd_scanner_stop_id                                    0x05050020
-#define sl_bt_cmd_scanner_set_timing_id                              0x01050020
-#define sl_bt_cmd_scanner_set_mode_id                                0x02050020
 #define sl_bt_cmd_scanner_start_id                                   0x03050020
+#define sl_bt_cmd_scanner_stop_id                                    0x05050020
 #define sl_bt_rsp_scanner_set_parameters_id                          0x06050020
 #define sl_bt_rsp_scanner_set_parameters_and_filter_id               0x07050020
-#define sl_bt_rsp_scanner_stop_id                                    0x05050020
-#define sl_bt_rsp_scanner_set_timing_id                              0x01050020
-#define sl_bt_rsp_scanner_set_mode_id                                0x02050020
 #define sl_bt_rsp_scanner_start_id                                   0x03050020
+#define sl_bt_rsp_scanner_stop_id                                    0x05050020
 
 /**
  * @brief These values indicate which Bluetooth discovery mode to use when
@@ -3826,17 +3620,38 @@ typedef enum
 /** @} */ // end Event Type Flags of Advertisement Reports
 
 /**
+ * @addtogroup sl_bt_scanner_option_flags Option Flags to Specify Scanning Options
+ * @{
+ *
+ * Defines the scanning option flags that can be set with the command @ref
+ * sl_bt_scanner_set_parameters_and_filter.
+ */
+
+/**
+ *
+ * If the built-in bonding database is used (the component
+ * bluetooth_feature_builtin_bonding_database is included in the application),
+ * the scanner component by default tries to search for or resolve the
+ * advertiser addresses to find if a bonding has been created with the
+ * advertiser device. The bonding handle is then reported in the @p bonding
+ * field of @ref sl_bt_evt_scanner_legacy_advertisement_report and @ref
+ * sl_bt_evt_scanner_extended_advertisement_report events.
+ *
+ * If the application does not need the bonding information in advertisement
+ * reports, set this scanner option to disable the search for the bonding. When
+ * this option is set the @p bonding field in advertisement reports will always
+ * be set to SL_BT_INVALID_BONDING_HANDLE (0xff).
+ *
+ * */
+#define SL_BT_SCANNER_IGNORE_BONDING 0x1       
+
+/** @} */ // end Option Flags to Specify Scanning Options
+
+/**
  * @addtogroup sl_bt_evt_scanner_legacy_advertisement_report sl_bt_evt_scanner_legacy_advertisement_report
  * @{
  * @brief Reports an advertising data or scan response packet from an
  * advertising device that uses legacy advertising PDUs.
- *
- * This event is used to report advertisements only if the application includes
- * the bluetooth_feature_legacy_scanner or bluetooth_feature_extended_scanner
- * component
- *
- * Otherwise, the @ref sl_bt_evt_scanner_scan_report event is used for
- * maintaining the backwards compatibility.
  */
 
 /** @brief Identifier of the legacy_advertisement_report event */
@@ -3893,7 +3708,7 @@ PACKSTRUCT( struct sl_bt_evt_scanner_legacy_advertisement_report_s
                                          - <b>Other:</b> Bonding handle */
   int8_t     rssi;                /**< Signal strength indicator (RSSI) in the
                                        last received packet. Units: dBm
-                                         - Range: -127 to +20 */
+                                         - <b>Range:</b> -127 to +20 */
   uint8_t    channel;             /**< The channel number on which the last
                                        packet was received */
   bd_addr    target_address;      /**< The target address if the advertisement
@@ -3950,11 +3765,6 @@ typedef struct sl_bt_evt_scanner_legacy_advertisement_report_s sl_bt_evt_scanner
  * device that uses extended advertising PDUs
  *
  * Multiple events may be reported for single advertisement train.
- *
- * This event is used to report advertisements only if the application includes
- * the bluetooth_feature_extended_scanner component. Otherwise, the @ref
- * sl_bt_evt_scanner_scan_report event is used for maintaining the backwards
- * compatibility.
  */
 
 /** @brief Identifier of the extended_advertisement_report event */
@@ -4016,7 +3826,7 @@ PACKSTRUCT( struct sl_bt_evt_scanner_extended_advertisement_report_s
                                          - <b>Other:</b> Bonding handle */
   int8_t     rssi;                /**< Signal strength indicator (RSSI) in the
                                        last received packet. Units: dBm
-                                         - Range: -127 to +20 */
+                                         - <b>Range:</b> -127 to +20 */
   uint8_t    channel;             /**< The channel number on which the last
                                        packet was received */
   bd_addr    target_address;      /**< The target address if this is directed
@@ -4075,12 +3885,14 @@ PACKSTRUCT( struct sl_bt_evt_scanner_extended_advertisement_report_s
                                            Coded PHY, 125k (S=8) or 500k (S=2) */
   int8_t     tx_power;            /**< TX power value in the received packet
                                        header. Units: dBm
-                                         - Valid value range: -127 to 126
+                                         - <b>Range:</b> -127 to 126
+
                                          - Value 127: information unavailable */
   uint16_t   periodic_interval;   /**< The periodic advertising interval. Value
                                        0 indicates no periodic advertising.
                                        Otherwise,
-                                         - Range: 0x06 to 0xFFFF
+                                         - <b>Range:</b> 0x06 to 0xFFFF
+
                                          - Unit: 1.25 ms
                                          - Time range: 7.5 ms to 81.92 s */
   uint8_t    data_completeness;   /**< Enum @ref sl_bt_scanner_data_status_t.
@@ -4114,141 +3926,6 @@ typedef struct sl_bt_evt_scanner_extended_advertisement_report_s sl_bt_evt_scann
 
 /** @} */ // end addtogroup sl_bt_evt_scanner_extended_advertisement_report
 
-/**
- * @addtogroup sl_bt_evt_scanner_scan_report sl_bt_evt_scanner_scan_report
- * @{
- * @brief <b>Deprecated</b> and replaced by new @ref
- * sl_bt_evt_scanner_legacy_advertisement_report and @ref
- * sl_bt_evt_scanner_extended_advertisement_report events
- *
- * To use these new events, the application needs to include the
- * bluetooth_feature_legacy_scanner or bluetooth_feature_extended_scanner
- * component.
- *
- * Reports an advertising or scan response packet from an advertising device
- * that uses legacy or extended advertising PDUs.
- */
-
-/** @brief Identifier of the scan_report event */
-#define sl_bt_evt_scanner_scan_report_id                             0x010500a0
-
-/***************************************************************************//**
- * @brief Data structure of the scan_report event
- ******************************************************************************/
-PACKSTRUCT( struct sl_bt_evt_scanner_scan_report_s
-{
-  uint8_t    packet_type;       /**< <b>Bits 0..2</b> : advertising packet type
-                                       - <b>000</b> : Connectable scannable
-                                         undirected advertising
-                                       - <b>001</b> : Connectable undirected
-                                         advertising
-                                       - <b>010</b> : Scannable undirected
-                                         advertising
-                                       - <b>011</b> : Non-connectable
-                                         non-scannable undirected advertising
-                                       - <b>100</b> : Scan Response. Note that
-                                         this is received only if the device is
-                                         in active scan mode.
-
-                                     <b>Bits 3..4</b> : Reserved for future
-
-                                     <b>Bits 5..6</b> : data completeness
-                                       - <b>00:</b> Complete
-                                       - <b>01:</b> Incomplete, more data to
-                                         come in new events
-                                       - <b>10:</b> Incomplete, data truncated,
-                                         no more to come
-
-                                     <b>Bit 7</b> : legacy or extended
-                                     advertising
-                                       - <b>0:</b> Legacy advertising PDUs used
-                                       - <b>1:</b> Extended advertising PDUs
-                                         used */
-  bd_addr    address;           /**< Bluetooth address of the remote device */
-  uint8_t    address_type;      /**< Enum @ref sl_bt_gap_address_type_t.
-
-                                     Advertiser address type.
-
-                                     If the application does not include the
-                                     bluetooth_feature_use_accurate_api_address_types
-                                     component, @p address_type uses the
-                                     following values:
-                                       - <b>0:</b> Public address
-                                       - <b>1:</b> Random address
-                                       - <b>255:</b> No address provided
-                                         (anonymous advertising)
-
-                                     If the application includes the
-                                     bluetooth_feature_use_accurate_api_address_types
-                                     component, @p address_type uses enum @ref
-                                     sl_bt_gap_address_type_t values:
-                                       - <b>sl_bt_gap_public_address (0x0):</b>
-                                         Public device address
-                                       - <b>sl_bt_gap_static_address (0x1):</b>
-                                         Static device address
-                                       - <b>sl_bt_gap_random_resolvable_address
-                                         (0x2):</b> Resolvable private random
-                                         address
-                                       - <b>sl_bt_gap_random_nonresolvable_address
-                                         (0x3):</b> Non-resolvable private
-                                         random address
-                                       - <b>sl_bt_gap_anonymous_address
-                                         (0xff):</b> No address provided
-                                         (anonymous advertising)
-                                       - <b>sl_bt_gap_public_address_resolved_from_rpa
-                                         (0x4):</b> Public identity address
-                                         resolved from a resolvable private
-                                         address (RPA)
-                                       - <b>sl_bt_gap_static_address_resolved_from_rpa
-                                         (0x5):</b> Static identity address
-                                         resolved from a resolvable private
-                                         address (RPA) */
-  uint8_t    bonding;           /**< Bonding handle if the remote advertising
-                                     device has previously bonded with the local
-                                     device. Values:
-                                       - <b>SL_BT_INVALID_BONDING_HANDLE
-                                         (0xff):</b> No bonding
-                                       - <b>Other:</b> Bonding handle */
-  uint8_t    primary_phy;       /**< Enum @ref sl_bt_gap_phy_t. The PHY on which
-                                     advertising packets are transmitted on the
-                                     primary advertising channel. Ignore this
-                                     field if the report is for a legacy
-                                     advertising PDU. Values:
-                                       - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
-                                       - <b>sl_bt_gap_phy_coded (0x4):</b> Coded
-                                         PHY, 125k (S=8) or 500k (S=2) */
-  uint8_t    secondary_phy;     /**< Enum @ref sl_bt_gap_phy_t. The PHY on which
-                                     advertising packets are transmitted on the
-                                     secondary advertising channel. Ignore this
-                                     field if the report is for a legacy
-                                     advertising PDU. Values:
-                                       - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
-                                       - <b>sl_bt_gap_phy_2m (0x2):</b> 2M PHY
-                                       - <b>sl_bt_gap_phy_coded (0x4):</b> Coded
-                                         PHY, 125k (S=8) or 500k (S=2) */
-  uint8_t    adv_sid;           /**< Advertising set identifier */
-  int8_t     tx_power;          /**< TX power value in the received packet
-                                     header. Units: dBm
-                                       - Valid value range: -127 to 126
-                                       - Value 127: information unavailable */
-  int8_t     rssi;              /**< Signal strength indicator (RSSI) in the
-                                     last received packet. Units: dBm
-                                       - Range: -127 to +20 */
-  uint8_t    channel;           /**< The channel number on which the last packet
-                                     was received */
-  uint16_t   periodic_interval; /**< The periodic advertising interval. Value 0
-                                     indicates no periodic advertising.
-                                     Otherwise,
-                                       - Range: 0x06 to 0xFFFF
-                                       - Unit: 1.25 ms
-                                       - Time range: 7.5 ms to 81.92 s */
-  uint8array data;              /**< Advertising or scan response data */
-});
-
-typedef struct sl_bt_evt_scanner_scan_report_s sl_bt_evt_scanner_scan_report_t;
-
-/** @} */ // end addtogroup sl_bt_evt_scanner_scan_report
-
 /***************************************************************************//**
  *
  * Set scan parameters for subsequent scanning operations. If the device is
@@ -4272,16 +3949,17 @@ typedef struct sl_bt_evt_scanner_scan_report_s sl_bt_evt_scanner_scan_report_t;
  *       advertising packet from a remote device and listens to the scan
  *       response packet from the remote device
  *
- *   Default value: @ref sl_bt_scanner_scan_mode_passive.
+ *     - <b>Default</b> : @ref sl_bt_scanner_scan_mode_passive
  *   @endparblock
  * @param[in] interval @parblock
  *   The time interval when the device starts its last scan until it begins the
  *   subsequent scan. In other words, how often to scan
+ *     - <b>Range:</b> 0x0004 to 0xFFFF
+ *
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0004 to 0xFFFF
  *     - Time Range: 2.5 ms to 40.96 s
  *
- *   Default value: 10 ms
+ *     - <b>Default</b> : 10 ms
  *
  *   A variable delay occurs when switching channels at the end of each scanning
  *   interval, which is included in the scanning interval time. During the
@@ -4300,11 +3978,12 @@ typedef struct sl_bt_evt_scanner_scan_report_s sl_bt_evt_scanner_scan_report_t;
  * @param[in] window @parblock
  *   The scan window, i.e., the duration of the scan, which must be less than or
  *   equal to the @p interval
+ *     - <b>Range:</b> 0x0004 to 0xFFFF
+ *
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0004 to 0xFFFF
  *     - Time Range: 2.5 ms to 40.96 s
  *
- *   Default value: 10 ms
+ *     - <b>Default</b> : 10 ms
  *
  *   Note that the packet reception is aborted if it's started just before the
  *   scan window ends.
@@ -4335,16 +4014,17 @@ sl_status_t sl_bt_scanner_set_parameters(uint8_t mode,
  *       advertising packet from a remote device and listens to the scan
  *       response packet from the remote device
  *
- *   Default value: @ref sl_bt_scanner_scan_mode_passive.
+ *     - <b>Default</b> : @ref sl_bt_scanner_scan_mode_passive
  *   @endparblock
  * @param[in] interval @parblock
  *   The time interval when the device starts its last scan until it begins the
  *   subsequent scan. In other words, how often to scan
+ *     - <b>Range:</b> 0x0004 to 0xFFFF
+ *
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0004 to 0xFFFF
  *     - Time Range: 2.5 ms to 40.96 s
  *
- *   Default value: 10 ms
+ *     - <b>Default</b> : 10 ms
  *
  *   A variable delay occurs when switching channels at the end of each scanning
  *   interval, which is included in the scanning interval time. During the
@@ -4363,16 +4043,18 @@ sl_status_t sl_bt_scanner_set_parameters(uint8_t mode,
  * @param[in] window @parblock
  *   The scan window, i.e., the duration of the scan, which must be less than or
  *   equal to the @p interval
+ *     - <b>Range:</b> 0x0004 to 0xFFFF
+ *
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0004 to 0xFFFF
  *     - Time Range: 2.5 ms to 40.96 s
  *
- *   Default value: 10 ms
+ *     - <b>Default</b> : 10 ms
  *
  *   Note that the packet reception is aborted if it's started just before the
  *   scan window ends.
  *   @endparblock
- * @param[in] flags No flags are currently defined. Set this parameter to 0.
+ * @param[in] flags Additional scanner options. Value: 0 or bitmask of @ref
+ *   sl_bt_scanner_option_flags.
  * @param[in] filter_policy @parblock
  *   Enum @ref sl_bt_scanner_filter_policy_t.
  *
@@ -4401,7 +4083,7 @@ sl_status_t sl_bt_scanner_set_parameters(uint8_t mode,
  *       advertising, the target address must additionally match the identity
  *       address of the local device or be any Resolvable Private Address.
  *
- *   Default value: @ref sl_bt_scanner_filter_policy_basic_unfiltered
+ *     - <b>Default</b> : @ref sl_bt_scanner_filter_policy_basic_unfiltered
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -4412,106 +4094,6 @@ sl_status_t sl_bt_scanner_set_parameters_and_filter(uint8_t mode,
                                                     uint16_t window,
                                                     uint32_t flags,
                                                     uint8_t filter_policy);
-
-/***************************************************************************//**
- *
- * Stop scanning for advertising devices. For more information about the
- * discovery, see the @ref sl_bt_scanner_start command.
- *
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-sl_status_t sl_bt_scanner_stop();
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by the @ref sl_bt_scanner_set_parameters
- * command.
- *
- * Set the scanning timing parameters on the specified PHY(s). If the device is
- * currently scanning, new parameters will take effect when scanning is
- * restarted.
- *
- * @param[in] phys Enum @ref sl_bt_scanner_scan_phy_t. The scanning PHY(s) the
- *   setting is set for. Values:
- *     - <b>sl_bt_scanner_scan_phy_1m (0x1):</b> 1M PHY
- *     - <b>sl_bt_scanner_scan_phy_coded (0x4):</b> Coded PHY
- *     - <b>sl_bt_scanner_scan_phy_1m_and_coded (0x5):</b> 1M and Coded PHYs
- * @param[in] scan_interval @parblock
- *   Scan interval is defined as the time interval when the device starts its
- *   last scan until it begins the subsequent scan. In other words, how often to
- *   scan
- *     - Time = Value x 0.625 ms
- *     - Range: 0x0004 to 0xFFFF
- *     - Time Range: 2.5 ms to 40.96 s
- *
- *   Default value: 10 ms
- *
- *   A variable delay occurs when switching channels at the end of each scanning
- *   interval, which is included in the scanning interval time. During the
- *   switch time, advertising packets are not received by the device. The switch
- *   time variation is use case-dependent. For example, if scanning while
- *   keeping active connections, the channel switch time might be longer than
- *   when scanning without any active connections. Increasing the scanning
- *   interval reduces the amount of time in which the device can't receive
- *   advertising packets because it switches channels less often.
- *
- *   After every scan interval, the scanner changes the frequency at which it
- *   operates. It cycles through all three advertising channels in a round robin
- *   fashion. According to the specification, all three channels must be used by
- *   a scanner.
- *   @endparblock
- * @param[in] scan_window @parblock
- *   Scan window defines the duration of the scan which must be less than or
- *   equal to the @p scan_interval
- *     - Time = Value x 0.625 ms
- *     - Range: 0x0004 to 0xFFFF
- *     - Time Range: 2.5 ms to 40.96 s
- *
- *   Default value: 10 ms Note that the packet reception is aborted if it's
- *   started just before the scan window ends.
- *   @endparblock
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_scanner_set_timing(uint8_t phys,
-                                     uint16_t scan_interval,
-                                     uint16_t scan_window);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by the @ref sl_bt_scanner_set_parameters
- * command.
- *
- * Set the scan mode on the specified PHY(s). If the device is currently
- * scanning, new parameters will take effect when scanning is restarted.
- *
- * @param[in] phys Enum @ref sl_bt_scanner_scan_phy_t. The scanning PHY(s) the
- *   setting is set for. Values:
- *     - <b>sl_bt_scanner_scan_phy_1m (0x1):</b> 1M PHY
- *     - <b>sl_bt_scanner_scan_phy_coded (0x4):</b> Coded PHY
- *     - <b>sl_bt_scanner_scan_phy_1m_and_coded (0x5):</b> 1M and Coded PHYs
- * @param[in] scan_mode @parblock
- *   Enum @ref sl_bt_scanner_scan_mode_t.
- *
- *   The scan mode. Values:
- *     - <b>sl_bt_scanner_scan_mode_passive (0x0):</b> Passive scanning mode
- *       where the device only listens to advertising packets and does not
- *       transmit packets
- *     - <b>sl_bt_scanner_scan_mode_active (0x1):</b> Active scanning mode where
- *       the device sends out a scan request packet upon receiving a scannable
- *       advertising packet from a remote device and listens to the scan
- *       response packet from the remote device
- *
- *   Default value: @ref sl_bt_scanner_scan_mode_passive.
- *   @endparblock
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_scanner_set_mode(uint8_t phys, uint8_t scan_mode);
 
 /***************************************************************************//**
  *
@@ -4556,10 +4138,6 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_scanner_set_mode(uint8_t phys, uint8_t sca
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_scanner_scan_report - This event is triggered for
- *     reporting a received advertisement if the application includes the
- *     bluetooth_feature_scanner component but does not include any other
- *     scanner component.
  *   - @ref sl_bt_evt_scanner_legacy_advertisement_report - This event is
  *     triggered for reporting a received advertisement that uses legacy
  *     advertising PDUs if the application includes the
@@ -4572,6 +4150,17 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_scanner_set_mode(uint8_t phys, uint8_t sca
  *
  ******************************************************************************/
 sl_status_t sl_bt_scanner_start(uint8_t scanning_phy, uint8_t discover_mode);
+
+/***************************************************************************//**
+ *
+ * Stop scanning for advertising devices. For more information about the
+ * discovery, see the @ref sl_bt_scanner_start command.
+ *
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_scanner_stop();
 
 /** @} */ // end addtogroup sl_bt_scanner
 
@@ -4588,32 +4177,12 @@ sl_status_t sl_bt_scanner_start(uint8_t scanning_phy, uint8_t discover_mode);
  * that do not have subevents or response slots, and/or
  * bluetooth_feature_pawr_sync to include support for Periodic Advertising with
  * Responses (PAwR) trains.
- *
- * Some functionality in this class is considered <b>deprecated</b> and has been
- * superseded by new classes. When one or more of
- * bluetooth_feature_sync_scanner, bluetooth_feature_periodic_sync, or
- * bluetooth_feature_pawr_sync components is included by the application,
- * commands that have been superseded by the new classes are no longer available
- * for use in the @ref sl_bt_sync class. Calling them will receive
- * SL_STATUS_NOT_SUPPORTED error code. These commands are as follows:
- *   - @ref sl_bt_sync_set_parameters
- *   - @ref sl_bt_sync_open
- *
- * See the command descriptions for the replacements.
- *
- * Events that are deprecated and superseded by the new classes are no longer
- * triggered by the @ref sl_bt_sync class if any of the new classes are included
- * in the application. See event descriptions for the replacements.
  */
 
 /* Command and Response IDs */
-#define sl_bt_cmd_sync_set_parameters_id                             0x02420020
-#define sl_bt_cmd_sync_open_id                                       0x00420020
 #define sl_bt_cmd_sync_set_reporting_mode_id                         0x03420020
 #define sl_bt_cmd_sync_update_sync_parameters_id                     0x04420020
 #define sl_bt_cmd_sync_close_id                                      0x01420020
-#define sl_bt_rsp_sync_set_parameters_id                             0x02420020
-#define sl_bt_rsp_sync_open_id                                       0x00420020
 #define sl_bt_rsp_sync_set_reporting_mode_id                         0x03420020
 #define sl_bt_rsp_sync_update_sync_parameters_id                     0x04420020
 #define sl_bt_rsp_sync_close_id                                      0x01420020
@@ -4646,203 +4215,6 @@ typedef enum
 } sl_bt_sync_advertiser_clock_accuracy_t;
 
 /**
- * @addtogroup sl_bt_evt_sync_opened sl_bt_evt_sync_opened
- * @{
- * @brief <b>Deprecated</b> and replaced by @ref sl_bt_evt_periodic_sync_opened
- * for periodic advertising trains that do not have subevents or response slots,
- * and with @ref sl_bt_evt_pawr_sync_opened for Periodic Advertising with
- * Responses (PAwR) trains.
- *
- * Indicates that a periodic advertising synchronization has been opened.
- */
-
-/** @brief Identifier of the opened event */
-#define sl_bt_evt_sync_opened_id                                     0x004200a0
-
-/***************************************************************************//**
- * @brief Data structure of the opened event
- ******************************************************************************/
-PACKSTRUCT( struct sl_bt_evt_sync_opened_s
-{
-  uint16_t sync;           /**< Periodic advertising synchronization handle */
-  uint8_t  adv_sid;        /**< Advertising set identifier */
-  bd_addr  address;        /**< Address of the advertiser */
-  uint8_t  address_type;   /**< Enum @ref sl_bt_gap_address_type_t.
-
-                                Advertiser address type.
-
-                                If the application does not include the
-                                bluetooth_feature_use_accurate_api_address_types
-                                component, @p address_type uses the following
-                                values:
-                                  - <b>0:</b> Public address
-                                  - <b>1:</b> Random address
-
-                                If the application includes the
-                                bluetooth_feature_use_accurate_api_address_types
-                                component, @p address_type uses enum @ref
-                                sl_bt_gap_address_type_t values:
-                                  - <b>sl_bt_gap_public_address (0x0):</b>
-                                    Public device address
-                                  - <b>sl_bt_gap_static_address (0x1):</b>
-                                    Static device address
-                                  - <b>sl_bt_gap_random_resolvable_address
-                                    (0x2):</b> Resolvable private random address
-                                  - <b>sl_bt_gap_random_nonresolvable_address
-                                    (0x3):</b> Non-resolvable private random
-                                    address
-                                  - <b>sl_bt_gap_public_address_resolved_from_rpa
-                                    (0x4):</b> Public identity address resolved
-                                    from a resolvable private address (RPA)
-                                  - <b>sl_bt_gap_static_address_resolved_from_rpa
-                                    (0x5):</b> Static identity address resolved
-                                    from a resolvable private address (RPA) */
-  uint8_t  adv_phy;        /**< Enum @ref sl_bt_gap_phy_t. The advertiser PHY.
-                                Values:
-                                  - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
-                                  - <b>sl_bt_gap_phy_2m (0x2):</b> 2M PHY
-                                  - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY,
-                                    125k (S=8) or 500k (S=2) */
-  uint16_t adv_interval;   /**< The periodic advertising interval. Value in
-                                units of 1.25 ms
-                                  - Range: 0x06 to 0xFFFF
-                                  - Time range: 7.5 ms to 81.92 s */
-  uint16_t clock_accuracy; /**< Enum @ref
-                                sl_bt_sync_advertiser_clock_accuracy_t. The
-                                advertiser clock accuracy. */
-  uint8_t  bonding;        /**< Bonding handle. Values:
-                                  - <b>SL_BT_INVALID_BONDING_HANDLE (0xff):</b>
-                                    No bonding
-                                  - <b>Other:</b> Bonding handle */
-});
-
-typedef struct sl_bt_evt_sync_opened_s sl_bt_evt_sync_opened_t;
-
-/** @} */ // end addtogroup sl_bt_evt_sync_opened
-
-/**
- * @addtogroup sl_bt_evt_sync_transfer_received sl_bt_evt_sync_transfer_received
- * @{
- * @brief <b>Deprecated</b> and replaced by @ref
- * sl_bt_evt_periodic_sync_transfer_received for periodic advertising trains
- * that do not have subevents or response slots responses, and with @ref
- * sl_bt_evt_pawr_sync_transfer_received for Periodic Advertising with Responses
- * (PAwR) trains.
- *
- * Indicates that synchronization information for a periodic advertising train
- * has been received
- *
- * See @ref sl_bt_past_receiver.
- */
-
-/** @brief Identifier of the transfer_received event */
-#define sl_bt_evt_sync_transfer_received_id                          0x034200a0
-
-/***************************************************************************//**
- * @brief Data structure of the transfer_received event
- ******************************************************************************/
-PACKSTRUCT( struct sl_bt_evt_sync_transfer_received_s
-{
-  uint16_t status;         /**< SL_STATUS_OK if synchronization was established.
-                                Other values indicate that the sync failed to
-                                get established. */
-  uint16_t sync;           /**< Periodic advertising synchronization handle */
-  uint16_t service_data;   /**< A value provided by the peer device */
-  uint8_t  connection;     /**< Connection handle of the connection that
-                                transferred the sync info */
-  uint8_t  adv_sid;        /**< Advertising set identifier */
-  bd_addr  address;        /**< Address of the advertiser */
-  uint8_t  address_type;   /**< Enum @ref sl_bt_gap_address_type_t.
-
-                                Advertiser address type.
-
-                                If the application does not include the
-                                bluetooth_feature_use_accurate_api_address_types
-                                component, @p address_type uses the following
-                                values:
-                                  - <b>0:</b> Public address
-                                  - <b>1:</b> Random address
-
-                                If the application includes the
-                                bluetooth_feature_use_accurate_api_address_types
-                                component, @p address_type uses enum @ref
-                                sl_bt_gap_address_type_t values:
-                                  - <b>sl_bt_gap_public_address (0x0):</b>
-                                    Public device address
-                                  - <b>sl_bt_gap_static_address (0x1):</b>
-                                    Static device address
-                                  - <b>sl_bt_gap_random_resolvable_address
-                                    (0x2):</b> Resolvable private random address
-                                  - <b>sl_bt_gap_random_nonresolvable_address
-                                    (0x3):</b> Non-resolvable private random
-                                    address
-                                  - <b>sl_bt_gap_public_address_resolved_from_rpa
-                                    (0x4):</b> Public identity address resolved
-                                    from a resolvable private address (RPA)
-                                  - <b>sl_bt_gap_static_address_resolved_from_rpa
-                                    (0x5):</b> Static identity address resolved
-                                    from a resolvable private address (RPA) */
-  uint8_t  adv_phy;        /**< Enum @ref sl_bt_gap_phy_t. The advertiser PHY.
-                                Values:
-                                  - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
-                                  - <b>sl_bt_gap_phy_2m (0x2):</b> 2M PHY
-                                  - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY,
-                                    125k (S=8) or 500k (S=2) */
-  uint16_t adv_interval;   /**< The periodic advertising interval. Value in
-                                units of 1.25 ms
-                                  - Range: 0x06 to 0xFFFF
-                                  - Time range: 7.5 ms to 81.92 s */
-  uint16_t clock_accuracy; /**< Enum @ref
-                                sl_bt_sync_advertiser_clock_accuracy_t. The
-                                advertiser clock accuracy. */
-  uint8_t  bonding;        /**< Bonding handle. Values:
-                                  - <b>SL_BT_INVALID_BONDING_HANDLE (0xff):</b>
-                                    No bonding
-                                  - <b>Other:</b> Bonding handle */
-});
-
-typedef struct sl_bt_evt_sync_transfer_received_s sl_bt_evt_sync_transfer_received_t;
-
-/** @} */ // end addtogroup sl_bt_evt_sync_transfer_received
-
-/**
- * @addtogroup sl_bt_evt_sync_data sl_bt_evt_sync_data
- * @{
- * @brief <b>Deprecated</b> and replaced by @ref sl_bt_evt_periodic_sync_report.
- *
- * Reports a received periodic advertisement packet.
- */
-
-/** @brief Identifier of the data event */
-#define sl_bt_evt_sync_data_id                                       0x024200a0
-
-/***************************************************************************//**
- * @brief Data structure of the data event
- ******************************************************************************/
-PACKSTRUCT( struct sl_bt_evt_sync_data_s
-{
-  uint16_t   sync;        /**< Periodic advertising synchronization handle */
-  int8_t     tx_power;    /**< TX power value in the received packet header.
-                               Units: dBm
-                                 - Valid value range: -127 to 126
-                                 - Value 127: information unavailable */
-  int8_t     rssi;        /**< Signal strength indicator (RSSI) in the latest
-                               received packet. Units: dBm
-                                 - Range: -127 to +20 */
-  uint8_t    data_status; /**< Data completeness:
-                                 - <b>0:</b> Complete
-                                 - <b>1:</b> Incomplete, more data to come in
-                                   new events
-                                 - <b>2:</b> Incomplete, data truncated, no more
-                                   to come */
-  uint8array data;        /**< Periodic advertising data */
-});
-
-typedef struct sl_bt_evt_sync_data_s sl_bt_evt_sync_data_t;
-
-/** @} */ // end addtogroup sl_bt_evt_sync_data
-
-/**
  * @addtogroup sl_bt_evt_sync_closed sl_bt_evt_sync_closed
  * @{
  * @brief Indicates that periodic advertising synchronization was lost or a
@@ -4869,104 +4241,6 @@ PACKSTRUCT( struct sl_bt_evt_sync_closed_s
 typedef struct sl_bt_evt_sync_closed_s sl_bt_evt_sync_closed_t;
 
 /** @} */ // end addtogroup sl_bt_evt_sync_closed
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref
- * sl_bt_sync_scanner_set_sync_parameters.
- *
- * Configure periodic advertiser synchronization parameters. The specified
- * parameters take effect immediately for all advertisers that have not already
- * established synchronization.
- *
- * The application should determine skip and timeout values based on the
- * periodic advertising interval provided by the advertiser. Ensure that you use
- * a long enough timeout to allow multiple receives. If @p skip and @p timeout
- * are used, select appropriate values so that they allow a few receiving
- * attempts. Periodic advertising intervals are reported in event @ref
- * sl_bt_evt_scanner_scan_report.
- *
- * @param[in] skip The maximum number of periodic advertising packets that can
- *   be skipped after a successful receive.
- *     - Range: 0x0000 to 0x01F3
- *     - Default value: 0
- * @param[in] timeout The maximum permitted time between successful receives. If
- *   this time is exceeded, synchronization is lost. Unit: 10 ms.
- *     - Range: 0x0A to 0x4000
- *     - Unit: 10 ms
- *     - Time range: 100 ms to 163.84 s
- *     - Default value: 1000 ms
- * @param[in] flags No flags defined currently
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_sync_set_parameters(uint16_t skip,
-                                      uint16_t timeout,
-                                      uint32_t flags);
-
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_sync_scanner_open.
- *
- * Start establishing synchronization with the specified periodic advertiser in
- * parallel with other advertisers given in previous invocations of this
- * command. The stack will internally enable scanning when needed so that
- * synchronizations can occur. The scanning responses from the internal scanning
- * are not passed to the application unless the application has also enabled
- * scanning.
- *
- * Advertisers that have not already synced before the invocation of this
- * command will be synced using the @p skip and @p timeout values configured in
- * the most recent invocation of command @ref sl_bt_evt_scanner_scan_report.
- *
- * @param[in] address Address of the advertiser
- * @param[in] address_type @parblock
- *   Enum @ref sl_bt_gap_address_type_t.
- *
- *   Advertiser address type.
- *
- *   If the application does not include the
- *   bluetooth_feature_use_accurate_api_address_types component, @p address_type
- *   uses the following values:
- *     - <b>0:</b> Public address
- *     - <b>1:</b> Random address
- *
- *   If the application includes the
- *   bluetooth_feature_use_accurate_api_address_types component, @p address_type
- *   uses enum @ref sl_bt_gap_address_type_t values:
- *     - <b>sl_bt_gap_public_address (0x0):</b> Public device address
- *     - <b>sl_bt_gap_static_address (0x1):</b> Static device address
- *     - <b>sl_bt_gap_random_resolvable_address (0x2):</b> Resolvable private
- *       random address
- *     - <b>sl_bt_gap_random_nonresolvable_address (0x3):</b> Non-resolvable
- *       private random address
- *     - <b>sl_bt_gap_public_address_resolved_from_rpa (0x4):</b> Public
- *       identity address resolved from a resolvable private address (RPA)
- *     - <b>sl_bt_gap_static_address_resolved_from_rpa (0x5):</b> Static
- *       identity address resolved from a resolvable private address (RPA)
- *   @endparblock
- * @param[in] adv_sid Advertising set identifier
- * @param[out] sync A handle that will be assigned to the periodic advertising
- *   synchronization after the synchronization is established. This handle is
- *   valid only if the result code of this response is SL_STATUS_OK.
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- * @b Events
- *   - @ref sl_bt_evt_sync_opened - Triggered after the synchronization is
- *     established.
- *   - @ref sl_bt_evt_sync_data - Indicates that a periodic advertisement packet
- *     is received.
- *   - @ref sl_bt_evt_sync_closed - Triggered after periodic advertising
- *     synchronization was lost or explicitly closed, or a synchronization
- *     establishment procedure was canceled.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_sync_open(bd_addr address,
-                            uint8_t address_type,
-                            uint8_t adv_sid,
-                            uint16_t *sync);
 
 /***************************************************************************//**
  *
@@ -5002,17 +4276,27 @@ sl_status_t sl_bt_sync_set_reporting_mode(uint16_t sync,
  * increase the @p skip value to minimize wakeups when power saving is
  * prioritized over receiving every periodic advertisement.
  *
+ * Irrespective of the value of the @p skip parameter, the Controller stops
+ * skipping packets if the skipping would cause a timeout.
+ *
  * @param[in] sync Periodic advertising synchronization handle
- * @param[in] skip The maximum number of periodic advertising packets that can
- *   be skipped after a successful receive.
- *     - Range: 0x0000 to 0x01F3
- *     - Default value: 0
- * @param[in] timeout The maximum permitted time between successful receives. If
- *   this time is exceeded, synchronization is lost. Unit: 10 ms.
- *     - Range: 0x0A to 0x4000
+ * @param[in] skip @parblock
+ *   The maximum number of periodic advertising packets that can be skipped
+ *   after a successful receive.
+ *     - <b>Range:</b> 0x0000 to 0x01F3
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] timeout @parblock
+ *   The maximum permitted time between successful receives. If this time is
+ *   exceeded, synchronization is lost. Unit: 10 ms.
+ *     - <b>Range:</b> 0x000A to 0x4000
+ *
  *     - Unit: 10 ms
  *     - Time range: 100 ms to 163.84 s
- *     - Default value: 1000 ms
+ *
+ *     - <b>Default</b> : 1000 ms
+ *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -5063,23 +4347,31 @@ sl_status_t sl_bt_sync_close(uint16_t sync);
  * synchronization.
  *
  * The application should determine skip and timeout values based on the
- * periodic advertising interval provided by the advertiser. Ensure that you use
- * a long enough timeout to allow multiple receives. If @p skip and @p timeout
- * are used, select appropriate values so that they allow a few receiving
- * attempts. Periodic advertising intervals are reported in @ref
- * sl_bt_evt_scanner_scan_report or @ref
+ * periodic advertising interval provided by the advertiser. Use a long enough
+ * timeout to allow multiple receives. If @p skip and @p timeout are used,
+ * select appropriate values so that they allow a few receiving attempts.
+ * Irrespective of the value of the @p skip parameter, the Controller stops
+ * skipping packets if the skipping would cause a timeout. Periodic advertising
+ * intervals are reported in @ref
  * sl_bt_evt_scanner_extended_advertisement_report event.
  *
- * @param[in] skip The maximum number of periodic advertising packets that can
- *   be skipped after a successful receive.
- *     - Range: 0x0000 to 0x01F3
- *     - Default value: 0
- * @param[in] timeout The maximum permitted time between successful receives. If
- *   this time is exceeded, synchronization is lost. Unit: 10 ms.
- *     - Range: 0x0A to 0x4000
+ * @param[in] skip @parblock
+ *   The maximum number of periodic advertising packets that can be skipped
+ *   after a successful receive.
+ *     - <b>Range:</b> 0x0000 to 0x01F3
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] timeout @parblock
+ *   The maximum permitted time between successful receives. If this time is
+ *   exceeded, synchronization is lost. Unit: 10 ms.
+ *     - <b>Range:</b> 0x000A to 0x4000
+ *
  *     - Unit: 10 ms
  *     - Time range: 100 ms to 163.84 s
- *     - Default value: 1000 ms
+ *
+ *     - <b>Default</b> : 1000 ms
+ *   @endparblock
  * @param[in] reporting_mode @parblock
  *   Enum @ref sl_bt_sync_reporting_mode_t. Specifies the initial mode for
  *   reporting data received in the periodic advertising train after it has
@@ -5106,12 +4398,23 @@ sl_status_t sl_bt_sync_scanner_set_sync_parameters(uint16_t skip,
  * parallel with other advertisers given in previous invocations of this
  * command.
  *
+ * Periodic advertisers are typically discovered by scanning for extended
+ * advertisements and observing the received @ref
+ * sl_bt_evt_scanner_extended_advertisement_report events. See the
+ * bluetooth_feature_extended_scanner component and the @ref sl_bt_scanner_start
+ * command. When an advertiser has periodic advertising, the @p
+ * periodic_interval field of @ref
+ * sl_bt_evt_scanner_extended_advertisement_report event will be non-zero. To
+ * synchronize to that periodic advertising train, use the @p address, @p
+ * address_type, and @p adv_sid fields from the @ref
+ * sl_bt_evt_scanner_extended_advertisement_report when issuing this command.
+ *
  * If the application has not already started scanning with the @ref
  * sl_bt_scanner_start command, the stack will internally enable scanning so
  * that synchronizations can occur. The internal scanning uses the PHY that was
  * most recently used with @ref sl_bt_scanner_start and the parameters that have
- * been configured with @ref sl_bt_scanner_set_timing. The internal scanning is
- * automatically stopped when all requested synchronizations have occurred.
+ * been configured with @ref sl_bt_scanner_set_parameters. The internal scanning
+ * is automatically stopped when all requested synchronizations have occurred.
  *
  * The scanning responses from the internal scanning are not passed to the
  * application unless the application starts scanning with the @ref
@@ -5124,7 +4427,8 @@ sl_status_t sl_bt_sync_scanner_set_sync_parameters(uint16_t skip,
  *
  * Advertisers that have not already synced before the invocation of this
  * command will be synced using the @p skip and @p timeout values configured in
- * the most recent invocation of command @ref sl_bt_evt_scanner_scan_report.
+ * the most recent invocation of command @ref
+ * sl_bt_evt_scanner_extended_advertisement_report.
  *
  * @param[in] address Address of the advertiser
  * @param[in] address_type @parblock
@@ -5152,7 +4456,7 @@ sl_status_t sl_bt_sync_scanner_set_sync_parameters(uint16_t skip,
  *     - <b>sl_bt_gap_static_address_resolved_from_rpa (0x5):</b> Static
  *       identity address resolved from a resolvable private address (RPA)
  *   @endparblock
- * @param[in] adv_sid Advertising set identifier
+ * @param[in] adv_sid The identifier of the advertising set to synchronize to
  * @param[out] sync A handle that will be assigned to the periodic advertising
  *   synchronization after the synchronization is established. This handle is
  *   valid only if the result code of this response is SL_STATUS_OK.
@@ -5233,6 +4537,9 @@ typedef enum
  * sl_bt_past_receiver_set_sync_receive_parameters after the connection is
  * opened.
  *
+ * Irrespective of the value of the @p skip parameter, the Controller stops
+ * skipping packets if the skipping would cause a timeout.
+ *
  * This command sets parameters that do not limit the synchronization based on
  * the CTE type. If the application includes bluetooth_feature_aoa_receiver or
  * bluetooth_feature_aod_receiver component and wants to specify a particular
@@ -5257,16 +4564,23 @@ typedef enum
  *   Default: @ref sl_bt_past_receiver_mode_ignore (No attempt is made to
  *   synchronize)
  *   @endparblock
- * @param[in] skip The maximum number of periodic advertising packets that can
- *   be skipped after a successful receive.
- *     - Range: 0x0000 to 0x01F3
- *     - Default value: 0
- * @param[in] timeout The maximum permitted time between successful receives. If
- *   this time is exceeded, synchronization is lost. Unit: 10 ms.
- *     - Range: 0x0A to 0x4000
+ * @param[in] skip @parblock
+ *   The maximum number of periodic advertising packets that can be skipped
+ *   after a successful receive.
+ *     - <b>Range:</b> 0x0000 to 0x01F3
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] timeout @parblock
+ *   The maximum permitted time between successful receives. If this time is
+ *   exceeded, synchronization is lost. Unit: 10 ms.
+ *     - <b>Range:</b> 0x000A to 0x4000
+ *
  *     - Unit: 10 ms
  *     - Time range: 100 ms to 163.84 s
- *     - Default value: 1000 ms
+ *
+ *     - <b>Default</b> : 1000 ms
+ *   @endparblock
  * @param[in] reporting_mode @parblock
  *   Enum @ref sl_bt_sync_reporting_mode_t. Specifies the initial mode for
  *   reporting data received in the periodic advertising train after it has
@@ -5283,16 +4597,9 @@ typedef enum
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_sync_transfer_received - Triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots. This event is used only when the application
- *     does not include bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync components.
- *   - @ref sl_bt_evt_periodic_sync_transfer_received - If the application
- *     includes the bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync component, triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots.
+ *   - @ref sl_bt_evt_periodic_sync_transfer_received - Triggered after
+ *     synchronization transfer is received for a periodic advertising train
+ *     that does not have subevents or response slots.
  *   - @ref sl_bt_evt_pawr_sync_transfer_received - If the application includes
  *     the bluetooth_feature_pawr_sync component, triggered after
  *     synchronization transfer is received for a Periodic Advertising with
@@ -5309,6 +4616,9 @@ sl_status_t sl_bt_past_receiver_set_default_sync_receive_parameters(uint8_t mode
  * Set the parameters for receiving Periodic Advertising Synchronization
  * Transfers (PAST) over the specified connection. The parameters do not affect
  * periodic advertising trains that the device has already synchronized to.
+ *
+ * Irrespective of the value of the @p skip parameter, the Controller stops
+ * skipping packets if the skipping would cause a timeout.
  *
  * This command sets parameters that do not limit the synchronization based on
  * the CTE type. If the application includes bluetooth_feature_aoa_receiver or
@@ -5335,16 +4645,23 @@ sl_status_t sl_bt_past_receiver_set_default_sync_receive_parameters(uint8_t mode
  *   Default: @ref sl_bt_past_receiver_mode_ignore (Do not attempt to
  *   synchronize)
  *   @endparblock
- * @param[in] skip The maximum number of periodic advertising packets that can
- *   be skipped after a successful receive.
- *     - Range: 0x0000 to 0x01F3
- *     - Default value: 0
- * @param[in] timeout The maximum permitted time between successful receives. If
- *   this time is exceeded, synchronization is lost. Unit: 10 ms.
- *     - Range: 0x0A to 0x4000
+ * @param[in] skip @parblock
+ *   The maximum number of periodic advertising packets that can be skipped
+ *   after a successful receive.
+ *     - <b>Range:</b> 0x0000 to 0x01F3
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] timeout @parblock
+ *   The maximum permitted time between successful receives. If this time is
+ *   exceeded, synchronization is lost. Unit: 10 ms.
+ *     - <b>Range:</b> 0x000A to 0x4000
+ *
  *     - Unit: 10 ms
  *     - Time range: 100 ms to 163.84 s
- *     - Default value: 1000 ms
+ *
+ *     - <b>Default</b> : 1000 ms
+ *   @endparblock
  * @param[in] reporting_mode @parblock
  *   Enum @ref sl_bt_sync_reporting_mode_t. Specifies the initial mode for
  *   reporting data received in the periodic advertising train after it has
@@ -5361,16 +4678,9 @@ sl_status_t sl_bt_past_receiver_set_default_sync_receive_parameters(uint8_t mode
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_sync_transfer_received - Triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots. This event is used only when the application
- *     does not include bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync components.
- *   - @ref sl_bt_evt_periodic_sync_transfer_received - If the application
- *     includes the bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync component, triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots.
+ *   - @ref sl_bt_evt_periodic_sync_transfer_received - Triggered after
+ *     synchronization transfer is received for a periodic advertising train
+ *     that does not have subevents or response slots.
  *   - @ref sl_bt_evt_pawr_sync_transfer_received - If the application includes
  *     the bluetooth_feature_pawr_sync component, triggered after
  *     synchronization transfer is received for a Periodic Advertising with
@@ -5528,7 +4838,8 @@ PACKSTRUCT( struct sl_bt_evt_periodic_sync_opened_s
                                     125k (S=8) or 500k (S=2) */
   uint16_t adv_interval;   /**< The Periodic Advertising interval. Value in
                                 units of 1.25 ms
-                                  - Range: 0x06 to 0xFFFF
+                                  - <b>Range:</b> 0x06 to 0xFFFF
+
                                   - Time range: 7.5 ms to 81.92 s */
   uint16_t clock_accuracy; /**< Enum @ref
                                 sl_bt_sync_advertiser_clock_accuracy_t. The
@@ -5607,7 +4918,8 @@ PACKSTRUCT( struct sl_bt_evt_periodic_sync_transfer_received_s
                                     125k (S=8) or 500k (S=2) */
   uint16_t adv_interval;   /**< The periodic advertising interval. Value in
                                 units of 1.25 ms
-                                  - Range: 0x06 to 0xFFFF
+                                  - <b>Range:</b> 0x06 to 0xFFFF
+
                                   - Time range: 7.5 ms to 81.92 s */
   uint16_t clock_accuracy; /**< Enum @ref
                                 sl_bt_sync_advertiser_clock_accuracy_t. The
@@ -5640,11 +4952,12 @@ PACKSTRUCT( struct sl_bt_evt_periodic_sync_report_s
   uint16_t   sync;        /**< Periodic advertising synchronization handle */
   int8_t     tx_power;    /**< TX power value in the received packet header.
                                Units: dBm
-                                 - Valid value range: -127 to 126
+                                 - <b>Range:</b> -127 to 126
+
                                  - Value 127: information unavailable */
   int8_t     rssi;        /**< Signal strength indicator (RSSI) in the latest
                                received packet. Units: dBm
-                                 - Range: -127 to +20 */
+                                 - <b>Range:</b> -127 to +20 */
   uint8_t    cte_type;    /**< The CTE type
                                  - <b>0x00:</b> AoA CTE
                                  - <b>0x01:</b> AoD CTE with 1us slots
@@ -5756,25 +5069,30 @@ PACKSTRUCT( struct sl_bt_evt_pawr_sync_opened_s
                                            Coded PHY, 125k (S=8) or 500k (S=2) */
   uint16_t adv_interval;          /**< The periodic advertising interval. Value
                                        in units of 1.25 ms
-                                         - Range: 0x06 to 0xFFFF
+                                         - <b>Range:</b> 0x06 to 0xFFFF
+
                                          - Time range: 7.5 ms to 81.92 s */
   uint16_t clock_accuracy;        /**< Enum @ref
                                        sl_bt_sync_advertiser_clock_accuracy_t.
                                        The advertiser clock accuracy. */
   uint8_t  num_subevents;         /**< The number of subevents.
-                                         - Range: 0x01 to 0x80 */
+                                         - <b>Range:</b> 0x01 to 0x80 */
   uint8_t  subevent_interval;     /**< Subevent interval. Value in units of 1.25
                                        ms.
-                                         - Range: 0x06 to 0xFF
+                                         - <b>Range:</b> 0x06 to 0xFF
+
                                          - Time range: 7.5 ms to 318.75 ms */
   uint8_t  response_slot_delay;   /**< Time between the advertising packet in a
                                        subevent and the first response slot.
                                        Value in units of 1.25 ms.
-                                         - Range: 0x01 to 0xFE
+                                         - <b>Range:</b> 0x01 to 0xFE
+
                                          - Time range: 1.25 ms to 317.5 ms */
-  uint8_t  response_slot_spacing; /**< Time between response slots. Value in
-                                       units of 0.125 ms.
-                                         - Range: 0x02 to 0xFF
+  uint8_t  response_slot_spacing; /**< Time between the start of response slots
+                                       in a subevent. Value in units of 0.125
+                                       ms.
+                                         - <b>Range:</b> 0x02 to 0xFF
+
                                          - Time range: 0.25 ms to 31.875 ms */
   uint8_t  bonding;               /**< Bonding handle. Values:
                                          - <b>SL_BT_INVALID_BONDING_HANDLE
@@ -5853,25 +5171,29 @@ PACKSTRUCT( struct sl_bt_evt_pawr_sync_transfer_received_s
                                            Coded PHY, 125k (S=8) or 500k (S=2) */
   uint16_t adv_interval;          /**< The periodic advertising interval. Value
                                        in units of 1.25 ms
-                                         - Range: 0x06 to 0xFFFF
+                                         - <b>Range:</b> 0x06 to 0xFFFF
+
                                          - Time range: 7.5 ms to 81.92 s */
   uint16_t clock_accuracy;        /**< Enum @ref
                                        sl_bt_sync_advertiser_clock_accuracy_t.
                                        The advertiser clock accuracy. */
   uint8_t  num_subevents;         /**< The number of subevents.
-                                         - Range: 0x01 to 0x80 */
+                                         - <b>Range:</b> 0x01 to 0x80 */
   uint8_t  subevent_interval;     /**< Subevent interval. Value in units of 1.25
                                        ms.
-                                         - Range: 0x06 to 0xFF
+                                         - <b>Range:</b> 0x06 to 0xFF
+
                                          - Time range: 7.5 ms to 318.75 ms */
   uint8_t  response_slot_delay;   /**< Time between the advertising packet in a
                                        subevent and the first response slot.
                                        Value in units of 1.25 ms.
-                                         - Range: 0x01 to 0xFE
+                                         - <b>Range:</b> 0x01 to 0xFE
+
                                          - Time range: 1.25 ms to 317.5 ms */
   uint8_t  response_slot_spacing; /**< Time between response slots. Value in
                                        units of 0.125 ms.
-                                         - Range: 0x02 to 0xFF
+                                         - <b>Range:</b> 0x02 to 0xFF
+
                                          - Time range: 0.25 ms to 31.875 ms */
   uint8_t  bonding;               /**< Bonding handle. Values:
                                          - <b>SL_BT_INVALID_BONDING_HANDLE
@@ -5905,11 +5227,12 @@ PACKSTRUCT( struct sl_bt_evt_pawr_sync_subevent_report_s
   uint16_t   sync;          /**< PAwR synchronization handle */
   int8_t     tx_power;      /**< TX power value in the received packet header.
                                  Units: dBm
-                                   - Valid value range: -127 to 126
+                                   - <b>Range:</b> -127 to 126
+
                                    - Value 127: information unavailable */
   int8_t     rssi;          /**< Signal strength indicator (RSSI) of the
                                  received packet. Units: dBm
-                                   - Range: -127 to +20 */
+                                   - <b>Range:</b> -127 to +20 */
   uint8_t    cte_type;      /**< The CTE type
                                    - <b>0x00:</b> AoA CTE
                                    - <b>0x01:</b> AoD CTE with 1us slots
@@ -6121,11 +5444,13 @@ PACKSTRUCT( struct sl_bt_evt_pawr_advertiser_response_report_s
   uint8_t    subevent;        /**< The subevent that this report corresponds to */
   int8_t     tx_power;        /**< TX power value in the received packet header.
                                    Units: dBm
-                                     - Valid value range: -127 to 126
+                                     - <b>Range:</b> -127 to 126
+
                                      - Value 127: information unavailable */
   int8_t     rssi;            /**< Signal strength indicator (RSSI) of the
                                    received packet. Units: dBm
-                                     - Valid value range: -127 to +20
+                                     - <b>Range:</b> -127 to +20
+
                                      - Value 127: information unavailable */
   uint8_t    cte_type;        /**< The CTE type
                                      - <b>0x00:</b> AoA CTE
@@ -6201,36 +5526,41 @@ typedef struct sl_bt_evt_pawr_advertiser_response_report_s sl_bt_evt_pawr_advert
  * @param[in] advertising_set The PAwR advertising set handle
  * @param[in] interval_min @parblock
  *   Minimum periodic advertising interval. Value in units of 1.25 ms.
- *     - Range: 0x06 to 0xFFFF
+ *     - <b>Range:</b> 0x06 to 0xFFFF
+ *
  *     - Time range: 7.5 ms to 81.92 s
  *
- *   Default value: 100 ms
+ *     - <b>Default</b> : 100 ms
  *   @endparblock
- * @param[in] interval_max @parblock
- *   Maximum periodic advertising interval. Value in units of 1.25 ms.
- *     - Range: 0x06 to 0xFFFF
+ * @param[in] interval_max Maximum periodic advertising interval. Value in units
+ *   of 1.25 ms.
  *     - Time range: 7.5 ms to 81.92 s
  *     - Note: interval_max should be bigger than interval_min
- *
- *   Default value: 200 ms
- *   @endparblock
  * @param[in] flags Additional periodic advertising options. Value: 0 or bitmask
  *   of @ref sl_bt_periodic_advertiser_flags
  * @param[in] num_subevents The number of subevents.
- *     - Range: 0x01 to 0x80
- * @param[in] subevent_interval Subevent interval. Value in units of 1.25 ms.
- *     - Range: 0x06 to 0xFF
+ *     - <b>Range:</b> 0x01 to 0x80
+ * @param[in] subevent_interval @parblock
+ *   Subevent interval. Value in units of 1.25 ms.
+ *     - <b>Range:</b> 0x06 to 0xFF
+ *
  *     - Time range: 7.5 ms to 318.75 ms
- * @param[in] response_slot_delay Time between the advertising packet in a
- *   subevent and the first response slot. Value in units of 1.25 ms.
- *     - Range: 0x01 to 0xFE
+ *   @endparblock
+ * @param[in] response_slot_delay @parblock
+ *   Time between the advertising packet in a subevent and the first response
+ *   slot. Value in units of 1.25 ms.
+ *     - <b>Range:</b> 0x01 to 0xFE
+ *
  *     - Time range: 1.25 ms to 317.5 ms
- * @param[in] response_slot_spacing Time between response slots. Value in units
- *   of 0.125 ms.
- *     - Range: 0x02 to 0xFF
+ *   @endparblock
+ * @param[in] response_slot_spacing @parblock
+ *   Time between response slots. Value in units of 0.125 ms.
+ *     - <b>Range:</b> 0x02 to 0xFF
+ *
  *     - Time range: 0.25 ms to 31.875 ms
+ *   @endparblock
  * @param[in] response_slots Number of subevent response slots.
- *     - Range: 0x01 to 0xFF
+ *     - <b>Range:</b> 0x01 to 0xFF
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -6371,7 +5701,9 @@ sl_status_t sl_bt_pawr_advertiser_stop(uint8_t advertising_set);
 #define sl_bt_cmd_connection_set_default_parameters_id               0x00060020
 #define sl_bt_cmd_connection_set_default_preferred_phy_id            0x01060020
 #define sl_bt_cmd_connection_set_default_data_length_id              0x10060020
+#define sl_bt_cmd_connection_set_default_acceptable_subrate_id       0x19060020
 #define sl_bt_cmd_connection_open_id                                 0x04060020
+#define sl_bt_cmd_connection_open_with_accept_list_id                0x16060020
 #define sl_bt_cmd_connection_set_parameters_id                       0x06060020
 #define sl_bt_cmd_connection_set_preferred_phy_id                    0x08060020
 #define sl_bt_cmd_connection_disable_slave_latency_id                0x03060020
@@ -6387,13 +5719,17 @@ sl_status_t sl_bt_pawr_advertiser_stop(uint8_t advertising_set);
 #define sl_bt_cmd_connection_set_data_length_id                      0x11060020
 #define sl_bt_cmd_connection_read_statistics_id                      0x13060020
 #define sl_bt_cmd_connection_get_scheduling_details_id               0x14060020
+#define sl_bt_cmd_connection_get_remote_address_id                   0x17060020
+#define sl_bt_cmd_connection_request_subrate_id                      0x1a060020
+#define sl_bt_cmd_connection_get_state_id                            0x18060020
 #define sl_bt_cmd_connection_close_id                                0x05060020
 #define sl_bt_cmd_connection_forcefully_close_id                     0x0f060020
-#define sl_bt_cmd_connection_get_rssi_id                             0x02060020
 #define sl_bt_rsp_connection_set_default_parameters_id               0x00060020
 #define sl_bt_rsp_connection_set_default_preferred_phy_id            0x01060020
 #define sl_bt_rsp_connection_set_default_data_length_id              0x10060020
+#define sl_bt_rsp_connection_set_default_acceptable_subrate_id       0x19060020
 #define sl_bt_rsp_connection_open_id                                 0x04060020
+#define sl_bt_rsp_connection_open_with_accept_list_id                0x16060020
 #define sl_bt_rsp_connection_set_parameters_id                       0x06060020
 #define sl_bt_rsp_connection_set_preferred_phy_id                    0x08060020
 #define sl_bt_rsp_connection_disable_slave_latency_id                0x03060020
@@ -6409,9 +5745,11 @@ sl_status_t sl_bt_pawr_advertiser_stop(uint8_t advertising_set);
 #define sl_bt_rsp_connection_set_data_length_id                      0x11060020
 #define sl_bt_rsp_connection_read_statistics_id                      0x13060020
 #define sl_bt_rsp_connection_get_scheduling_details_id               0x14060020
+#define sl_bt_rsp_connection_get_remote_address_id                   0x17060020
+#define sl_bt_rsp_connection_request_subrate_id                      0x1a060020
+#define sl_bt_rsp_connection_get_state_id                            0x18060020
 #define sl_bt_rsp_connection_close_id                                0x05060020
 #define sl_bt_rsp_connection_forcefully_close_id                     0x0f060020
-#define sl_bt_rsp_connection_get_rssi_id                             0x02060020
 
 /**
  * @brief Types of device roles in a Bluetooth connection
@@ -6421,6 +5759,17 @@ typedef enum
   sl_bt_connection_role_peripheral = 0x0, /**< (0x0) The Peripheral role */
   sl_bt_connection_role_central    = 0x1  /**< (0x1) The Central role */
 } sl_bt_connection_role_t;
+
+/**
+ * @brief Connection states
+ */
+typedef enum
+{
+  sl_bt_connection_state_closed  = 0x0, /**< (0x0) Connection closed */
+  sl_bt_connection_state_closing = 0x1, /**< (0x1) Connection is being closed */
+  sl_bt_connection_state_open    = 0x2, /**< (0x2) Connection open */
+  sl_bt_connection_state_opening = 0x3  /**< (0x3) Connection is being opened */
+} sl_bt_connection_state_t;
 
 /**
  * @brief Indicate the Bluetooth Security Mode.
@@ -6499,10 +5848,10 @@ typedef enum
  * @brief Indicates that a new connection was opened
  *
  * The specific semantics depend on the role of the device:
- *   - On the central device (parameter @p master set to @ref
+ *   - On the central device (parameter @p role set to @ref
  *     sl_bt_connection_role_central) the event is triggered when the Link Layer
  *     has sent a connect request to the remote device.
- *   - On the peripheral device (parameter @p master set to @ref
+ *   - On the peripheral device (parameter @p role set to @ref
  *     sl_bt_connection_role_peripheral) the event is triggered when the Link
  *     Layer has responded to the connect request of the remote device.
  *
@@ -6541,7 +5890,7 @@ PACKSTRUCT( struct sl_bt_evt_connection_opened_s
                                 - <b>sl_bt_gap_static_address_resolved_from_rpa
                                   (0x5):</b> Static identity address resolved
                                   from a resolvable private address (RPA) */
-  uint8_t  master;       /**< Enum @ref sl_bt_connection_role_t. The role this
+  uint8_t  role;         /**< Enum @ref sl_bt_connection_role_t. The role this
                               device operates in the connection. Values:
                                 - <b>sl_bt_connection_role_peripheral (0x0):</b>
                                   The Peripheral role
@@ -6605,10 +5954,6 @@ PACKSTRUCT( struct sl_bt_evt_connection_parameters_s
                                    Authenticated Secure Connections pairing with
                                    encryption using a 128-bit strength
                                    encryption key */
-  uint16_t txsize;        /**< <b>Deprecated</b> and no longer used for
-                               reporting the connection data length update. Use
-                               the event @ref sl_bt_evt_connection_data_length
-                               instead. */
 });
 
 typedef struct sl_bt_evt_connection_parameters_s sl_bt_evt_connection_parameters_t;
@@ -6690,9 +6035,9 @@ PACKSTRUCT( struct sl_bt_evt_connection_get_remote_tx_power_completed_s
                                  125k Coded PHY (S=8)
                                - <b>sl_bt_gap_phy_coding_500k_coded (0x8):</b>
                                  500k Coded PHY (S=2) */
-  int8_t   power_level; /**< Transmit power level. Values:
-                               - <b>Range -127 to 20:</b> The transmit power
-                                 level in dBm
+  int8_t   power_level; /**< Transmit power level in dBm. Values:
+                               - <b>Range:</b> -127 to +20
+
                                - <b>@ref SL_BT_CONNECTION_TX_POWER_UNMANAGED
                                  (0x7E):</b> Remote device is not managing power
                                  levels on this PHY.
@@ -6767,9 +6112,7 @@ PACKSTRUCT( struct sl_bt_evt_connection_tx_power_s
                                 125k Coded PHY (S=8)
                               - <b>sl_bt_gap_phy_coding_500k_coded (0x8):</b>
                                 500k Coded PHY (S=2) */
-  int8_t  power_level; /**< Transmit power level. Values:
-                              - <b>Range -127 to 20:</b> The transmit power
-                                level in dBm
+  int8_t  power_level; /**< Transmit power level in dBm. Values:
                               - <b>@ref SL_BT_CONNECTION_TX_POWER_UNAVAILABLE
                                 (0x7F):</b> Transmit power level is not
                                 available. */
@@ -6828,9 +6171,9 @@ PACKSTRUCT( struct sl_bt_evt_connection_remote_tx_power_s
                                 125k Coded PHY (S=8)
                               - <b>sl_bt_gap_phy_coding_500k_coded (0x8):</b>
                                 500k Coded PHY (S=2) */
-  int8_t  power_level; /**< Transmit power level. Values:
-                              - <b>Range -127 to 20:</b> The transmit power
-                                level in dBm
+  int8_t  power_level; /**< Transmit power level in dBm. Values:
+                              - <b>Range:</b> -127 to +20
+
                               - <b>@ref SL_BT_CONNECTION_TX_POWER_UNMANAGED
                                 (0x7E):</b> Remote device is not managing power
                                 levels on this PHY.
@@ -6950,8 +6293,8 @@ PACKSTRUCT( struct sl_bt_evt_connection_statistics_s
                                                   that have been successfully
                                                   received on this connection.
                                                   Units: dBm
-                                                    - Valid value range: -127 to
-                                                      +20
+                                                    - <b>Range:</b> -127 to +20
+
                                                     - Value 127: information
                                                       unavailable */
   int8_t   rssi_max;                         /**< The maximum Received Signal
@@ -6960,8 +6303,8 @@ PACKSTRUCT( struct sl_bt_evt_connection_statistics_s
                                                   that have been successfully
                                                   received on this connection.
                                                   Units: dBm
-                                                    - Valid value range: -127 to
-                                                      +20
+                                                    - <b>Range:</b> -127 to +20
+
                                                     - Value 127: information
                                                       unavailable */
   uint32_t num_total_connection_events;      /**< The total number of connection
@@ -7003,6 +6346,62 @@ typedef struct sl_bt_evt_connection_statistics_s sl_bt_evt_connection_statistics
 /** @} */ // end addtogroup sl_bt_evt_connection_statistics
 
 /**
+ * @addtogroup sl_bt_evt_connection_request_subrate_failed sl_bt_evt_connection_request_subrate_failed
+ * @{
+ * @brief This event is triggered when the command @ref
+ * sl_bt_connection_request_subrate has failed and returns the error code for
+ * that failure
+ */
+
+/** @brief Identifier of the request_subrate_failed event */
+#define sl_bt_evt_connection_request_subrate_failed_id               0x0d0600a0
+
+/***************************************************************************//**
+ * @brief Data structure of the request_subrate_failed event
+ ******************************************************************************/
+PACKSTRUCT( struct sl_bt_evt_connection_request_subrate_failed_s
+{
+  uint8_t  connection; /**< Connection handle */
+  uint16_t result;     /**< The error code provided by the failed procedure */
+});
+
+typedef struct sl_bt_evt_connection_request_subrate_failed_s sl_bt_evt_connection_request_subrate_failed_t;
+
+/** @} */ // end addtogroup sl_bt_evt_connection_request_subrate_failed
+
+/**
+ * @addtogroup sl_bt_evt_connection_subrate_changed sl_bt_evt_connection_subrate_changed
+ * @{
+ * @brief This event is triggered when the procedure started by @ref
+ * sl_bt_connection_request_subrate has completed successfully or when the
+ * subrate parameters have changed due to a peer request
+ */
+
+/** @brief Identifier of the subrate_changed event */
+#define sl_bt_evt_connection_subrate_changed_id                      0x0e0600a0
+
+/***************************************************************************//**
+ * @brief Data structure of the subrate_changed event
+ ******************************************************************************/
+PACKSTRUCT( struct sl_bt_evt_connection_subrate_changed_s
+{
+  uint8_t  connection;          /**< Connection handle */
+  uint16_t subrate_factor;      /**< Subrate factor applied to the specified
+                                     underlying connection interval. */
+  uint16_t latency;             /**< Peripheral latency for the connection in
+                                     number of subrated connection events. */
+  uint16_t continuation_number; /**< Number of underlying connection events to
+                                     remain active after a packet containing a
+                                     Link Layer PDU with a non-zero Length field
+                                     is sent or received. */
+  uint16_t timeout;             /**< Supervision timeout. Time = Value x 10 ms */
+});
+
+typedef struct sl_bt_evt_connection_subrate_changed_s sl_bt_evt_connection_subrate_changed_t;
+
+/** @} */ // end addtogroup sl_bt_evt_connection_subrate_changed
+
+/**
  * @addtogroup sl_bt_evt_connection_closed sl_bt_evt_connection_closed
  * @{
  * @brief Indicates that a connection was either closed or that no connection
@@ -7037,36 +6436,6 @@ typedef struct sl_bt_evt_connection_closed_s sl_bt_evt_connection_closed_t;
 
 /** @} */ // end addtogroup sl_bt_evt_connection_closed
 
-/**
- * @addtogroup sl_bt_evt_connection_rssi sl_bt_evt_connection_rssi
- * @{
- * @brief Triggered when a @ref sl_bt_connection_get_rssi command has completed
- *
- * This event is only used by deprecated @ref sl_bt_connection_get_rssi that
- * returns the RSSI value asynchronously.
- *
- * Use the @ref sl_bt_connection_get_median_rssi command to get the RSSI
- * synchronously.
- */
-
-/** @brief Identifier of the rssi event */
-#define sl_bt_evt_connection_rssi_id                                 0x030600a0
-
-/***************************************************************************//**
- * @brief Data structure of the rssi event
- ******************************************************************************/
-PACKSTRUCT( struct sl_bt_evt_connection_rssi_s
-{
-  uint8_t connection; /**< Connection handle */
-  uint8_t status;     /**< Command complete status which is always SL_STATUS_OK */
-  int8_t  rssi;       /**< The median of the last seven measured RSSI values on
-                           the connection. Units: dBm. Range: -127 to +20. */
-});
-
-typedef struct sl_bt_evt_connection_rssi_s sl_bt_evt_connection_rssi_t;
-
-/** @} */ // end addtogroup sl_bt_evt_connection_rssi
-
 /***************************************************************************//**
  *
  * Set default Bluetooth connection parameters. The values are valid for all
@@ -7086,33 +6455,36 @@ typedef struct sl_bt_evt_connection_rssi_s sl_bt_evt_connection_rssi_t;
  * @param[in] min_interval @parblock
  *   Minimum value for the connection event interval. This must be set less than
  *   or equal to @p max_interval.
+ *     - <b>Range:</b> 0x0006 to 0x0c80
+ *
  *     - Time = Value x 1.25 ms
- *     - Range: 0x0006 to 0x0c80
  *     - Time Range: 7.5 ms to 4 s
  *
- *   Default value: 20 ms
+ *     - <b>Default</b> : 20 ms
  *   @endparblock
  * @param[in] max_interval @parblock
  *   Maximum value for the connection event interval. This must be set greater
  *   than or equal to @p min_interval.
+ *     - <b>Range:</b> 0x0006 to 0x0c80
+ *
  *     - Time = Value x 1.25 ms
- *     - Range: 0x0006 to 0x0c80
  *     - Time Range: 7.5 ms to 4 s
  *
- *   Default value: 50 ms
+ *     - <b>Default</b> : 50 ms
  *   @endparblock
  * @param[in] latency @parblock
  *   Peripheral latency, which defines how many connection intervals the
  *   peripheral can skip if it has no data to send
- *     - Range: 0x0000 to 0x01f3
+ *     - <b>Range:</b> 0x0000 to 0x01f3
  *
- *   Default value: 0
+ *     - <b>Default</b> : 0
  *   @endparblock
  * @param[in] timeout @parblock
  *   Supervision timeout, which defines the time that the connection is
  *   maintained although the devices can't communicate at the currently
  *   configured connection intervals.
- *     - Range: 0x000a to 0x0c80
+ *     - <b>Range:</b> 0x000a to 0x0c80
+ *
  *     - Time = Value x 10 ms
  *     - Time Range: 100 ms to 32 s
  *     - The value in milliseconds must be larger than (1 + @p latency) * @p
@@ -7120,8 +6492,7 @@ typedef struct sl_bt_evt_connection_rssi_s sl_bt_evt_connection_rssi_t;
  *
  *   Set the supervision timeout at a value which allows communication attempts
  *   over at least a few connection intervals.
- *
- *   Default value: 1000 ms
+ *     - <b>Default</b> : 1000 ms
  *   @endparblock
  * @param[in] min_ce_length @parblock
  *   Minimum length of the connection event. It must be less than or equal to @p
@@ -7138,9 +6509,10 @@ typedef struct sl_bt_evt_connection_rssi_s sl_bt_evt_connection_rssi_t;
  *   event length or doesn't want to do fine tuning.
  *
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0000 to 0xffff
  *
- *   Default value: 0x0000
+ *     - <b>Range:</b> 0x0000 to 0xffff
+ *
+ *     - <b>Default</b> : 0x0000
  *   @endparblock
  * @param[in] max_ce_length @parblock
  *   Maximum length of the connection event. It must be greater than or equal to
@@ -7159,9 +6531,10 @@ typedef struct sl_bt_evt_connection_rssi_s sl_bt_evt_connection_rssi_t;
  *   Use the default value if the application doesn't care about the connection
  *   event length or doesn't want to do fine tuning.
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0000 to 0xffff
  *
- *   Default value: 0xffff
+ *     - <b>Range:</b> 0x0000 to 0xffff
+ *
+ *     - <b>Default</b> : 0xffff
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -7226,9 +6599,9 @@ sl_status_t sl_bt_connection_set_default_preferred_phy(uint8_t preferred_phy,
  *   Preferred maximum payload octets of a packet that the local Controller will
  *   send
  *
- *   Range: Range: 27 (0x1B) to 251 (0xFB)
+ *     - <b>Range:</b> 0x001B to 0x00FB
  *
- *   Default: 251
+ *     - <b>Default</b> : 251
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -7238,12 +6611,80 @@ sl_status_t sl_bt_connection_set_default_data_length(uint16_t tx_data_len);
 
 /***************************************************************************//**
  *
+ * Set the default acceptable parameters for subrating requests made by the
+ * peripheral on future ACL connections where this device is the central. The
+ * application must include the Connection Subrating feature
+ * (bluetooth_feature_connection_subrating) in order to use this command.
+ *
+ * When a connection is established, central will store these values to
+ * determine if future subrate requests from the peripheral are acceptable.
+ * Peripheral may store it's own set of parameters independently but they will
+ * not be used in that role. Running this command has no effect on connections
+ * that are already active, instead to change the stored acceptable values, use
+ * the command @ref sl_bt_connection_request_subrate on the central device.
+ *
+ * Subrating is not automatically enabled on new a connection. Use the command
+ * @ref sl_bt_connection_request_subrate to set the subrate parameters and
+ * enable subrating of a specific connection.
+ *
+ * @param[in] min_subrate @parblock
+ *   Minimum subrate factor allowed in requests by a peripheral. This parameter
+ *   must be set to less or equal to @p max_subrate.
+ *     - <b>Range:</b> 1 to 500
+ *
+ *     - <b>Default</b> : 1
+ *   @endparblock
+ * @param[in] max_subrate @parblock
+ *   Maximum subrate factor allowed in requests by a peripheral. This parameter
+ *   must be set greater or equal to @p min_subrate.
+ *     - <b>Range:</b> 1 to 500
+ *
+ *     - <b>Default</b> : 1
+ *   @endparblock
+ * @param[in] max_latency @parblock
+ *   Maximum Peripheral latency allowed in requests, in units of subrated
+ *   connection intervals. The result of (@p max_latency + 1) x @p max_subrate
+ *   must be less than or equal to 500.
+ *     - <b>Range:</b> 0 to 499
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] continuation_number @parblock
+ *   Minimum number of underlying connection events to remain active after a
+ *   packet containing a Controller PDU with a non-zero Length field is sent or
+ *   received in requests by a peripheral. This number must be set to be smaller
+ *   than @p max_subrate.
+ *     - <b>Range:</b> 0 to 499
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] max_timeout @parblock
+ *   Maximum supervision timeout allowed in requests by a peripheral.
+ *     - <b>Range:</b> 10 (100 ms) to 3200 (32 s)
+ *
+ *     - Time = Value x 10 ms
+ *     - Time Range: 100 ms to 32 s
+ *
+ *     - <b>Default</b> : 10 (100 ms)
+ *   @endparblock
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_connection_set_default_acceptable_subrate(uint16_t min_subrate,
+                                                            uint16_t max_subrate,
+                                                            uint16_t max_latency,
+                                                            uint16_t continuation_number,
+                                                            uint16_t max_timeout);
+
+/***************************************************************************//**
+ *
  * Connect to an advertising device with the specified initiating PHY on which
  * connectable advertisements on primary advertising channels are received. The
  * Bluetooth stack will enter a state where it continuously scans for the
  * connectable advertising packets from the remote device, which matches the
  * Bluetooth address given as a parameter. Scan parameters set in @ref
- * sl_bt_scanner_set_timing are used in this operation. Upon receiving the
+ * sl_bt_scanner_set_parameters are used in this operation. Upon receiving the
  * advertising packet, the module will send a connection request packet to the
  * target device to initiate a Bluetooth connection. To cancel an ongoing
  * connection process, use @ref sl_bt_connection_close command with the handle
@@ -7310,6 +6751,37 @@ sl_status_t sl_bt_connection_open(bd_addr address,
 
 /***************************************************************************//**
  *
+ * Connect to any device in the Filter Accept List, which enables the Auto
+ * Connection Establishment procedure on the local controller. The behavior of
+ * this command is the same as @ref sl_bt_connection_open. The only difference
+ * is that @ref sl_bt_connection_open opens a connection to a given peer device
+ * address.
+ *
+ * See @ref sl_bt_connection_open for more details.
+ *
+ * @param[in] initiating_phy Enum @ref sl_bt_gap_phy_t. The initiating PHY.
+ *   Values:
+ *     - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
+ *     - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY, 125k (S=8) or 500k (S=2)
+ * @param[out] connection Handle that will be assigned to the connection after
+ *   the connection is established. This handle is valid only if the result code
+ *   of this response is 0 (zero).
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ * @b Events
+ *   - @ref sl_bt_evt_connection_opened - This event is triggered after the
+ *     connection is opened and indicates whether the devices are already bonded
+ *     and the role of the device in this connection.
+ *   - @ref sl_bt_evt_connection_parameters - This event indicates the
+ *     connection parameters and security mode of the connection.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_connection_open_with_accept_list(uint8_t initiating_phy,
+                                                   uint8_t *connection);
+
+/***************************************************************************//**
+ *
  * Request a change in the connection parameters of a Bluetooth connection.
  *   - On the central device the HCI LE Connection Update command is used to
  *     update the parameters.
@@ -7325,24 +6797,31 @@ sl_status_t sl_bt_connection_open(bd_addr address,
  * interval.
  *
  * @param[in] connection Connection Handle
- * @param[in] min_interval Minimum value for the connection event interval. This
- *   must be set less than or equal to @p max_interval.
+ * @param[in] min_interval @parblock
+ *   Minimum value for the connection event interval. This must be set less than
+ *   or equal to @p max_interval.
+ *     - <b>Range:</b> 0x0006 to 0x0c80
+ *
  *     - Time = Value x 1.25 ms
- *     - Range: 0x0006 to 0x0c80
  *     - Time Range: 7.5 ms to 4 s
- * @param[in] max_interval Maximum value for the connection event interval. This
- *   must be set greater than or equal to @p min_interval.
+ *   @endparblock
+ * @param[in] max_interval @parblock
+ *   Maximum value for the connection event interval. This must be set greater
+ *   than or equal to @p min_interval.
+ *     - <b>Range:</b> 0x0006 to 0x0c80
+ *
  *     - Time = Value x 1.25 ms
- *     - Range: 0x0006 to 0x0c80
  *     - Time Range: 7.5 ms to 4 s
+ *   @endparblock
  * @param[in] latency Peripheral latency, which defines how many connection
  *   intervals the peripheral can skip if it has no data to send
- *     - Range: 0x0000 to 0x01f3
+ *     - <b>Range:</b> 0x0000 to 0x01f3
  * @param[in] timeout @parblock
  *   Supervision timeout, which defines the time that the connection is
  *   maintained although the devices can't communicate at the currently
  *   configured connection intervals.
- *     - Range: 0x000a to 0x0c80
+ *     - <b>Range:</b> 0x000a to 0x0c80
+ *
  *     - Time = Value x 10 ms
  *     - Time Range: 100 ms to 32 s
  *     - The value in milliseconds must be larger than (1 + @p latency) * @p
@@ -7362,13 +6841,12 @@ sl_status_t sl_bt_connection_open(bd_addr address,
  *   reserved for the connection event so it can transmit and receive more
  *   packets in a connection interval.
  *
- *   Use the default value if the application doesn't care about the connection
- *   event length or doesn't want to do fine tuning.
+ *   Use value 0x0000 if the application doesn't care about the connection event
+ *   length or doesn't want to do fine tuning.
  *
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0000 to 0xffff
  *
- *   Default value: 0x0000
+ *     - <b>Range:</b> 0x0000 to 0xffff
  *   @endparblock
  * @param[in] max_ce_length @parblock
  *   Maximum length of the connection event. It must be greater than or equal to
@@ -7384,12 +6862,11 @@ sl_status_t sl_bt_connection_open(bd_addr address,
  *   operation. This is useful to limit power consumption or leave more time to
  *   other tasks.
  *
- *   Use the default value if the application doesn't care about the connection
- *   event length or doesn't want to do fine tuning.
+ *   Use value 0xffff if the application doesn't care about the connection event
+ *   length or doesn't want to do fine tuning.
  *     - Time = Value x 0.625 ms
- *     - Range: 0x0000 to 0xffff
  *
- *   Default value: 0xffff
+ *     - <b>Range:</b> 0x0000 to 0xffff
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -7475,7 +6952,8 @@ sl_status_t sl_bt_connection_disable_slave_latency(uint8_t connection,
  *
  * @param[in] connection Connection handle
  * @param[out] rssi The median of the last seven measured RSSI values. Units:
- *   dBm. Range: -127 to +20.
+ *   dBm.
+ *     - <b>Range:</b> -127 to +20
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -7580,13 +7058,17 @@ sl_status_t sl_bt_connection_set_remote_power_reporting(uint8_t connection,
  *     - <b>sl_bt_gap_phy_coding_2m_uncoded (0x2):</b> 2M PHY
  *     - <b>sl_bt_gap_phy_coding_125k_coded (0x4):</b> 125k Coded PHY (S=8)
  *     - <b>sl_bt_gap_phy_coding_500k_coded (0x8):</b> 500k Coded PHY (S=2)
- * @param[out] current_level The current transmit power level of the PHY on the
- *   connection. Values:
- *     - <b>Range -127 to 20:</b> The transmit power level in dBm
+ * @param[out] current_level @parblock
+ *   The current transmit power level in dBm of the PHY on the connection.
+ *   Values:
+ *     - <b>Range:</b> -127 to +20
+ *
  *     - <b>@ref SL_BT_CONNECTION_TX_POWER_UNAVAILABLE (0x7F):</b> Transmit
  *       power level is not available.
- * @param[out] max_level The maximum transmit power level of the PHY on the
- *   connection. Values: Range -127 to +20 in dBm.
+ *   @endparblock
+ * @param[out] max_level The maximum transmit power level in dBm of the PHY on
+ *   the connection.
+ *     - <b>Range:</b> -127 to +20
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -7700,13 +7182,13 @@ sl_status_t sl_bt_connection_get_security_status(uint8_t connection,
  *   Preferred maximum payload octets of a packet that the local Controller will
  *   send
  *
- *   Range: 27 (0x1B) to 251 (0xFB)
+ *     - <b>Range:</b> 20 (0x1B) to 251 (0XFB)
  *   @endparblock
  * @param[in] tx_time_us @parblock
  *   Preferred maximum TX time in microseconds that the local Controller will
  *   take to send a packet
  *
- *   Range: 328 (0x0148) to 17040 (0x4290)
+ *     - <b>Range:</b> 328 (0x0148) to 17040 (0x4290)
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -7816,6 +7298,140 @@ sl_status_t sl_bt_connection_get_scheduling_details(uint8_t connection,
 
 /***************************************************************************//**
  *
+ * Get the Bluetooth address of the remote device on the given connection.
+ *
+ * @param[in] connection Connection handle
+ * @param[out] address Bluetooth address of the remote device
+ * @param[out] address_type Enum @ref sl_bt_gap_address_type_t. Remote device
+ *   address type. Values:
+ *     - <b>sl_bt_gap_public_address (0x0):</b> Public device address
+ *     - <b>sl_bt_gap_static_address (0x1):</b> Static device address
+ *     - <b>sl_bt_gap_random_resolvable_address (0x2):</b> Resolvable private
+ *       random address
+ *     - <b>sl_bt_gap_random_nonresolvable_address (0x3):</b> Non-resolvable
+ *       private random address
+ *     - <b>sl_bt_gap_public_address_resolved_from_rpa (0x4):</b> Public
+ *       identity address resolved from a resolvable private address (RPA)
+ *     - <b>sl_bt_gap_static_address_resolved_from_rpa (0x5):</b> Static
+ *       identity address resolved from a resolvable private address (RPA)
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_connection_get_remote_address(uint8_t connection,
+                                                bd_addr *address,
+                                                uint8_t *address_type);
+
+/***************************************************************************//**
+ *
+ * Request a change to the subrating factor and other parameters applied to an
+ * existing connection. The application must include the Connection Subrating
+ * feature (bluetooth_feature_connection_subrating) in order to use this
+ * command.
+ *
+ * If the local device is in the central role on this connection, this command
+ * overrides the default acceptable subrating parameters set by @ref
+ * sl_bt_connection_set_default_acceptable_subrate and uses the specified
+ * subrate parameters for this connection. If the local device is in the
+ * peripheral role on this connection, this command requests a change to the
+ * parameters but they may not be accepted by the peer central device.
+ *
+ * If the connection parameters are changed (see command @ref
+ * sl_bt_connection_set_parameters and event @ref
+ * sl_bt_evt_connection_parameters) after subrate parameters were successfully
+ * applied, the @p latency and @p timeout from @ref
+ * sl_bt_evt_connection_parameters take effect and the @p subrate_factor is
+ * reset to 1 and the @p continuation_number to 0 for the connection. Use this
+ * command @ref sl_bt_connection_request_subrate again after the connection
+ * parameter change to re-enable subrating.
+ *
+ * This command returns SL_STATUS_BT_CTRL_UNSUPPORTED_REMOTE_FEATURE when the
+ * device is in central role on the connection and the peripheral does not
+ * support the subrate feature.
+ *
+ * @param[in] connection Connection handle
+ * @param[in] min_subrate @parblock
+ *   Minimum subrate factor to be applied to the underlying connection interval.
+ *   This parameter must be set to less or equal to @p max_subrate.
+ *     - <b>Range:</b> 1 to 500
+ *
+ *     - <b>Default</b> : 1
+ *   @endparblock
+ * @param[in] max_subrate @parblock
+ *   Maximum subrate factor to be applied to the underlying connection interval.
+ *   This parameter must be set greater or equal to @p min_subrate.
+ *     - <b>Range:</b> 1 to 500
+ *
+ *     - <b>Default</b> : 1
+ *   @endparblock
+ * @param[in] max_latency @parblock
+ *   Maximum Peripheral latency for the connection in units of subrated
+ *   connection intervals. The result of (@p max_latency + 1) x @p max_subrate
+ *   must be less than or equal to 500.
+ *     - <b>Range:</b> 0 to 499
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] continuation_number @parblock
+ *   Minimum number of underlying connection events to remain active after a
+ *   packet containing a Link Layer PDU with a non-zero Length field is sent or
+ *   received. This number must be set to be smaller than @p max_subrate.
+ *     - <b>Range:</b> 0 to 499
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] timeout @parblock
+ *   Supervision timeout, which defines the time that the connection is
+ *   maintained although the devices can't communicate at the currently
+ *   configured connection intervals.
+ *     - <b>Range:</b> 10 (100 ms) to 3200 (32 s)
+ *
+ *     - <b>Default</b> : 10 (100 ms)
+ *
+ *     - Time = Value x 10 ms
+ *     - Time Range: 100 ms to 32 s
+ *     - The value in milliseconds must be larger than (1 + @p max_latency) * @p
+ *       max_interval * 2, where @p max_interval is given in milliseconds
+ *
+ *   Set the supervision timeout at a value which allows communication attempts
+ *   over at least a few connection intervals.
+ *   @endparblock
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ * @b Events
+ *   - @ref sl_bt_evt_connection_subrate_changed - Triggered when the request to
+ *     change the subrate parameters has been successfully completed.
+ *   - @ref sl_bt_evt_connection_request_subrate_failed - Triggered when the
+ *     request to change the subrate parameters has failed.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_connection_request_subrate(uint8_t connection,
+                                             uint16_t min_subrate,
+                                             uint16_t max_subrate,
+                                             uint16_t max_latency,
+                                             uint16_t continuation_number,
+                                             uint16_t timeout);
+
+/***************************************************************************//**
+ *
+ * Get the state of the given connection.
+ *
+ * @param[in] connection Connection handle
+ * @param[out] state Enum @ref sl_bt_connection_state_t. State of the given
+ *   connection. Values:
+ *     - <b>sl_bt_connection_state_closed (0x0):</b> Connection closed
+ *     - <b>sl_bt_connection_state_closing (0x1):</b> Connection is being closed
+ *     - <b>sl_bt_connection_state_open (0x2):</b> Connection open
+ *     - <b>sl_bt_connection_state_opening (0x3):</b> Connection is being opened
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_connection_get_state(uint8_t connection, uint8_t *state);
+
+/***************************************************************************//**
+ *
  * Close a Bluetooth connection gracefully by performing the ACL Termination
  * procedure or cancel an ongoing connection establishment process. The
  * parameter is a connection handle which is reported in @ref
@@ -7860,26 +7476,6 @@ sl_status_t sl_bt_connection_close(uint8_t connection);
  ******************************************************************************/
 sl_status_t sl_bt_connection_forcefully_close(uint8_t connection);
 
-/***************************************************************************//**
- *
- * <b>Deprecated</b> and replaced by @ref sl_bt_connection_get_median_rssi which
- * synchronously returns the value.
- *
- * Get the latest RSSI value of a Bluetooth connection. The RSSI value will be
- * reported in a @ref sl_bt_evt_connection_rssi event if the command returns
- * SL_STATUS_OK.
- *
- * @param[in] connection Connection handle
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- * @b Events
- *   - @ref sl_bt_evt_connection_rssi - Triggered when this command has
- *     completed.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_connection_get_rssi(uint8_t connection);
-
 /** @} */ // end addtogroup sl_bt_connection
 
 /**
@@ -7906,6 +7502,7 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_connection_get_rssi(uint8_t connection);
 #define sl_bt_cmd_gatt_read_characteristic_value_id                  0x07090020
 #define sl_bt_cmd_gatt_read_characteristic_value_from_offset_id      0x12090020
 #define sl_bt_cmd_gatt_read_multiple_characteristic_values_id        0x11090020
+#define sl_bt_cmd_gatt_read_variable_length_characteristic_values_id 0x16090020
 #define sl_bt_cmd_gatt_read_characteristic_value_by_uuid_id          0x08090020
 #define sl_bt_cmd_gatt_write_characteristic_value_id                 0x09090020
 #define sl_bt_cmd_gatt_write_characteristic_value_without_response_id 0x0a090020
@@ -7914,6 +7511,7 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_connection_get_rssi(uint8_t connection);
 #define sl_bt_cmd_gatt_execute_characteristic_value_write_id         0x0c090020
 #define sl_bt_cmd_gatt_read_descriptor_value_id                      0x0e090020
 #define sl_bt_cmd_gatt_write_descriptor_value_id                     0x0f090020
+#define sl_bt_cmd_gatt_get_mtu_id                                    0x15090020
 #define sl_bt_rsp_gatt_set_max_mtu_id                                0x00090020
 #define sl_bt_rsp_gatt_discover_primary_services_id                  0x01090020
 #define sl_bt_rsp_gatt_discover_primary_services_by_uuid_id          0x02090020
@@ -7927,6 +7525,7 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_connection_get_rssi(uint8_t connection);
 #define sl_bt_rsp_gatt_read_characteristic_value_id                  0x07090020
 #define sl_bt_rsp_gatt_read_characteristic_value_from_offset_id      0x12090020
 #define sl_bt_rsp_gatt_read_multiple_characteristic_values_id        0x11090020
+#define sl_bt_rsp_gatt_read_variable_length_characteristic_values_id 0x16090020
 #define sl_bt_rsp_gatt_read_characteristic_value_by_uuid_id          0x08090020
 #define sl_bt_rsp_gatt_write_characteristic_value_id                 0x09090020
 #define sl_bt_rsp_gatt_write_characteristic_value_without_response_id 0x0a090020
@@ -7935,6 +7534,7 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_connection_get_rssi(uint8_t connection);
 #define sl_bt_rsp_gatt_execute_characteristic_value_write_id         0x0c090020
 #define sl_bt_rsp_gatt_read_descriptor_value_id                      0x0e090020
 #define sl_bt_rsp_gatt_write_descriptor_value_id                     0x0f090020
+#define sl_bt_rsp_gatt_get_mtu_id                                    0x15090020
 
 /**
  * @brief These values indicate which attribute request or response has caused
@@ -8104,7 +7704,8 @@ typedef struct sl_bt_evt_gatt_descriptor_s sl_bt_evt_gatt_descriptor_t;
  * sl_bt_gatt_read_characteristic_value, @ref
  * sl_bt_gatt_read_characteristic_value_from_offset, @ref
  * sl_bt_gatt_read_characteristic_value_by_uuid, @ref
- * sl_bt_gatt_read_multiple_characteristic_values; and when the remote GATT
+ * sl_bt_gatt_read_multiple_characteristic_values and @ref
+ * sl_bt_gatt_read_variable_length_characteristic_values. When the remote GATT
  * server sends indications or notifications after enabling notifications with
  * @ref sl_bt_gatt_set_characteristic_notification. The parameter @p att_opcode
  * indicates which type of GATT transaction triggered this event. In particular,
@@ -8197,22 +7798,26 @@ typedef struct sl_bt_evt_gatt_procedure_completed_s sl_bt_evt_gatt_procedure_com
 
 /***************************************************************************//**
  *
- * Set the maximum size of ATT Message Transfer Units (MTU). Functionality is
- * the same as @ref sl_bt_gatt_server_set_max_mtu and this setting applies to
- * both GATT client and server. If the given value is too large according to the
- * maximum BGAPI payload size, the system will select the maximum possible value
- * as the maximum ATT_MTU. If the maximum ATT_MTU is larger than 23, the GATT
- * client in the stack will automatically send an MTU exchange request after a
- * Bluetooth connection has been established.
+ * Set the maximum size of ATT Message Transfer Units (MTU) in the host stack.
+ * The functionality is the same as @ref sl_bt_gatt_server_set_max_mtu and the
+ * setting applies to both GATT client and server.
+ *
+ * The value will be used as the maximum receive MTU size of the GATT client in
+ * ATT_EXCHANGE_MTU_REQ and maximum receive MTU size of the GATT server in
+ * ATT_EXCHANGE_MTU_RSP. The ATT_MTU on a connection is 23 when the connection
+ * is opened. The GATT client will automatically send an ATT_EXCHANGE_MTU_REQ
+ * after a connection is opened if the setting value is larger than 23.
+ *
+ * If the given value is too large according to the maximum BGAPI payload size,
+ * the host stack will select the maximum possible value.
  *
  * @param[in] max_mtu @parblock
- *   Maximum size of Message Transfer Units (MTU) allowed
- *     - Range: 23 to 250
+ *   Maximum size of MTU in the host stack for GATT client and server
+ *     - <b>Range:</b> 23 to 250
  *
- *   Default: 247
+ *     - <b>Default</b> : 247
  *   @endparblock
- * @param[out] max_mtu_out The maximum ATT_MTU selected by the system if this
- *   command succeeds
+ * @param[out] max_mtu_out The maximum size of MTU selected by the host stack
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -8544,6 +8149,52 @@ sl_status_t sl_bt_gatt_read_multiple_characteristic_values(uint8_t connection,
 
 /***************************************************************************//**
  *
+ * Read multiple variable-length characteristic values from a remote GATT
+ * database at once. The remote GATT server returns values in the order they
+ * were requested in one ATT PDU as the response. When the GATT client receives
+ * the response, it generates an @ref sl_bt_evt_gatt_characteristic_value event
+ * for each length-value tuple in the response that contains a characteristic
+ * value in full length. If data in the last tuple is truncated, it will be
+ * discarded by the host stack. A @ref sl_bt_evt_gatt_procedure_completed event
+ * indicates either that this GATT procedure was successfully completed or
+ * failed with an error.
+ *
+ * When the remote GATT server is from Silicon Labs Bluetooth stack, the server
+ * returns ATT Invalid PDU (0x04) if this command only reads one characteristic
+ * value.
+ *
+ * This command has following limitations in current SDK,
+ *   - It cannot read all the requested characteristic values if the total
+ *     length of length-value tuples is greater than the response PDU can take.
+ *     The GATT client will discard a value in the response if the value is
+ *     truncated.
+ *   - The characteristic handle is not correctly reported in an @ref
+ *     sl_bt_evt_gatt_characteristic_value event generated from this procedure.
+ *   - When the remote GATT server is from Silicon Labs Bluetooth stack, the
+ *     server returns ATT Application Error 0x80 if this command tries to read
+ *     the value of a user-type characteristic.
+ *
+ * @param[in] connection Connection handle
+ * @param[in] characteristic_list_len Length of data in @p characteristic_list
+ * @param[in] characteristic_list List of uint16 characteristic handles each in
+ *   little endian format.
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ * @b Events
+ *   - @ref sl_bt_evt_gatt_characteristic_value - Generated for each
+ *     length-value tuple in the response that contains a characteristic value
+ *     in full length. The characteristic handle is set to 0 in this event.
+ *   - @ref sl_bt_evt_gatt_procedure_completed - Procedure was either
+ *     successfully completed or failed with an error.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_gatt_read_variable_length_characteristic_values(uint8_t connection,
+                                                                  size_t characteristic_list_len,
+                                                                  const uint8_t* characteristic_list);
+
+/***************************************************************************//**
+ *
  * Read characteristic values of a service from a remote GATT database by giving
  * the UUID of the characteristic and the handle of the service containing this
  * characteristic. If multiple characteristic values are received in one ATT
@@ -8775,6 +8426,18 @@ sl_status_t sl_bt_gatt_write_descriptor_value(uint8_t connection,
                                               size_t value_len,
                                               const uint8_t* value);
 
+/***************************************************************************//**
+ *
+ * Get the size of ATT Message Transfer Units (MTU) for a connection.
+ *
+ * @param[in] connection Connection handle
+ * @param[out] mtu The maximum ATT_MTU used by the connection
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_gatt_get_mtu(uint8_t connection, uint16_t *mtu);
+
 /** @} */ // end addtogroup sl_bt_gatt
 
 /**
@@ -8814,6 +8477,7 @@ sl_status_t sl_bt_gatt_write_descriptor_value(uint8_t connection,
 #define sl_bt_cmd_gattdb_stop_characteristic_id                      0x0e460020
 #define sl_bt_cmd_gattdb_commit_id                                   0x0f460020
 #define sl_bt_cmd_gattdb_abort_id                                    0x10460020
+#define sl_bt_cmd_gattdb_get_attribute_state_id                      0x11460020
 #define sl_bt_rsp_gattdb_new_session_id                              0x00460020
 #define sl_bt_rsp_gattdb_add_service_id                              0x01460020
 #define sl_bt_rsp_gattdb_remove_service_id                           0x02460020
@@ -8831,6 +8495,7 @@ sl_status_t sl_bt_gatt_write_descriptor_value(uint8_t connection,
 #define sl_bt_rsp_gattdb_stop_characteristic_id                      0x0e460020
 #define sl_bt_rsp_gattdb_commit_id                                   0x0f460020
 #define sl_bt_rsp_gattdb_abort_id                                    0x10460020
+#define sl_bt_rsp_gattdb_get_attribute_state_id                      0x11460020
 
 /**
  * @brief This enum defines GATT service types.
@@ -8840,6 +8505,33 @@ typedef enum
   sl_bt_gattdb_primary_service   = 0x0, /**< (0x0) Primary service */
   sl_bt_gattdb_secondary_service = 0x1  /**< (0x1) Secondary service */
 } sl_bt_gattdb_service_type_t;
+
+/**
+ * @brief This enum defines the high-level category of an attribute in the local
+ * GATT database.
+ */
+typedef enum
+{
+  sl_bt_gattdb_category_service                    = 0x1, /**< (0x1) The
+                                                               attribute is a
+                                                               service
+                                                               declaration */
+  sl_bt_gattdb_category_include                    = 0x2, /**< (0x2) The
+                                                               attribute is an
+                                                               include
+                                                               declaration */
+  sl_bt_gattdb_category_characteristic_declaration = 0x3, /**< (0x3) The
+                                                               attribute is a
+                                                               characteristic
+                                                               declaration */
+  sl_bt_gattdb_category_characteristic_value       = 0x4, /**< (0x4) The
+                                                               attribute is a
+                                                               characteristic
+                                                               value */
+  sl_bt_gattdb_category_descriptor                 = 0x5  /**< (0x5) The
+                                                               attribute is a
+                                                               descriptor */
+} sl_bt_gattdb_attribute_category_t;
 
 /**
  * @brief This enum defines characteristic and descriptor value types.
@@ -8979,6 +8671,33 @@ typedef enum
 
 /** @} */ // end GATT Descriptor Property Flags
 
+/**
+ * @addtogroup sl_bt_gattdb_attribute_state GATT Attribute State Flags
+ * @{
+ *
+ * Defines the attribute state flags for GATT attributes.
+ */
+
+/** The attribute is visible to remote GATT clients. */
+#define SL_BT_GATTDB_ATTRIBUTE_STATE_FLAG_ACTIVE  0x1       
+
+/** The attribute has been marked to be activated when the changes are
+ * committed. */
+#define SL_BT_GATTDB_ATTRIBUTE_STATE_FLAG_STARTED 0x2       
+
+/** The attribute has been marked to be inactivated when the changes are
+ * committed. */
+#define SL_BT_GATTDB_ATTRIBUTE_STATE_FLAG_STOPPED 0x4       
+
+/** The attribute has been marked to be added when the changes are committed. */
+#define SL_BT_GATTDB_ATTRIBUTE_STATE_FLAG_ADDED   0x8       
+
+/** The attribute has been marked to be deleted when the changes are committed.
+ * */
+#define SL_BT_GATTDB_ATTRIBUTE_STATE_FLAG_DELETED 0x10      
+
+/** @} */ // end GATT Attribute State Flags
+
 /***************************************************************************//**
  *
  * Start a new GATT database update session. If the operation is successful, the
@@ -9010,10 +8729,10 @@ sl_status_t sl_bt_gattdb_new_session(uint16_t *session);
  * appended to the service list and is in stopped state. Use @ref
  * sl_bt_gattdb_start_service command to set it visible to remote GATT clients.
  *
- * You are not allowed to add the Generic Attribute Profile service. If the
- * application needs GATT caching, enable the feature in the configuration of
- * this component and the GATT server will handle GATT caching according to the
- * procedures specified by the Bluetooth core specification.
+ * The user application is not allowed to add the Generic Attribute Profile
+ * service. If the application needs GATT caching, enable the feature in the
+ * configuration of this component and the GATT server will handle GATT caching
+ * according to the procedures specified by the Bluetooth core specification.
  *
  * @param[in] session The database update session ID
  * @param[in] type Enum @ref sl_bt_gattdb_service_type_t. The service type.
@@ -9314,7 +9033,8 @@ sl_status_t sl_bt_gattdb_add_uuid16_descriptor(uint16_t session,
  * @param[in] session The database update session ID
  * @param[in] characteristic The characteristic value attribute handle of the
  *   characteristic the descriptor is added to
- * @param[in] property Bitmask of characteristic descriptor properties
+ * @param[in] property The descriptor properties. Value: bitmask of @ref
+ *   sl_bt_gattdb_descriptor_properties
  * @param[in] security Security requirement. Value: 0 or bitmask of @ref
  *   sl_bt_gattdb_security_requirements. A security requirement flag for a
  *   property is ignored if the property is not set for the descriptor.
@@ -9469,6 +9189,20 @@ sl_status_t sl_bt_gattdb_commit(uint16_t session);
  ******************************************************************************/
 sl_status_t sl_bt_gattdb_abort(uint16_t session);
 
+/***************************************************************************//**
+ *
+ * Get the state of the given attribute.
+ *
+ * @param[in] attribute Attribute handle
+ * @param[out] state State of the given attribute. Value: bitmask of @ref
+ *   sl_bt_gattdb_attribute_state
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_gattdb_get_attribute_state(uint16_t attribute,
+                                             uint8_t *state);
+
 /** @} */ // end addtogroup sl_bt_gattdb
 
 /**
@@ -9485,8 +9219,10 @@ sl_status_t sl_bt_gattdb_abort(uint16_t session);
 #define sl_bt_cmd_gatt_server_set_max_mtu_id                         0x0a0a0020
 #define sl_bt_cmd_gatt_server_get_mtu_id                             0x0b0a0020
 #define sl_bt_cmd_gatt_server_find_attribute_id                      0x060a0020
+#define sl_bt_cmd_gatt_server_find_primary_service_id                0x090a0020
 #define sl_bt_cmd_gatt_server_read_attribute_value_id                0x000a0020
 #define sl_bt_cmd_gatt_server_read_attribute_type_id                 0x010a0020
+#define sl_bt_cmd_gatt_server_read_attribute_properties_id           0x050a0020
 #define sl_bt_cmd_gatt_server_write_attribute_value_id               0x020a0020
 #define sl_bt_cmd_gatt_server_send_user_read_response_id             0x030a0020
 #define sl_bt_cmd_gatt_server_send_user_write_response_id            0x040a0020
@@ -9503,8 +9239,10 @@ sl_status_t sl_bt_gattdb_abort(uint16_t session);
 #define sl_bt_rsp_gatt_server_set_max_mtu_id                         0x0a0a0020
 #define sl_bt_rsp_gatt_server_get_mtu_id                             0x0b0a0020
 #define sl_bt_rsp_gatt_server_find_attribute_id                      0x060a0020
+#define sl_bt_rsp_gatt_server_find_primary_service_id                0x090a0020
 #define sl_bt_rsp_gatt_server_read_attribute_value_id                0x000a0020
 #define sl_bt_rsp_gatt_server_read_attribute_type_id                 0x010a0020
+#define sl_bt_rsp_gatt_server_read_attribute_properties_id           0x050a0020
 #define sl_bt_rsp_gatt_server_write_attribute_value_id               0x020a0020
 #define sl_bt_rsp_gatt_server_send_user_read_response_id             0x030a0020
 #define sl_bt_rsp_gatt_server_send_user_write_response_id            0x040a0020
@@ -9802,22 +9540,27 @@ typedef struct sl_bt_evt_gatt_server_notification_tx_completed_s sl_bt_evt_gatt_
 
 /***************************************************************************//**
  *
- * Set the maximum size of ATT Message Transfer Units (MTU). The functionality
- * is the same as @ref sl_bt_gatt_set_max_mtu and this setting applies to both
- * GATT client and server. If the given value is too large according to the
- * maximum BGAPI payload size, the system will select the maximum possible value
- * as the maximum ATT_MTU. If the maximum ATT_MTU is larger than 23, the GATT
- * client in the stack will automatically send an MTU exchange request after a
- * Bluetooth connection was established.
+ * Set the maximum size of ATT Message Transfer Units (MTU) in the host stack.
+ * The functionality is the same as @ref sl_bt_gatt_set_max_mtu and the setting
+ * applies to both GATT client and server.
+ *
+ * The value will be used as maximum receive MTU size of the GATT server in
+ * ATT_EXCHANGE_MTU_RSP. If the GATT client component presents in the
+ * application, the value will also be used as the maximum receive MTU size in
+ * ATT_EXCHANGE_MTU_REQ. The ATT_MTU on a connection is 23 when the connection
+ * is opened. Note that only the GATT Client role can initiate an ATT MTU
+ * Exchange request.
+ *
+ * If the given value is too large according to the maximum BGAPI payload size,
+ * the host stack will select the maximum possible value.
  *
  * @param[in] max_mtu @parblock
- *   Maximum size of Message Transfer Units (MTU) allowed
- *     - Range: 23 to 250
+ *   Maximum size of MTU in the host stack for GATT client and server
+ *     - <b>Range:</b> 23 to 250
  *
- *   Default: 247
+ *     - <b>Default</b> : 247
  *   @endparblock
- * @param[out] max_mtu_out The maximum ATT_MTU selected by the system if this
- *   command succeeded
+ * @param[out] max_mtu_out The maximum size of MTU selected by the host stack
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -9854,6 +9597,26 @@ sl_status_t sl_bt_gatt_server_find_attribute(uint16_t start,
                                              size_t type_len,
                                              const uint8_t* type,
                                              uint16_t *attribute);
+
+/***************************************************************************//**
+ *
+ * Find a primary service from local GATT database.
+ *
+ * @param[in] start Search start index
+ * @param[in] uuid_len Length of data in @p uuid
+ * @param[in] uuid Variable-length byte array. The first byte defines the length
+ *   of data that follows, 0 - 255 bytes.
+ * @param[out] start_out Group start handle if this command succeeds
+ * @param[out] end_out Group end handle if this command succeeds
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_gatt_server_find_primary_service(uint16_t start,
+                                                   size_t uuid_len,
+                                                   const uint8_t* uuid,
+                                                   uint16_t *start_out,
+                                                   uint16_t *end_out);
 
 /***************************************************************************//**
  *
@@ -9896,6 +9659,70 @@ sl_status_t sl_bt_gatt_server_read_attribute_type(uint16_t attribute,
                                                   size_t max_type_size,
                                                   size_t *type_len,
                                                   uint8_t *type);
+
+/***************************************************************************//**
+ *
+ * Read the properties of an attribute from the local GATT database.
+ *
+ * @param[in] attribute Attribute handle
+ * @param[out] category Enum @ref sl_bt_gattdb_attribute_category_t. The
+ *   high-level attribute category. Values:
+ *     - <b>sl_bt_gattdb_category_service (0x1):</b> The attribute is a service
+ *       declaration
+ *     - <b>sl_bt_gattdb_category_include (0x2):</b> The attribute is an include
+ *       declaration
+ *     - <b>sl_bt_gattdb_category_characteristic_declaration (0x3):</b> The
+ *       attribute is a characteristic declaration
+ *     - <b>sl_bt_gattdb_category_characteristic_value (0x4):</b> The attribute
+ *       is a characteristic value
+ *     - <b>sl_bt_gattdb_category_descriptor (0x5):</b> The attribute is a
+ *       descriptor
+ * @param[out] security Security requirement for accessing the attribute. The
+ *   value is a bitmask of @ref sl_bt_gattdb_security_requirements.
+ * @param[out] properties The property flags of the attribute. Different flags
+ *   are used depending on the attribute category specified by @p category:
+ *     - When @p category is @ref sl_bt_gattdb_category_service, the value is a
+ *       bitmask of @ref sl_bt_gattdb_service_property_flags
+ *     - When @p category is @ref sl_bt_gattdb_category_include, the value is
+ *       set to 0
+ *     - When @p category is @ref
+ *       sl_bt_gattdb_category_characteristic_declaration, the value is set to 0
+ *     - When @p category is @ref sl_bt_gattdb_category_characteristic_value,
+ *       the value is a bitmask of @ref sl_bt_gattdb_characteristic_properties
+ *     - When @p category is @ref sl_bt_gattdb_category_descriptor, the value is
+ *       a bitmask of @ref sl_bt_gattdb_descriptor_properties
+ * @param[out] value_type Enum @ref sl_bt_gattdb_value_type_t. The value type.
+ *   Values:
+ *     - <b>sl_bt_gattdb_fixed_length_value (0x1):</b> A fixed-length value
+ *       managed by the local GATT server for responding the read and write
+ *       requests of remote GATT clients
+ *     - <b>sl_bt_gattdb_variable_length_value (0x2):</b> A variable-length
+ *       value managed by the local GATT server for responding the read and
+ *       write requests of remote GATT clients
+ *     - <b>sl_bt_gattdb_user_managed_value (0x3):</b> A value managed by the
+ *       user application for responding the read and write requests of remote
+ *       GATT clients.
+ * @param[out] len The current length of the attribute data stored in the local
+ *   GATT database. This value is set to 0 for attributes that are managed by
+ *   the user application (@p value_type is @ref
+ *   sl_bt_gattdb_user_managed_value).
+ * @param[out] max_writable_len The maximum writable length of the attribute
+ *   data stored in the local GATT database. This is independent of the
+ *   attribute permissions, as even read-only attributes can be writable by the
+ *   local GATT server. This value is set to 0 for attributes that are not
+ *   writable or are managed by the user application (@p value_type is @ref
+ *   sl_bt_gattdb_user_managed_value).
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_gatt_server_read_attribute_properties(uint16_t attribute,
+                                                        uint8_t *category,
+                                                        uint16_t *security,
+                                                        uint16_t *properties,
+                                                        uint8_t *value_type,
+                                                        uint16_t *len,
+                                                        uint16_t *max_writable_len);
 
 /***************************************************************************//**
  *
@@ -10072,7 +9899,11 @@ sl_status_t sl_bt_gatt_server_send_indication(uint8_t connection,
  * setting the corresponding flag to the Client Characteristic Configuration
  * descriptor. If the Client Characteristic Configuration descriptor supports
  * both notifications and indications, the stack will always send a notification
- * even when the client has enabled both.
+ * even when the client has enabled both. This command will not return an error
+ * if some clients fail to be notified. Iterate @ref
+ * sl_bt_gatt_server_send_notification or @ref sl_bt_gatt_server_send_indication
+ * on each connection if the application needs to check that the notification or
+ * indication was sent to each client.
  *
  * A new indication to a GATT client can't be sent until an outstanding
  * indication procedure with the same client has completed, and the operation
@@ -10225,27 +10056,19 @@ sl_status_t sl_bt_gatt_server_read_client_supported_features(uint8_t connection,
 /** @} */ // end addtogroup sl_bt_gatt_server
 
 /**
- * @addtogroup sl_bt_nvm NVM
+ * @addtogroup sl_bt_nvm NVM3 Access in NCP mode
  * @{
  *
- * @brief NVM
+ * @brief NVM3 Access in NCP mode
  *
- * Provide an interface to manage user data objects (key/value pairs) in the
- * flash memory. User data stored within the flash memory is persistent across
- * reset and power cycling of the device. Because Bluetooth bondings are also
- * stored in the flash area, in addition to the flash storage size, the space
- * available for user data also depends on the number of bondings the device has
- * at the time.
+ * Provide convenient methods for applications in NCP mode to manage user data
+ * in the Bluetooth region of NVM3. User data stored in NVM3 is persistent
+ * across reset and power cycling of the device. Because Bluetooth bondings are
+ * also stored in NVM3, the space available for user data also depends on the
+ * number of bondings the device has at the time.
  *
- * On EFR32[B|M]G1x devices, either PS Store or NVM3 data storage driver can be
- * used. PS Store is supported by the Bluetooth stack only. Using NVM3 is
- * recommended if the device needs to support Dynamic Multiple Protocol (DMP).
- * On EFR32[B|M]G2x devices, only NVM3 is supported. When NVM3 is used,
- * applications can also use the NVM3 APIs directly.
- *
- * In PS Store, the flash storage size is fixed at 2048 bytes. The maximum data
- * object size associated to a key is 56 bytes. A Bluetooth bonding uses at
- * maximum 138 bytes for secure connections and 174 bytes for legacy pairing.
+ * It is recommended to use NVM3 APIs directly whenever it is possible,
+ * especially for applications in SoC mode.
  *
  * In NVM3, the flash store size is configurable and the minimum is 3 flash
  * pages. The maximum data object size is configurable up to 4096 bytes. A
@@ -10265,27 +10088,33 @@ sl_status_t sl_bt_gatt_server_read_client_supported_features(uint8_t connection,
 #define sl_bt_rsp_nvm_erase_all_id                                   0x010d0020
 
 /**
- * @addtogroup sl_bt_nvm_keys Defined Keys
+ * @addtogroup sl_bt_nvm_key_range Defined key ranges
  * @{
  *
- * Define keys
+ * Define key ranges in the Bluetooth region of NVM3
  */
 
-/** Crystal tuning value override */
-#define SL_BT_NVM_KEY_CTUNE 0x32      
+/** The low bound of the key range for storing user data in the Bluetooth region
+ * of NVM3 */
+#define SL_BT_NVM_KEY_RANGE_USER_MIN 0x4000    
 
-/** @} */ // end Defined Keys
+/** The high bound of the key range for storing user data in the Bluetooth
+ * region of NVM3 */
+#define SL_BT_NVM_KEY_RANGE_USER_MAX 0x5fff    
+
+/** @} */ // end Defined key ranges
 
 /***************************************************************************//**
  *
- * Store a value into the specified NVM key. Allowed NVM keys are in range from
- * 0x4000 to 0x407F. At most, 56 bytes user data can be stored in one NVM key.
- * The error code 0x018a (command_too_long) is returned if the value data is
- * more than 56 bytes.
+ * Store a value into the specified NVM3 key in the Bluetooth region. Allowed
+ * keys are in the range from SL_BT_NVM_KEY_RANGE_USER_MIN (0x4000) to
+ * SL_BT_NVM_KEY_RANGE_USER_MAX (0x5FFF). The maximum value length is the lesser
+ * of NVM3_DEFAULT_MAX_OBJECT_SIZE configuration in the application and 253
+ * bytes which is the maximum amount this command can accept.
  *
- * @param[in] key NVM key
+ * @param[in] key The NVM3 key in the Bluetooth region
  * @param[in] value_len Length of data in @p value
- * @param[in] value Value to store into the specified NVM key
+ * @param[in] value Value to store into the NVM3 key
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -10296,13 +10125,15 @@ sl_status_t sl_bt_nvm_save(uint16_t key,
 
 /***************************************************************************//**
  *
- * Retrieve the value of the specified NVM key.
+ * Retrieve the value of the specified NVM3 key in the Bluetooth region. Allowed
+ * keys are in the range from SL_BT_NVM_KEY_RANGE_USER_MIN (0x4000) to
+ * SL_BT_NVM_KEY_RANGE_USER_MAX (0x5FFF).
  *
- * @param[in] key NVM key of the value to be retrieved
+ * @param[in] key The NVM3 key in the Bluetooth region
  * @param[in] max_value_size Size of output buffer passed in @p value
  * @param[out] value_len On return, set to the length of output data written to
  *   @p value
- * @param[out] value The returned value of the specified NVM key
+ * @param[out] value The value of the NVM3 key
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -10314,9 +10145,11 @@ sl_status_t sl_bt_nvm_load(uint16_t key,
 
 /***************************************************************************//**
  *
- * Delete a single NVM key and its value from the persistent store.
+ * Delete a single NVM3 key and its value from the Bluetooth region. Allowed
+ * keys are in the range from SL_BT_NVM_KEY_RANGE_USER_MIN (0x4000) to
+ * SL_BT_NVM_KEY_RANGE_USER_MAX (0x5FFF).
  *
- * @param[in] key NVM key to delete
+ * @param[in] key The NVM3 key to delete
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -10325,7 +10158,8 @@ sl_status_t sl_bt_nvm_erase(uint16_t key);
 
 /***************************************************************************//**
  *
- * Delete all NVM keys and their corresponding values.
+ * Delete all NVMs keys and their corresponding values in the Bluetooth region
+ * of NVM3. All bluetooth bondings and associated data in NVM3 are deleted too.
  *
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -10419,13 +10253,16 @@ typedef struct sl_bt_evt_test_dtm_completed_s sl_bt_evt_test_dtm_completed_t;
  * In the transmitter test, the device sends packets continuously with a fixed
  * interval. The type and length of each packet is set by @p packet_type and @p
  * length parameters. The parameter @p phy specifies which PHY is used to
- * transmit the packets. All devices support at least 1M PHY. A special packet
- * type, <b>test_pkt_carrier</b> , can be used to transmit continuous
- * unmodulated carrier. The <b>length</b> field is ignored in this mode. As this
- * command has the limitation within the value of @p power_level, use of @ref
- * sl_bt_test_dtm_tx_cw for custom waves is recommended.
+ * transmit the packets. All devices support at least 1M PHY.
  *
  * Stop the test using the @ref sl_bt_test_dtm_end command.
+ *
+ * For transmitter test with packet type @ref sl_bt_test_pkt_pn9 or @ref
+ * sl_bt_test_pkt_carrier, use the @ref sl_bt_test_dtm_tx_cw command.
+ *
+ * Starting a transmitter test while other Bluetooth activities are active will
+ * either result in an error response or cause functionality issues, hence make
+ * sure other Bluetooth activities are stopped when performing the test.
  *
  * @param[in] packet_type Enum @ref sl_bt_test_packet_type_t. Packet type to
  *   transmit. Values:
@@ -10436,43 +10273,28 @@ typedef struct sl_bt_evt_test_dtm_completed_s sl_bt_evt_test_dtm_completed_t;
  *     - <b>sl_bt_test_pkt_00000000 (0x5):</b> 00000000 packet payload
  *     - <b>sl_bt_test_pkt_00001111 (0x6):</b> 00001111 packet payload
  *     - <b>sl_bt_test_pkt_01010101 (0x7):</b> 01010101 packet payload
- *     - <b>sl_bt_test_pkt_pn9 (0xfd):</b> PN9 continuously modulated output
- *     - <b>sl_bt_test_pkt_carrier (0xfe):</b> Unmodulated carrier
- * @param[in] length @parblock
- *   Packet length in bytes
- *
- *   <b>Range:</b> 0-255
- *   @endparblock
- * @param[in] channel @parblock
- *   Bluetooth channel
- *
- *   <b>Range:</b> 0-39
- *
- *   Channel is (F - 2402) / 2,
- *
- *   where F is frequency in MHz
- *   @endparblock
+ * @param[in] length Packet length in bytes
+ *     - <b>Range:</b> 0 to 255
+ * @param[in] channel Bluetooth channel. Channel is (F - 2402) / 2, where F is
+ *   frequency in MHz.
+ *     - <b>Range:</b> 0 (2402 MHz) to 39 (2480 MHz)
  * @param[in] phy Enum @ref sl_bt_test_phy_t. PHY to use. Values:
  *     - <b>sl_bt_test_phy_1m (0x1):</b> 1M PHY
  *     - <b>sl_bt_test_phy_2m (0x2):</b> 2M PHY
  *     - <b>sl_bt_test_phy_125k (0x3):</b> 125k Coded PHY
  *     - <b>sl_bt_test_phy_500k (0x4):</b> 500k Coded PHY
  * @param[in] power_level @parblock
- *   TX power level in unit dBm. Values:
- *     - <b>-127 to +20:</b> Use specified or the nearest TX power level. The
- *       minimum -127 dBm is specified in the Bluetooth specification. However,
- *       a device may not support this low TX power. In addition, only some
- *       devices support 20 dBm TX power. Effective TX power will be limited by
- *       the global system TX power that can be set with the @ref
- *       sl_bt_system_set_tx_power command.
+ *   TX power level in unit dBm. Use specified or the nearest TX power level.
+ *   The minimum -127 dBm is specified in the Bluetooth specification. However,
+ *   a device may not support this low TX power. In addition, only some devices
+ *   support 20 dBm TX power. Effective TX power will be limited by the global
+ *   system TX power that can be set with the @ref sl_bt_system_set_tx_power
+ *   command. Values:
+ *     - <b>Range:</b> -127 to +20
+ *
  *     - <b>0x7E:</b> Use minimum TX power level the device supports.
  *     - <b>0x7F:</b> Use the smallest of the maximum TX power level the device
  *       supports and the global maximum TX power setting in stack.
- *
- *   For continuous unmodulated carrier mode, the values are set in 0.1 dBm
- *   unit. If the value exceeds the range of power level value allowed by the
- *   device, the command will adjust the power level to the closest minimum or
- *   maximum value.
  *   @endparblock
  *
  * @return Command result
@@ -10501,19 +10323,17 @@ sl_status_t sl_bt_test_dtm_tx_v4(uint8_t packet_type,
  *
  * Stop the test using the @ref sl_bt_test_dtm_end command.
  *
+ * Starting a transmitter test while other Bluetooth activities are active will
+ * either result in an error response or cause functionality issues, hence make
+ * sure other Bluetooth activities are stopped when performing the test.
+ *
  * @param[in] packet_type Enum @ref sl_bt_test_packet_type_t. Packet type to
  *   transmit. Values:
  *     - <b>sl_bt_test_pkt_pn9 (0xfd):</b> PN9 continuously modulated output
  *     - <b>sl_bt_test_pkt_carrier (0xfe):</b> Unmodulated carrier
- * @param[in] channel @parblock
- *   Bluetooth channel
- *
- *   <b>Range:</b> 0-39
- *
- *   Channel is (F - 2402) / 2,
- *
- *   where F is frequency in MHz
- *   @endparblock
+ * @param[in] channel Bluetooth channel. Channel is (F - 2402) / 2,where F is
+ *   frequency in MHz.
+ *     - <b>Range:</b> 0 to 39
  * @param[in] phy Enum @ref sl_bt_test_phy_t. PHY to use. Values:
  *     - <b>sl_bt_test_phy_1m (0x1):</b> 1M PHY
  *     - <b>sl_bt_test_phy_2m (0x2):</b> 2M PHY
@@ -10552,15 +10372,13 @@ sl_status_t sl_bt_test_dtm_tx_cw(uint8_t packet_type,
  * trigger another @ref sl_bt_evt_test_dtm_completed event, which carries the
  * number of packets received during the test.
  *
- * @param[in] channel @parblock
- *   Bluetooth channel
+ * Starting a receiver test while other Bluetooth activities are active will
+ * either result in an error response or cause functionality issues, hence make
+ * sure other Bluetooth activities are stopped when performing the test.
  *
- *   <b>Range:</b> 0-39
- *
- *   Channel is (F - 2402) / 2,
- *
- *   where F is frequency in MHz
- *   @endparblock
+ * @param[in] channel Bluetooth channel. Channel is (F - 2402) / 2, where F is
+ *   frequency in MHz.
+ *     - <b>Range:</b> 0 to 39
  * @param[in] phy Enum @ref sl_bt_test_phy_t. PHY to use. Values:
  *     - <b>sl_bt_test_phy_1m (0x1):</b> 1M PHY
  *     - <b>sl_bt_test_phy_2m (0x2):</b> 2M PHY
@@ -10620,8 +10438,8 @@ sl_status_t sl_bt_test_dtm_end();
  *     requirements and I/O capabilities of this device.
  *   - Use the command @ref sl_bt_sm_set_bondable_mode to set this device into
  *     bondable mode.
- *   - Use the command @ref sl_bt_advertiser_start to start connectable
- *     advertising.
+ *   - Start connectable advertising, e.g., using the command @ref
+ *     sl_bt_legacy_advertiser_start.
  *   - Open a connection to this device from the remote device.
  *   - After the connection is open, start the bonding process on the remote
  *     device.
@@ -10636,7 +10454,6 @@ sl_status_t sl_bt_test_dtm_end();
 #define sl_bt_cmd_sm_configure_id                                    0x010f0020
 #define sl_bt_cmd_sm_set_minimum_key_size_id                         0x140f0020
 #define sl_bt_cmd_sm_set_debug_mode_id                               0x0f0f0020
-#define sl_bt_cmd_sm_add_to_whitelist_id                             0x130f0020
 #define sl_bt_cmd_sm_store_bonding_configuration_id                  0x020f0020
 #define sl_bt_cmd_sm_set_bondable_mode_id                            0x000f0020
 #define sl_bt_cmd_sm_set_passkey_id                                  0x100f0020
@@ -10654,11 +10471,9 @@ sl_status_t sl_bt_test_dtm_end();
 #define sl_bt_cmd_sm_set_legacy_oob_id                               0x190f0020
 #define sl_bt_cmd_sm_set_oob_id                                      0x1a0f0020
 #define sl_bt_cmd_sm_set_remote_oob_id                               0x1b0f0020
-#define sl_bt_cmd_sm_set_bonding_data_id                             0x1c0f0020
 #define sl_bt_rsp_sm_configure_id                                    0x010f0020
 #define sl_bt_rsp_sm_set_minimum_key_size_id                         0x140f0020
 #define sl_bt_rsp_sm_set_debug_mode_id                               0x0f0f0020
-#define sl_bt_rsp_sm_add_to_whitelist_id                             0x130f0020
 #define sl_bt_rsp_sm_store_bonding_configuration_id                  0x020f0020
 #define sl_bt_rsp_sm_set_bondable_mode_id                            0x000f0020
 #define sl_bt_rsp_sm_set_passkey_id                                  0x100f0020
@@ -10676,7 +10491,6 @@ sl_status_t sl_bt_test_dtm_end();
 #define sl_bt_rsp_sm_set_legacy_oob_id                               0x190f0020
 #define sl_bt_rsp_sm_set_oob_id                                      0x1a0f0020
 #define sl_bt_rsp_sm_set_remote_oob_id                               0x1b0f0020
-#define sl_bt_rsp_sm_set_bonding_data_id                             0x1c0f0020
 
 /**
  * @cond RESTRICTED
@@ -10800,7 +10614,9 @@ typedef enum
 PACKSTRUCT( struct sl_bt_evt_sm_passkey_display_s
 {
   uint8_t  connection; /**< Connection handle */
-  uint32_t passkey;    /**< Passkey. Range: 0 to 999999.
+  uint32_t passkey;    /**< Passkey.
+                              - <b>Range:</b> 0 to 999999
+
                               - NOTE! When displaying the passkey to the user,
                                 prefix the number with zeros to obtain a 6 digit
                                 number
@@ -10854,7 +10670,9 @@ typedef struct sl_bt_evt_sm_passkey_request_s sl_bt_evt_sm_passkey_request_t;
 PACKSTRUCT( struct sl_bt_evt_sm_confirm_passkey_s
 {
   uint8_t  connection; /**< Connection handle */
-  uint32_t passkey;    /**< Passkey. Range: 0 to 999999.
+  uint32_t passkey;    /**< Passkey.
+                              - <b>Range:</b> 0 to 999999
+
                               - NOTE! When displaying the passkey to the user,
                                 prefix the number with zeros to obtain a 6 digit
                                 number
@@ -10920,7 +10738,8 @@ typedef struct sl_bt_evt_sm_bonded_s sl_bt_evt_sm_bonded_t;
 PACKSTRUCT( struct sl_bt_evt_sm_bonding_failed_s
 {
   uint8_t  connection; /**< Connection handle */
-  uint16_t reason;     /**< Describes error that occurred */
+  uint16_t reason;     /**< An sl_status_t code describing the error that
+                            occurred */
 });
 
 typedef struct sl_bt_evt_sm_bonding_failed_s sl_bt_evt_sm_bonding_failed_t;
@@ -10946,8 +10765,10 @@ typedef struct sl_bt_evt_sm_bonding_failed_s sl_bt_evt_sm_bonding_failed_t;
 PACKSTRUCT( struct sl_bt_evt_sm_confirm_bonding_s
 {
   uint8_t connection;     /**< Connection handle */
-  uint8_t bonding_handle; /**< Bonding handle for the request. Range: 0 to 31,
-                               or SL_BT_INVALID_BONDING_HANDLE (0xff).
+  uint8_t bonding_handle; /**< Bonding handle for the request.
+                                 - <b>Range:</b> 0 to 31
+
+                                 - 0xFF: SL_BT_INVALID_BONDING_HANDLE
                                  - NOTE! When the bonding handle is anything
                                    other than SL_BT_INVALID_BONDING_HANDLE
                                    (0xff), a bonding already exists for this
@@ -11006,7 +10827,7 @@ typedef struct sl_bt_evt_sm_confirm_bonding_s sl_bt_evt_sm_confirm_bonding_t;
  *     - <b>0:</b> Allow debug keys from remote device.
  *     - <b>1:</b> Reject pairing if remote device uses debug keys.
  *
- *   Default value: 0x00
+ *     - <b>Default</b> : 0
  *   @endparblock
  * @param[in] io_capabilities Enum @ref sl_bt_sm_io_capability_t. I/O
  *   Capabilities. The default I/O Capability used by the stack is No Input and
@@ -11030,8 +10851,8 @@ sl_status_t sl_bt_sm_configure(uint8_t flags, uint8_t io_capabilities);
  * Set the minimum allowed key size used for bonding. The default value is 16
  * bytes.
  *
- * @param[in] minimum_key_size Minimum allowed key size for bonding. Range: 7 to
- *   16
+ * @param[in] minimum_key_size Minimum allowed key size for bonding.
+ *     - <b>Range:</b> 7 to 16
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -11054,50 +10875,19 @@ sl_status_t sl_bt_sm_set_debug_mode();
 
 /***************************************************************************//**
  *
- * <b>Deprecated</b> and replaced by @ref
- * sl_bt_accept_list_add_device_by_bonding and @ref
- * sl_bt_accept_list_add_device_by_address provided by the
- * bluetooth_feature_accept_list component.
- *
- * Add device to accept list, which can be enabled with @ref
- * sl_bt_gap_enable_whitelisting.
- *
- * When using external bonding database, the accept list size must be set before
- * adding devices to the list using @ref sl_bt_sm_store_bonding_configuration.
- *
- * @param[in] address Address of the device added to accept list
- * @param[in] address_type Enum @ref sl_bt_gap_address_type_t. Address type of
- *   the device added to accept list. Values:
- *     - <b>sl_bt_gap_public_address (0x0):</b> Public device address
- *     - <b>sl_bt_gap_static_address (0x1):</b> Static device address
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-SL_BGAPI_DEPRECATED sl_status_t sl_bt_sm_add_to_whitelist(bd_addr address, uint8_t address_type);
-
-/***************************************************************************//**
- *
  * Set the maximum allowed bonding count and bonding policy. The maximum number
  * of bondings that can be supported depends on how much user data is stored in
- * the NVM and the NVM size. When bond policy value 1 or 2 is selected, the
+ * the NVM3 and the NVM3 size. When bond policy value 1 or 2 is selected, the
  * stack will automatically write the new bond, as per the policy, only if the
  * maximum allowed bonding count has been reached. If the stack can't write a
- * new bond for any other reason (e.g., NVM is full), an error will be thrown
+ * new bond for any other reason (e.g., NVM3 is full), an error will be thrown
  * through the bonding_failed event indicating why the bonding was not written.
  * The application has to manually release space from the NVM (e.g., by deleting
  * one of the existing bonds or application data) so that a new bond can be
  * saved. The default value is 13.
  *
- * When using external bonding database with accept list filtering, this command
- * must be called before adding devices to the accept list to define the list
- * size. Calling this function empties the existing accept list.
- *
- * @param[in] max_bonding_count @parblock
- *   Maximum allowed bonding count. Range: 1 to 32
- *
- *   Sets the accept list size with external bonding database.
- *   @endparblock
+ * @param[in] max_bonding_count Maximum allowed bonding count.
+ *     - <b>Range:</b> 1 to 32
  * @param[in] policy_flags @parblock
  *   Bonding policy. Values:
  *     - <b>0:</b> If database is full, new bonding attempts will fail
@@ -11126,7 +10916,7 @@ sl_status_t sl_bt_sm_store_bonding_configuration(uint8_t max_bonding_count,
  *     - <b>0:</b> New bondings not accepted
  *     - <b>1:</b> Bondings allowed
  *
- *   Default value: 0
+ *     - <b>Default</b> : 0
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -11139,8 +10929,12 @@ sl_status_t sl_bt_sm_set_bondable_mode(uint8_t bondable);
  * Enter a fixed passkey, which will be used in the @ref
  * sl_bt_evt_sm_passkey_display event.
  *
- * @param[in] passkey Passkey. Valid range: 0-999999. Set -1 to disable and
- *   start using random passkeys.
+ * @param[in] passkey @parblock
+ *   Passkey.
+ *     - <b>Range:</b> 0 to 999999
+ *
+ *   . Set -1 to disable and start using random passkeys.
+ *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -11175,7 +10969,12 @@ sl_status_t sl_bt_sm_increase_security(uint8_t connection);
  * Enter a passkey after receiving a passkey request event.
  *
  * @param[in] connection Connection handle
- * @param[in] passkey Passkey. Valid range: 0-999999. Set -1 to cancel pairing.
+ * @param[in] passkey @parblock
+ *   Passkey.
+ *     - <b>Range:</b> 0 to 999999
+ *
+ *   Set -1 to cancel pairing.
+ *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -11200,6 +10999,12 @@ sl_status_t sl_bt_sm_passkey_confirm(uint8_t connection, uint8_t confirm);
  *
  * Accept or reject the bonding request.
  *
+ * NOTE! When the bonding handle for the connection is anything other than
+ * SL_BT_INVALID_BONDING_HANDLE (0xff), a bonding already exists for this
+ * connection. Overwriting the existing bonding is a potential security risk.
+ * The bonding handle is included in the @ref sl_bt_evt_sm_confirm_bonding
+ * event.
+ *
  * @param[in] connection Connection handle
  * @param[in] confirm Acceptance. Values:
  *     - <b>0:</b> Reject
@@ -11212,12 +11017,16 @@ sl_status_t sl_bt_sm_bonding_confirm(uint8_t connection, uint8_t confirm);
 
 /***************************************************************************//**
  *
- * Delete the specified bonding or accept list filtering. The connection will be
- * closed if the remote device is connected currently.
+ * Delete the specified bonding. The connection will be closed if the remote
+ * device is connected currently.
  *
  * This commands deletes the information from the persistent bonding database
  * when the built-in bonding database
  * (bluetooth_feature_builtin_bonding_database) is used.
+ *
+ * When used with Filter Accept List (bluetooth_feature_accept_list) or
+ * Resolving List (bluetooth_feature_resolving_list), this command removes the
+ * deleted device from the lists.
  *
  * This command is unavailable if the external bonding database
  * (bluetooth_feature_external_bonding_database) is used.
@@ -11231,11 +11040,15 @@ sl_status_t sl_bt_sm_delete_bonding(uint8_t bonding);
 
 /***************************************************************************//**
  *
- * Delete all bondings, accept list filtering and device local identity
- * resolving key (IRK). All connections to affected devices are closed as well.
+ * Delete all bondings and device local identity resolving key (IRK). All
+ * connections to affected devices are closed as well.
  *
  * This command empties the persistent bonding database when the built-in
  * bonding database (bluetooth_feature_builtin_bonding_database) is used.
+ *
+ * When used with Filter Accept List (bluetooth_feature_accept_list) or
+ * Resolving List (bluetooth_feature_resolving_list), this command removes the
+ * deleted devices from the lists.
  *
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -11246,22 +11059,20 @@ sl_status_t sl_bt_sm_delete_bondings();
 /***************************************************************************//**
  *
  * Get number of entries and bitmask of their handles saved in the bonding
- * database. The entry in the bonding database can be either bonding or accept
- * list filtering device.
+ * database.
  *
- * To get the bonding type and peer device address of a bonding, use the @ref
- * sl_bt_sm_get_bonding_details command. The bonding handle can be calculated
- * from the handle bitmask returned by this command, or alternatively, repeat
- * calling the @ref sl_bt_sm_get_bonding_details command to get the detailed
- * information of all bondings.
+ * To get the bonding information and peer device address of a bonding, use the
+ * @ref sl_bt_sm_get_bonding_details command. The bonding handle can be
+ * calculated from the handle bitmask returned by this command, or
+ * alternatively, repeat calling the @ref sl_bt_sm_get_bonding_details command
+ * to get the detailed information of all bondings.
  *
  * This command is unavailable if the external bonding database
  * (bluetooth_feature_external_bonding_database) is used.
  *
  * @param[in] reserved Use the value 0 on this reserved field. Do not use
  *   none-zero values because they are reserved for future use.
- * @param[out] num_bondings Total number of bondings and accept list filtering
- *   devices stored in bonding database.
+ * @param[out] num_bondings Total number of bondings stored in bonding database.
  * @param[in] max_bondings_size Size of output buffer passed in @p bondings
  * @param[out] bondings_len On return, set to the length of output data written
  *   to @p bondings
@@ -11300,8 +11111,7 @@ sl_status_t sl_bt_sm_get_bonding_handles(uint32_t reserved,
  *     - <b>sl_bt_gap_public_address (0x0):</b> Public device address
  *     - <b>sl_bt_gap_static_address (0x1):</b> Static device address
  * @param[out] security_mode Enum @ref sl_bt_connection_security_t. Connection
- *   security mode. Accept list filtering entry has security mode as no
- *   security. Values:
+ *   security mode. Values:
  *     - <b>sl_bt_connection_mode1_level1 (0x0):</b> No security
  *     - <b>sl_bt_connection_mode1_level2 (0x1):</b> Unauthenticated pairing
  *       with encryption
@@ -11310,7 +11120,7 @@ sl_status_t sl_bt_sm_get_bonding_handles(uint32_t reserved,
  *     - <b>sl_bt_connection_mode1_level4 (0x3):</b> Authenticated Secure
  *       Connections pairing with encryption using a 128-bit strength encryption
  *       key
- * @param[out] key_size Key length in bytes, 0 for accept list filtering entry
+ * @param[out] key_size Key length in bytes
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -11323,8 +11133,7 @@ sl_status_t sl_bt_sm_get_bonding_details(uint32_t bonding,
 
 /***************************************************************************//**
  *
- * Find the bonding or accept list filtering entry by using a Bluetooth device
- * address.
+ * Find the bonding entry by using a Bluetooth device address.
  *
  * This command is unavailable if the external bonding database
  * (bluetooth_feature_external_bonding_database) is used.
@@ -11332,8 +11141,7 @@ sl_status_t sl_bt_sm_get_bonding_details(uint32_t bonding,
  * @param[in] address The Bluetooth device address
  * @param[out] bonding The bonding handle
  * @param[out] security_mode Enum @ref sl_bt_connection_security_t. Connection
- *   security mode. Accept list filtering entry has security mode as no
- *   security. Values:
+ *   security mode. Values:
  *     - <b>sl_bt_connection_mode1_level1 (0x0):</b> No security
  *     - <b>sl_bt_connection_mode1_level2 (0x1):</b> Unauthenticated pairing
  *       with encryption
@@ -11342,7 +11150,7 @@ sl_status_t sl_bt_sm_get_bonding_details(uint32_t bonding,
  *     - <b>sl_bt_connection_mode1_level4 (0x3):</b> Authenticated Secure
  *       Connections pairing with encryption using a 128-bit strength encryption
  *       key
- * @param[out] key_size Key length in bytes, 0 for accept list filtering entry
+ * @param[out] key_size Key length in bytes
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -11383,10 +11191,13 @@ sl_status_t sl_bt_sm_resolve_rpa(bd_addr rpa,
  *
  * Restricted/experimental API. Contact Silicon Labs sales for more information.
  *
- * Set key for bonding or accept list filtering entry overwriting any possible
- * existing key. If there is error which leaves bonding entry in inconsistent
- * state the bonding will be deleted. Only IRK can be added to accept list
- * filtering entry.
+ * <b>Deprecated</b> . Use feature "External Bluetooth bonding database"
+ * (bluetooth_feature_external_bonding_database) if the user case requires
+ * overwriting bonding keys outside of the bonding process.
+ *
+ * Set the key for a bonding. This overwrites the value if the key exists
+ * already. If there is error which leaves the bonding entry in inconsistent
+ * state the bonding will be deleted.
  *
  * @param[in] bonding Bonding handle
  * @param[in] key_type Enum @ref sl_bt_sm_bonding_key_t. Key type. Values:
@@ -11404,7 +11215,7 @@ sl_status_t sl_bt_sm_resolve_rpa(bd_addr rpa,
  *
  * @endcond
  ******************************************************************************/
-sl_status_t sl_bt_sm_set_bonding_key(uint32_t bonding,
+SL_BGAPI_DEPRECATED sl_status_t sl_bt_sm_set_bonding_key(uint32_t bonding,
                                      uint8_t key_type,
                                      aes_key_128 key);
 
@@ -11473,44 +11284,6 @@ sl_status_t sl_bt_sm_set_remote_oob(uint8_t enable,
                                     aes_key_128 random,
                                     aes_key_128 confirm);
 
-/***************************************************************************//**
- * @cond RESTRICTED
- *
- * Restricted/experimental API. Contact Silicon Labs sales for more information.
- *
- * Set bonding data for connection from external bonding database.
- *
- * @param[in] connection Connection handle
- * @param[in] type Enum @ref sl_bt_sm_bonding_data_t. Bonding data type. Values:
- *     - <b>sl_bt_sm_bonding_data_remote_address (0x0):</b> Identity address of
- *       the remote device
- *     - <b>sl_bt_sm_bonding_data_remote_ltk (0x1):</b> LTK used as central
- *       device
- *     - <b>sl_bt_sm_bonding_data_local_ltk (0x2):</b> LTK used as peripheral
- *       device
- *     - <b>sl_bt_sm_bonding_data_remote_master_inf (0x3):</b> Idenfication info
- *       used as central device
- *     - <b>sl_bt_sm_bonding_data_local_master_inf (0x4):</b> Idenfication info
- *       used as central device
- *     - <b>sl_bt_sm_bonding_data_irk (0x5):</b> IRK of the remote device
- *     - <b>sl_bt_sm_bonding_data_meta (0x6):</b> Metadata about the bonding
- *     - <b>sl_bt_sm_bonding_data_gatt_client_config (0x7):</b> GATT database
- *       client configuration
- *     - <b>sl_bt_sm_bonding_data_gatt_client_features (0x8):</b> GATT client
- *       supported features
- *     - <b>sl_bt_sm_bonding_data_gatt_db_hash (0x9):</b> GATT database hash
- * @param[in] data_len Length of data in @p data
- * @param[in] data Bonding data.
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- * @endcond
- ******************************************************************************/
-sl_status_t sl_bt_sm_set_bonding_data(uint8_t connection,
-                                      uint8_t type,
-                                      size_t data_len,
-                                      const uint8_t* data);
-
 /** @} */ // end addtogroup sl_bt_sm
 
 /**
@@ -11565,14 +11338,14 @@ sl_status_t sl_bt_sm_set_bonding_data(uint8_t connection,
  *
  * In this configuration, the value of @p bonding parameter in @ref
  * sl_bt_evt_advertiser_scan_request, @ref sl_bt_evt_connection_opened, @ref
- * sl_bt_evt_sm_bonded, @ref sl_bt_evt_scanner_scan_report, @ref
- * sl_bt_evt_scanner_legacy_advertisement_report, @ref
- * sl_bt_evt_scanner_extended_advertisement_report, @ref sl_bt_evt_sync_opened,
- * and @ref sl_bt_evt_sync_transfer_received is always
- * SL_BT_INVALID_BONDING_HANDLE (0xff). Resolving the bonding handle is the
- * responsibility of the external bonding database. Additionally, the following
- * BGAPI commands are not available and will return the SL_STATUS_NOT_AVAILABLE
- * error:
+ * sl_bt_evt_sm_bonded, @ref sl_bt_evt_scanner_legacy_advertisement_report, @ref
+ * sl_bt_evt_scanner_extended_advertisement_report, @ref
+ * sl_bt_evt_periodic_sync_opened, @ref sl_bt_evt_pawr_sync_opened, @ref
+ * sl_bt_evt_periodic_sync_transfer_received, and @ref
+ * sl_bt_evt_pawr_sync_transfer_received is always SL_BT_INVALID_BONDING_HANDLE
+ * (0xff). Resolving the bonding handle is the responsibility of the external
+ * bonding database. Additionally, the following BGAPI commands are not
+ * available and will return the SL_STATUS_NOT_AVAILABLE error:
  *   - @ref sl_bt_sm_delete_bonding
  *   - @ref sl_bt_sm_get_bonding_handles
  *   - @ref sl_bt_sm_get_bonding_details
@@ -12082,6 +11855,14 @@ sl_status_t sl_bt_resolving_list_remove_all_devices();
  *
  * Add a device to the Filter Accept List based on its bonding handle.
  *
+ * This command returns the error SL_STATUS_BT_CTRL_CONTROLLER_BUSY if the
+ * Filter Accept List is currently used by scanning filter policy, advertising
+ * filter policy, or by initiator filter policy, i.e. initiating connection to
+ * devices on the Filter Accept List. If the list is currently in use, the
+ * application needs to first stop the operation that uses the Filter Accept
+ * List, then add a device to the Filter Accept List, and then restart the
+ * operation that uses the Filter Accept List.
+ *
  * @param[in] bonding The bonding handle
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -12096,11 +11877,23 @@ sl_status_t sl_bt_accept_list_add_device_by_bonding(uint32_t bonding);
  * Use the special address type @ref sl_bt_gap_anonymous_address to add an entry
  * that matches all advertisements sent with no address.
  *
+ * This command returns the error SL_STATUS_BT_CTRL_CONTROLLER_BUSY if the
+ * Filter Accept List is currently used by scanning filter policy, advertising
+ * filter policy, or by initiator filter policy, i.e. initiating connection to
+ * devices on the Filter Accept List. If the list is currently in use, the
+ * application needs to first stop the operation that uses the Filter Accept
+ * List, then add a device to the Filter Accept List, and then restart the
+ * operation that uses the Filter Accept List.
+ *
  * @param[in] address Bluetooth address of the peer device
  * @param[in] address_type Enum @ref sl_bt_gap_address_type_t. The peer device
  *   address type. Values:
  *     - <b>sl_bt_gap_public_address (0x0):</b> Public device address
  *     - <b>sl_bt_gap_static_address (0x1):</b> Static device address
+ *     - <b>sl_bt_gap_random_resolvable_address (0x2):</b> Resolvable private
+ *       random address
+ *     - <b>sl_bt_gap_random_nonresolvable_address (0x3):</b> Non-resolvable
+ *       private random address
  *     - <b>sl_bt_gap_anonymous_address (0xff):</b> Anonymous address. A Filter
  *       Accept List entry with this type matches all advertisements sent with
  *       no address.
@@ -12114,6 +11907,14 @@ sl_status_t sl_bt_accept_list_add_device_by_address(bd_addr address,
 /***************************************************************************//**
  *
  * Remove a device from the Filter Accept List based on its bonding handle.
+ *
+ * This command returns the error SL_STATUS_BT_CTRL_CONTROLLER_BUSY if the
+ * Filter Accept List is currently used by scanning filter policy, advertising
+ * filter policy, or by initiator filter policy, i.e. initiating connection to
+ * devices on the Filter Accept List. If the list is currently in use, the
+ * application needs to first stop the operation that uses the Filter Accept
+ * List, then remove a device from the Filter Accept List, and then restart the
+ * operation that uses the Filter Accept List.
  *
  * @param[in] bonding The bonding handle
  *
@@ -12129,11 +11930,23 @@ sl_status_t sl_bt_accept_list_remove_device_by_bonding(uint32_t bonding);
  * Use the special address type @ref sl_bt_gap_anonymous_address to remove an
  * entry that matches all advertisements sent with no address.
  *
+ * This command returns the error SL_STATUS_BT_CTRL_CONTROLLER_BUSY if the
+ * Filter Accept List is currently used by scanning filter policy, advertising
+ * filter policy, or by initiator filter policy, i.e. initiating connection to
+ * devices on the Filter Accept List. If the list is currently in use, the
+ * application needs to first stop the operation that uses the Filter Accept
+ * List, then remove a device from the Filter Accept List, and then restart the
+ * operation that uses the Filter Accept List.
+ *
  * @param[in] address Bluetooth address of the peer device
  * @param[in] address_type Enum @ref sl_bt_gap_address_type_t. The peer device
  *   address type. Values:
  *     - <b>sl_bt_gap_public_address (0x0):</b> Public device address
  *     - <b>sl_bt_gap_static_address (0x1):</b> Static device address
+ *     - <b>sl_bt_gap_random_resolvable_address (0x2):</b> Resolvable private
+ *       random address
+ *     - <b>sl_bt_gap_random_nonresolvable_address (0x3):</b> Non-resolvable
+ *       private random address
  *     - <b>sl_bt_gap_anonymous_address (0xff):</b> Anonymous address. A Filter
  *       Accept List entry with this type matches all advertisements sent with
  *       no address.
@@ -12148,6 +11961,13 @@ sl_status_t sl_bt_accept_list_remove_device_by_address(bd_addr address,
  *
  * Remove all devices from the Filter Accept List.
  *
+ * This command returns the error SL_STATUS_BT_CTRL_CONTROLLER_BUSY if the
+ * Filter Accept List is currently used by scanning filter policy, advertising
+ * filter policy, or by initiator filter policy, i.e. initiating connection to
+ * devices on the Filter Accept List. If the list is currently in use, the
+ * application needs to first stop the operation that uses the Filter Accept
+ * List, and then remove all devices from the Filter Accept List.
+ *
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -12155,121 +11975,6 @@ sl_status_t sl_bt_accept_list_remove_device_by_address(bd_addr address,
 sl_status_t sl_bt_accept_list_remove_all_devices();
 
 /** @} */ // end addtogroup sl_bt_accept_list
-
-/**
- * @addtogroup sl_bt_ota OTA
- * @{
- *
- * @brief OTA
- *
- * Commands in this class are used for configuring OTA DFU using the Apploader.
- *
- * Note that this class is used on EFR series 1 and is not available for series
- * 2 devices. The Apploader runs as a Bootloader communication plugin on series
- * 2 and the Apploader plugin API supports setting device name and advertising
- * data. Other configurations can be implemented in the Apploader plugin
- * application space.
- */
-
-/* Command and Response IDs */
-#define sl_bt_cmd_ota_set_device_name_id                             0x01100020
-#define sl_bt_cmd_ota_set_advertising_data_id                        0x02100020
-#define sl_bt_cmd_ota_set_configuration_id                           0x03100020
-#define sl_bt_cmd_ota_set_rf_path_id                                 0x04100020
-#define sl_bt_rsp_ota_set_device_name_id                             0x01100020
-#define sl_bt_rsp_ota_set_advertising_data_id                        0x02100020
-#define sl_bt_rsp_ota_set_configuration_id                           0x03100020
-#define sl_bt_rsp_ota_set_rf_path_id                                 0x04100020
-
-/***************************************************************************//**
- *
- * Set the device name to be used during the OTA update. The name is stored in
- * the persistent store. Maximum name length is 17 bytes.
- *
- * Default is "OTA" if a name is not set.
- *
- * Note that this command is available for EFR series 1 devices only.
- *
- * @param[in] name_len Length of data in @p name
- * @param[in] name OTA device name
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-sl_status_t sl_bt_ota_set_device_name(size_t name_len, const uint8_t* name);
-
-/***************************************************************************//**
- *
- * Set advertising packets in OTA. Maximum 31 bytes of data can be set.
- *
- * Note that this command is available for EFR series 1 devices only.
- *
- * @param[in] packet_type This value selects whether data is intended for
- *   advertising packets or scan response packets.
- *     - <b>2:</b> OTA advertising packets
- *     - <b>4:</b> OTA scan response packets
- * @param[in] adv_data_len Length of data in @p adv_data
- * @param[in] adv_data Data to be set
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-sl_status_t sl_bt_ota_set_advertising_data(uint8_t packet_type,
-                                           size_t adv_data_len,
-                                           const uint8_t* adv_data);
-
-/***************************************************************************//**
- *
- * Set OTA configuration. The setting is stored in the persistent store.
- *
- * Note that this command is available for EFR series 1 devices only.
- *
- * @param[in] flags @parblock
- *   OTA configuration flags. This value is given as a bitmask. Flags:
- *
- *   Bit 0: Advertising address
- *
- *     - <b>0:</b> Use public device address
- *     - <b>1:</b> Use a random address
- *
- *   Bit 1: Application update version check. Check the version number and
- *   product ID of the application upgrade before applying. If the version
- *   number of the current application can't be determined, this implementation
- *   will assume that it is OK to apply the new image. Note that this is not a
- *   security feature.
- *
- *     - <b>0:</b> Disable version check
- *     - <b>1:</b> Enable version check
- *
- *   Bit 2 to 31: Reserved
- *
- *   Default value: 0
- *   @endparblock
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-sl_status_t sl_bt_ota_set_configuration(uint32_t flags);
-
-/***************************************************************************//**
- *
- * Set RF path antenna for OTA. This command should be used only if the device
- * has multiple antenna ports. The setting is stored in the persistent store.
- *
- * Note that this command is available for EFR series 1 devices only.
- *
- * @param[in] enable If enabled antenna selection is used in OTA, otherwise
- *   default antenna is used.
- * @param[in] antenna Set antenna used in OTA. Value should be come from
- *   RAIL_AntennaSel_t enum. See antenna path selection in RAIL
- *   rail_chip_specific.h.
- *
- * @return SL_STATUS_OK if successful. Error code otherwise.
- *
- ******************************************************************************/
-sl_status_t sl_bt_ota_set_rf_path(uint8_t enable, uint8_t antenna);
-
-/** @} */ // end addtogroup sl_bt_ota
 
 /**
  * @addtogroup sl_bt_coex Coexistence
@@ -12403,13 +12108,16 @@ sl_status_t sl_bt_coex_get_counters(uint8_t reset,
 /** @} */ // end addtogroup sl_bt_coex
 
 /**
- * @addtogroup sl_bt_cs Accurate Bluetooth Ranging
+ * @addtogroup sl_bt_cs Channel Sounding
  * @{
  *
- * @brief Accurate Bluetooth Ranging
+ * @brief Channel Sounding
  *
- * This class provides commands and events for Accurate Bluetooth Ranging (ABR)
- * between Bluetooth devices.
+ * This class provides commands and events for Channel Sounding (CS) between
+ * Bluetooth devices.
+ *
+ * Any CS command that involves a remote device requires that the connection
+ * with the remote device is encrypted.
  */
 
 /* Command and Response IDs */
@@ -12422,6 +12130,7 @@ sl_status_t sl_bt_coex_get_counters(uint8_t reset,
 #define sl_bt_cmd_cs_procedure_enable_id                             0x06590020
 #define sl_bt_cmd_cs_set_antenna_configuration_id                    0x07590020
 #define sl_bt_cmd_cs_read_local_supported_capabilities_id            0x08590020
+#define sl_bt_cmd_cs_read_remote_supported_capabilities_id           0x09590020
 #define sl_bt_rsp_cs_security_enable_id                              0x00590020
 #define sl_bt_rsp_cs_set_default_settings_id                         0x01590020
 #define sl_bt_rsp_cs_create_config_id                                0x02590020
@@ -12431,9 +12140,10 @@ sl_status_t sl_bt_coex_get_counters(uint8_t reset,
 #define sl_bt_rsp_cs_procedure_enable_id                             0x06590020
 #define sl_bt_rsp_cs_set_antenna_configuration_id                    0x07590020
 #define sl_bt_rsp_cs_read_local_supported_capabilities_id            0x08590020
+#define sl_bt_rsp_cs_read_remote_supported_capabilities_id           0x09590020
 
 /**
- * @brief Specifies the role for the device during ABR procedure.
+ * @brief Specifies the role for the device during CS procedure.
  */
 typedef enum
 {
@@ -12444,7 +12154,7 @@ typedef enum
 } sl_bt_cs_role_t;
 
 /**
- * @brief Defines the status of a given role for an ABR capable device.
+ * @brief Defines the status of a given role for an CS capable device.
  */
 typedef enum
 {
@@ -12453,28 +12163,16 @@ typedef enum
 } sl_bt_cs_role_status_t;
 
 /**
- * @brief Defines the status of a companion signal.
+ * @brief Defines the CS procedure state for the device.
  */
 typedef enum
 {
-  sl_bt_cs_companion_signal_status_disable = 0x0, /**< (0x0) The companion
-                                                       signal is disabled */
-  sl_bt_cs_companion_signal_status_enable  = 0x1  /**< (0x1) The companion
-                                                       signal is enabled */
-} sl_bt_cs_companion_signal_status_t;
-
-/**
- * @brief Defines the ABR procedure state for the device.
- */
-typedef enum
-{
-  sl_bt_cs_procedure_state_disabled = 0x0, /**< (0x0) ABR procedures are
-                                                disabled */
-  sl_bt_cs_procedure_state_enabled  = 0x1  /**< (0x1) ABR procedures are enabled */
+  sl_bt_cs_procedure_state_disabled = 0x0, /**< (0x0) CS procedures are disabled */
+  sl_bt_cs_procedure_state_enabled  = 0x1  /**< (0x1) CS procedures are enabled */
 } sl_bt_cs_procedure_state_t;
 
 /**
- * @brief Defines the different modes for ABR steps.
+ * @brief Defines the different modes for CS steps.
  */
 typedef enum
 {
@@ -12486,19 +12184,35 @@ typedef enum
 } sl_bt_cs_mode_t;
 
 /**
- * @brief Defines the Round Trip Time (RTT) payload types used during the ABR
+ * @brief Defines the Round Trip Time (RTT) payload types used during the CS
  * sequence.
  */
 typedef enum
 {
-  sl_bt_cs_rtt_type_coarse                     = 0x0, /**< (0x0) RTT Coarse */
-  sl_bt_cs_rtt_type_fractional_96_bit_sounding = 0x2  /**< (0x2) RTT Fractional
+  sl_bt_cs_rtt_type_aa_only                    = 0x0, /**< (0x0) RTT Access
+                                                           Address (AA) only */
+  sl_bt_cs_rtt_type_fractional_32_bit_sounding = 0x1, /**< (0x1) RTT Fractional
+                                                           with 32-bit Sounding
+                                                           Sequence */
+  sl_bt_cs_rtt_type_fractional_96_bit_sounding = 0x2, /**< (0x2) RTT Fractional
                                                            with 96-bit Sounding
+                                                           Sequence */
+  sl_bt_cs_rtt_type_fractional_32_bit_random   = 0x3, /**< (0x3) RTT Fractional
+                                                           with 32-bit Random
+                                                           Sequence */
+  sl_bt_cs_rtt_type_fractional_64_bit_random   = 0x4, /**< (0x4) RTT Fractional
+                                                           with 64-bit Random
+                                                           Sequence */
+  sl_bt_cs_rtt_type_fractional_96_bit_random   = 0x5, /**< (0x5) RTT Fractional
+                                                           with 96-bit Random
+                                                           Sequence */
+  sl_bt_cs_rtt_type_fractional_128_bit_random  = 0x6  /**< (0x6) RTT Fractional
+                                                           with 128-bit Random
                                                            Sequence */
 } sl_bt_cs_rtt_type_t;
 
 /**
- * @brief Specifies the ABR channel selection algorithms.
+ * @brief Specifies the CS channel selection algorithms.
  */
 typedef enum
 {
@@ -12510,7 +12224,7 @@ typedef enum
                                                                           #3b
                                                                           for
                                                                           non-mode
-                                                                          0 ABR
+                                                                          0 CS
                                                                           steps */
   sl_bt_cs_channel_selection_algorithm_3c                     = 0x1, /**< (0x1)
                                                                           Use
@@ -12520,7 +12234,7 @@ typedef enum
                                                                           #3c
                                                                           for
                                                                           non-mode
-                                                                          0 ABR
+                                                                          0 CS
                                                                           steps */
   sl_bt_cs_channel_selection_algorithm_user_shape_interleaved = 0x2  /**< (0x2)
                                                                           Use
@@ -12549,56 +12263,48 @@ typedef enum
  */
 typedef enum
 {
-  sl_bt_cs_done_status_complete                 = 0x0,  /**< (0x0) All results
-                                                             complete for the
-                                                             ABR procedure or
-                                                             subevent */
-  sl_bt_cs_done_status_partial_results_continue = 0x1,  /**< (0x1) Partial
-                                                             results with more
-                                                             to follow */
-  sl_bt_cs_done_status_current_aborted          = 0xfe, /**< (0xfe) Current ABR
-                                                             procedure or
-                                                             subevent aborted */
-  sl_bt_cs_done_status_all_aborted              = 0xff  /**< (0xff) Current and
-                                                             all subsequent
-                                                             subevents in the
-                                                             procedure aborted */
+  sl_bt_cs_done_status_complete                 = 0x0, /**< (0x0) All results
+                                                            complete for the CS
+                                                            procedure or
+                                                            subevent */
+  sl_bt_cs_done_status_partial_results_continue = 0x1, /**< (0x1) Partial
+                                                            results with more to
+                                                            follow */
+  sl_bt_cs_done_status_aborted                  = 0xf  /**< (0xf) Current
+                                                            procedure and all
+                                                            subsequent subevents
+                                                            in the procedure
+                                                            aborted or current
+                                                            subevent aborted. */
 } sl_bt_cs_done_status_t;
 
 /**
- * @brief Describes the abort reasons for ABR procedures and subevents and is
- * represented by 4 bits in a byte
+ * @brief Specifies the role for the device during CS procedure.
  */
 typedef enum
 {
-  sl_bt_cs_abort_reason_no_abort              = 0x0, /**< (0x0) Not aborted */
-  sl_bt_cs_abort_reason_host_request          = 0x1, /**< (0x1) Local or remote
-                                                          host request */
-  sl_bt_cs_abort_reason_insufficient_channels = 0x2, /**< (0x2) Filtered channel
-                                                          has less than 15
-                                                          channels */
-  sl_bt_cs_abort_reason_no_map_update         = 0x3, /**< (0x3) Channel map
-                                                          update instant has
-                                                          passed */
-  sl_bt_cs_abort_reason_unspecified           = 0xf  /**< (0xf) Unspecified
-                                                          reasons for abortion */
-} sl_bt_cs_abort_reason_t;
+  sl_bt_cs_config_state_removed = 0x0, /**< (0x0) The CS device configuration is
+                                            removed */
+  sl_bt_cs_config_state_created = 0x1  /**< (0x1) The CS device configuration is
+                                            created */
+} sl_bt_cs_config_state_t;
 
 /**
- * @brief Specifies the role for the device during ABR procedure.
+ * @brief Specifies the Signal Noise Ration (SNR) used to control transmission
+ * of CS_SYNC packets. Currently the SiSDK does not support the SNR control
+ * adjustment.
  */
 typedef enum
 {
-  sl_bt_cs_config_state_removed = 0x0, /**< (0x0) The ABR device configuration
-                                            is removed */
-  sl_bt_cs_config_state_created = 0x1  /**< (0x1) The ABR device configuration
-                                            is created */
-} sl_bt_cs_config_state_t;
+  sl_bt_cs_snr_control_adjustment_not_applied = 0xff  /**< (0xff) SNR control
+                                                           adjustment not to be
+                                                           applied */
+} sl_bt_cs_snr_control_adjustment_t;
 
 /**
  * @addtogroup sl_bt_evt_cs_security_enable_complete sl_bt_evt_cs_security_enable_complete
  * @{
- * @brief Indicates that a locally initiated ABR security start procedure has
+ * @brief Indicates that a locally initiated CS security start procedure has
  * completed or the local controller has responded to a channel security request
  * from the remote controller
  */
@@ -12621,8 +12327,8 @@ typedef struct sl_bt_evt_cs_security_enable_complete_s sl_bt_evt_cs_security_ena
 /**
  * @addtogroup sl_bt_evt_cs_config_complete sl_bt_evt_cs_config_complete
  * @{
- * @brief Indicates that a locally initiated ABR configuration procedure has
- * completed or the local controller has responded to an ABR configuration
+ * @brief Indicates that a locally initiated CS configuration procedure has
+ * completed or the local controller has responded to an CS configuration
  * request from the remote controller
  */
 
@@ -12634,219 +12340,225 @@ typedef struct sl_bt_evt_cs_security_enable_complete_s sl_bt_evt_cs_security_ena
  ******************************************************************************/
 PACKSTRUCT( struct sl_bt_evt_cs_config_complete_s
 {
-  uint8_t                connection;              /**< Connection handle */
-  uint8_t                config_id;               /**< ABR configuration
-                                                       identifier.
-                                                         - Range: 0 to 3 */
-  uint16_t               status;                  /**< SL_STATUS_OK if
-                                                       successful. Error code
-                                                       otherwise. */
-  uint8_t                config_state;            /**< Enum @ref
-                                                       sl_bt_cs_config_state_t.
-                                                       ABR configuration state
-                                                       Values:
-                                                         - <b>sl_bt_cs_config_state_removed
-                                                           (0x0):</b> The ABR
-                                                           device configuration
-                                                           is removed
-                                                         - <b>sl_bt_cs_config_state_created
-                                                           (0x1):</b> The ABR
-                                                           device configuration
-                                                           is created */
-  uint8_t                main_mode_type;          /**< Enum @ref
-                                                       sl_bt_cs_mode_t. Main
-                                                       mode type. Values:
-                                                         - <b>sl_bt_cs_mode_rtt
-                                                           (0x1):</b> Round Trip
-                                                           Time (RTT)
-                                                           measurement
-                                                         - <b>sl_bt_cs_mode_pbr
-                                                           (0x2):</b>
-                                                           Phase-Based Ranging
-                                                           (PBR) measurement
-                                                         - <b>sl_bt_cs_submode_disabled
-                                                           (0xff):</b> Submode
-                                                           disabled for the
-                                                           procedure. */
-  uint8_t                sub_mode_type;           /**< Enum @ref
-                                                       sl_bt_cs_mode_t. Sub mode
-                                                       type. Values:
-                                                         - <b>sl_bt_cs_mode_rtt
-                                                           (0x1):</b> Round Trip
-                                                           Time (RTT)
-                                                           measurement
-                                                         - <b>sl_bt_cs_mode_pbr
-                                                           (0x2):</b>
-                                                           Phase-Based Ranging
-                                                           (PBR) measurement
-                                                         - <b>sl_bt_cs_submode_disabled
-                                                           (0xff):</b> Submode
-                                                           disabled for the
-                                                           procedure. */
-  uint8_t                min_main_mode_steps;     /**< Minimum number of ABR
-                                                       main mode steps to be
-                                                       executed prior to a sub
-                                                       mode step.
-                                                         - Range: 1 to 160 */
-  uint8_t                max_main_mode_steps;     /**< Maximum number of ABR
-                                                       main mode steps to be
-                                                       executed prior to a sub
-                                                       mode step.
-                                                         - Range: 1 to 160 */
-  uint8_t                main_mode_repetition;    /**< Number of main mode steps
-                                                       taken from the end of the
-                                                       last ABR subevent to be
-                                                       repeated at the beginning
-                                                       of the current ABR
-                                                       subevent directly after
-                                                       the last Mode 0 step of
-                                                       that event.
-                                                         - Range: 0 to 3 */
-  uint8_t                mode_calibration_steps;  /**< Number of calibration
-                                                       mode steps to be included
-                                                       at the beginning of the
-                                                       test ABR subevent.
-                                                         - Range: 1 to 3 */
-  uint8_t                role;                    /**< Enum @ref
-                                                       sl_bt_cs_role_t. Device
-                                                       role during the ABR
-                                                       procedure Values:
-                                                         - <b>sl_bt_cs_role_initiator
-                                                           (0x0):</b> The device
-                                                           will initiate the
-                                                           procedure
-                                                         - <b>sl_bt_cs_role_reflector
-                                                           (0x1):</b> The device
-                                                           will reciprocate
-                                                           transmission */
-  uint8_t                rtt_type;                /**< Enum @ref
-                                                       sl_bt_cs_rtt_type_t. RTT
-                                                       payload type used in the
-                                                       ABR procedure Values:
-                                                         - <b>sl_bt_cs_rtt_type_coarse
-                                                           (0x0):</b> RTT Coarse
-                                                         - <b>sl_bt_cs_rtt_type_fractional_96_bit_sounding
-                                                           (0x2):</b> RTT
-                                                           Fractional with
-                                                           96-bit Sounding
-                                                           Sequence */
-  uint8_t                cs_sync_phy;             /**< Enum @ref
-                                                       sl_bt_gap_phy_t. Used PHY
-                                                       for ABR SYNC exchanges
-                                                       during a procedure
-                                                       Values:
-                                                         - <b>sl_bt_gap_phy_1m
-                                                           (0x1):</b> 1M PHY */
-  sl_bt_cs_channel_map_t channel_map;             /**< A fixed length byte array
-                                                       of 10 bytes consisting of
-                                                       79 1-bit fields.
+  uint8_t                connection;             /**< Connection handle */
+  uint8_t                config_id;              /**< CS configuration
+                                                      identifier.
+                                                        - <b>Range:</b> 0 to 3 */
+  uint16_t               status;                 /**< SL_STATUS_OK if
+                                                      successful. Error code
+                                                      otherwise. */
+  uint8_t                config_state;           /**< Enum @ref
+                                                      sl_bt_cs_config_state_t.
+                                                      CS configuration state
+                                                      Values:
+                                                        - <b>sl_bt_cs_config_state_removed
+                                                          (0x0):</b> The CS
+                                                          device configuration
+                                                          is removed
+                                                        - <b>sl_bt_cs_config_state_created
+                                                          (0x1):</b> The CS
+                                                          device configuration
+                                                          is created */
+  uint8_t                main_mode_type;         /**< Enum @ref sl_bt_cs_mode_t.
+                                                      Main mode type. Values:
+                                                        - <b>sl_bt_cs_mode_rtt
+                                                          (0x1):</b> Round Trip
+                                                          Time (RTT) measurement
+                                                        - <b>sl_bt_cs_mode_pbr
+                                                          (0x2):</b> Phase-Based
+                                                          Ranging (PBR)
+                                                          measurement
+                                                        - <b>sl_bt_cs_submode_disabled
+                                                          (0xff):</b> Submode
+                                                          disabled for the
+                                                          procedure. */
+  uint8_t                sub_mode_type;          /**< Enum @ref sl_bt_cs_mode_t.
+                                                      Sub mode type. Values:
+                                                        - <b>sl_bt_cs_mode_rtt
+                                                          (0x1):</b> Round Trip
+                                                          Time (RTT) measurement
+                                                        - <b>sl_bt_cs_mode_pbr
+                                                          (0x2):</b> Phase-Based
+                                                          Ranging (PBR)
+                                                          measurement
+                                                        - <b>sl_bt_cs_submode_disabled
+                                                          (0xff):</b> Submode
+                                                          disabled for the
+                                                          procedure. */
+  uint8_t                min_main_mode_steps;    /**< Minimum number of CS main
+                                                      mode steps to be executed
+                                                      prior to a sub mode step.
+                                                        - <b>Range:</b> 2 to 255 */
+  uint8_t                max_main_mode_steps;    /**< Maximum number of CS main
+                                                      mode steps to be executed
+                                                      prior to a sub mode step.
+                                                        - <b>Range:</b> 2 to 255 */
+  uint8_t                main_mode_repetition;   /**< Number of main mode steps
+                                                      taken from the end of the
+                                                      last CS subevent to be
+                                                      repeated at the beginning
+                                                      of the current CS subevent
+                                                      directly after the last
+                                                      Mode 0 step of that event.
+                                                        - <b>Range:</b> 0 to 3 */
+  uint8_t                mode_calibration_steps; /**< Number of calibration mode
+                                                      steps to be included at
+                                                      the beginning of the test
+                                                      CS subevent.
+                                                        - <b>Range:</b> 1 to 3 */
+  uint8_t                role;                   /**< Enum @ref sl_bt_cs_role_t.
+                                                      Device role during the CS
+                                                      procedure Values:
+                                                        - <b>sl_bt_cs_role_initiator
+                                                          (0x0):</b> The device
+                                                          will initiate the
+                                                          procedure
+                                                        - <b>sl_bt_cs_role_reflector
+                                                          (0x1):</b> The device
+                                                          will reciprocate
+                                                          transmission */
+  uint8_t                rtt_type;               /**< Enum @ref
+                                                      sl_bt_cs_rtt_type_t. RTT
+                                                      payload type used in the
+                                                      CS procedure Values:
+                                                        - <b>sl_bt_cs_rtt_type_aa_only
+                                                          (0x0):</b> RTT Access
+                                                          Address (AA) only
+                                                        - <b>sl_bt_cs_rtt_type_fractional_32_bit_sounding
+                                                          (0x1):</b> RTT
+                                                          Fractional with 32-bit
+                                                          Sounding Sequence
+                                                        - <b>sl_bt_cs_rtt_type_fractional_96_bit_sounding
+                                                          (0x2):</b> RTT
+                                                          Fractional with 96-bit
+                                                          Sounding Sequence
+                                                        - <b>sl_bt_cs_rtt_type_fractional_32_bit_random
+                                                          (0x3):</b> RTT
+                                                          Fractional with 32-bit
+                                                          Random Sequence
+                                                        - <b>sl_bt_cs_rtt_type_fractional_64_bit_random
+                                                          (0x4):</b> RTT
+                                                          Fractional with 64-bit
+                                                          Random Sequence
+                                                        - <b>sl_bt_cs_rtt_type_fractional_96_bit_random
+                                                          (0x5):</b> RTT
+                                                          Fractional with 96-bit
+                                                          Random Sequence
+                                                        - <b>sl_bt_cs_rtt_type_fractional_128_bit_random
+                                                          (0x6):</b> RTT
+                                                          Fractional with
+                                                          128-bit Random
+                                                          Sequence */
+  uint8_t                cs_sync_phy;            /**< Enum @ref sl_bt_gap_phy_t.
+                                                      Used PHY for CS_SYNC
+                                                      exchanges during a
+                                                      procedure Values:
+                                                        - <b>sl_bt_gap_phy_1m
+                                                          (0x1):</b> 1M PHY
+                                                        - <b>sl_bt_gap_phy_2m
+                                                          (0x2):</b> 2M PHY
+                                                        - <b>sl_bt_gap_phy_coded
+                                                          (0x4):</b> Coded PHY,
+                                                          125k (S=8) or 500k
+                                                          (S=2)
+                                                        - <b>sl_bt_gap_phy_any
+                                                          (0xff):</b> Any PHYs
+                                                          the device supports */
+  sl_bt_cs_channel_map_t channel_map;            /**< A fixed length byte array
+                                                      of 10 bytes consisting of
+                                                      80 1-bit fields.
 
-                                                       The nth field (in the
-                                                       range 0 to 78) contains
-                                                       the value for the ABR
-                                                       channel index n.
+                                                      The nth field (in the
+                                                      range 0 to 78) contains
+                                                      the value for the CS
+                                                      channel index n.
 
-                                                         - Bit value 0: Channel
-                                                           n is disabled
-                                                         - Bit value 1: Channel
-                                                           n is enabled
+                                                        - Bit value 0: Channel n
+                                                          is disabled
+                                                        - Bit value 1: Channel n
+                                                          is enabled
 
-                                                       The rest of most
-                                                       significant bits are
-                                                       reserved for future use
-                                                       and must be set to 0.
-                                                       Channels n = 0, 1, 23,
-                                                       24, 25, 77 and 78 shall
-                                                       be ignored and not used
-                                                       for ABR. At least 15
-                                                       channels shall be marked
-                                                       as used. */
-  uint8_t                channel_map_repetition;  /**< Number of times the
-                                                       channel_map field will be
-                                                       cycled through for
-                                                       non-Mode 0 steps within a
-                                                       ABR procedure.
-                                                         - Range: 0x01 to 0xFF */
-  uint8_t                channel_selection_type;  /**< Enum @ref
-                                                       sl_bt_cs_channel_selection_algorithm_t.
-                                                       ABR algorithm to be used
-                                                       during the procedure for
-                                                       non-mode 0 steps Value:
-                                                         - <b>sl_bt_cs_channel_selection_algorithm_3b
-                                                           (0x0):</b> Use
-                                                           Channel Selection
-                                                           Algorithm #3b for
-                                                           non-mode 0 ABR steps
-                                                         - <b>sl_bt_cs_channel_selection_algorithm_3c
-                                                           (0x1):</b> Use
-                                                           Channel Selection
-                                                           Algorithm #3c for
-                                                           non-mode 0 ABR steps
-                                                         - <b>sl_bt_cs_channel_selection_algorithm_user_shape_interleaved
-                                                           (0x2):</b> Use
-                                                           Interleaved shape for
-                                                           user specified
-                                                           channel sequence */
-  uint8_t                ch3c_shape;              /**< Enum @ref
-                                                       sl_bt_cs_ch3c_shape_t.
-                                                       Shape for user-specified
-                                                       channel sequence Values:
-                                                         - <b>sl_bt_cs_ch3c_shape_hat
-                                                           (0x0):</b> Use Hat
-                                                           shape for user
-                                                           specified channel
-                                                           sequence
-                                                         - <b>sl_bt_cs_chc3_shape_interleaved
-                                                           (0x1):</b> Use
-                                                           Interleaved shape for
-                                                           user specified
-                                                           channel sequence */
-  uint8_t                ch3c_jump;               /**< Number of channels
-                                                       skipped in each rising
-                                                       and falling sequence
-                                                         - Range: 0x03 to 0x08 */
-  uint8_t                companion_signal_enable; /**< Enum @ref
-                                                       sl_bt_cs_companion_signal_status_t.
-                                                       Enabled or disabled
-                                                       companion signal status
-                                                       Values:
-                                                         - <b>sl_bt_cs_companion_signal_status_disable
-                                                           (0x0):</b> The
-                                                           companion signal is
-                                                           disabled
-                                                         - <b>sl_bt_cs_companion_signal_status_enable
-                                                           (0x1):</b> The
-                                                           companion signal is
-                                                           enabled */
-  uint8_t                ip1_time_us;             /**< Interlude time in
-                                                       microseconds between the
-                                                       RTT packets. Values:
-                                                       0x0A, 0x14, 0x1E, 0x28,
-                                                       0x32, 0x3C, 0x50, or
-                                                       0x91. All other values
-                                                       are reserved for future
-                                                       use. */
-  uint8_t                ip2_time_us;             /**< Interlude time in
-                                                       microseconds between the
-                                                       CS tones. Values: 0x0A,
-                                                       0x14, 0x1E, 0x28, 0x32,
-                                                       0x3C, 0x50, or 0x91. All
-                                                       other values are reserved
-                                                       for future use. */
-  uint8_t                fcs_time_us;             /**< Time in microseconds for
-                                                       frequency changes.
-                                                       Values: 0x0F, 0x14, 0x1E,
-                                                       0x28, 0x32, 0x3C, 0x50,
-                                                       0x64, 0x78, or 0x96. All
-                                                       other values are reserved
-                                                       for future use. */
-  uint8_t                pm_time_us;              /**< Time in microseconds for
-                                                       the phase measurement
-                                                       period of the CS tones.
-                                                       Values: 0x0A, 0x14, or
-                                                       0x28. All other values
-                                                       are reserved for future
-                                                       use. */
+                                                      The most significant bit
+                                                      (79) is reserved for
+                                                      future use and must be set
+                                                      to 0. Channels n = 0, 1,
+                                                      23, 24, 25, 77 and 78
+                                                      shall be ignored and not
+                                                      used for CS. At least 15
+                                                      channels shall be marked
+                                                      as used. */
+  uint8_t                channel_map_repetition; /**< Number of times the
+                                                      channel_map field will be
+                                                      cycled through for
+                                                      non-Mode 0 steps within a
+                                                      CS procedure.
+                                                        - <b>Range:</b> 1 to 255 */
+  uint8_t                channel_selection_type; /**< Enum @ref
+                                                      sl_bt_cs_channel_selection_algorithm_t.
+                                                      CS algorithm to be used
+                                                      during the procedure for
+                                                      non-mode 0 steps Value:
+                                                        - <b>sl_bt_cs_channel_selection_algorithm_3b
+                                                          (0x0):</b> Use Channel
+                                                          Selection Algorithm
+                                                          #3b for non-mode 0 CS
+                                                          steps
+                                                        - <b>sl_bt_cs_channel_selection_algorithm_3c
+                                                          (0x1):</b> Use Channel
+                                                          Selection Algorithm
+                                                          #3c for non-mode 0 CS
+                                                          steps
+                                                        - <b>sl_bt_cs_channel_selection_algorithm_user_shape_interleaved
+                                                          (0x2):</b> Use
+                                                          Interleaved shape for
+                                                          user specified channel
+                                                          sequence */
+  uint8_t                ch3c_shape;             /**< Enum @ref
+                                                      sl_bt_cs_ch3c_shape_t.
+                                                      Shape for user-specified
+                                                      channel sequence Values:
+                                                        - <b>sl_bt_cs_ch3c_shape_hat
+                                                          (0x0):</b> Use Hat
+                                                          shape for user
+                                                          specified channel
+                                                          sequence
+                                                        - <b>sl_bt_cs_chc3_shape_interleaved
+                                                          (0x1):</b> Use
+                                                          Interleaved shape for
+                                                          user specified channel
+                                                          sequence */
+  uint8_t                ch3c_jump;              /**< Number of channels skipped
+                                                      in each rising and falling
+                                                      sequence
+                                                        - <b>Range:</b> 3 to 8 */
+  uint8_t                reserved;               /**< Reserved for future use. */
+  uint8_t                t_ip1_time;             /**< Interlude time in
+                                                      microseconds between the
+                                                      RTT packets. Values: 0x0A,
+                                                      0x14, 0x1E, 0x28, 0x32,
+                                                      0x3C, 0x50, or 0x91. All
+                                                      other values are reserved
+                                                      for future use. */
+  uint8_t                t_ip2_time;             /**< Interlude time in
+                                                      microseconds between the
+                                                      CS tones. Values: 0x0A,
+                                                      0x14, 0x1E, 0x28, 0x32,
+                                                      0x3C, 0x50, or 0x91. All
+                                                      other values are reserved
+                                                      for future use. */
+  uint8_t                t_fcs_time;             /**< Time in microseconds for
+                                                      frequency changes. Values:
+                                                      0x0F, 0x14, 0x1E, 0x28,
+                                                      0x32, 0x3C, 0x50, 0x64,
+                                                      0x78, or 0x96. All other
+                                                      values are reserved for
+                                                      future use. */
+  uint8_t                t_pm_time;              /**< Time in microseconds for
+                                                      the phase measurement
+                                                      period of the CS tones.
+                                                      Values: 0x0A, 0x14, or
+                                                      0x28. All other values are
+                                                      reserved for future use. */
 });
 
 typedef struct sl_bt_evt_cs_config_complete_s sl_bt_evt_cs_config_complete_t;
@@ -12856,9 +12568,9 @@ typedef struct sl_bt_evt_cs_config_complete_s sl_bt_evt_cs_config_complete_t;
 /**
  * @addtogroup sl_bt_evt_cs_procedure_enable_complete sl_bt_evt_cs_procedure_enable_complete
  * @{
- * @brief Indicates the controller has scheduled a new ABR procedure
- * measurement, as a result of @ref sl_bt_cs_procedure_enable command or
- * disabled an ongoing, as a result of @ref sl_bt_cs_procedure_enable command.
+ * @brief Indicates the controller has scheduled a new CS procedure measurement,
+ * as a result of @ref sl_bt_cs_procedure_enable command or disabled an ongoing,
+ * as a result of @ref sl_bt_cs_procedure_enable command.
  */
 
 /** @brief Identifier of the procedure_enable_complete event */
@@ -12869,45 +12581,50 @@ typedef struct sl_bt_evt_cs_config_complete_s sl_bt_evt_cs_config_complete_t;
  ******************************************************************************/
 PACKSTRUCT( struct sl_bt_evt_cs_procedure_enable_complete_s
 {
-  uint8_t  connection;             /**< Connection handle */
-  uint8_t  config_id;              /**< ABR configuration identifier.
-                                          - Range: 0 to 3 */
-  uint16_t status;                 /**< SL_STATUS_OK if successful. Error code
-                                        otherwise. */
-  uint8_t  state;                  /**< Enum @ref sl_bt_cs_procedure_state_t.
-                                        ABR procedure enabled or disabled
-                                        Values:
-                                          - <b>sl_bt_cs_procedure_state_disabled
-                                            (0x0):</b> ABR procedures are
-                                            disabled
-                                          - <b>sl_bt_cs_procedure_state_enabled
-                                            (0x1):</b> ABR procedures are
-                                            enabled */
-  uint8_t  antenna_config;         /**< Antenna configuration index
-                                          - Range: 0 to 7 */
-  int8_t   tx_power;               /**< Transmit power level used in the
-                                        transmission. Units: dBm.
-                                          - Range: -127 to +20
-                                          - Value: 0x07F. Transmit power level
-                                            is unavailable */
-  uint32_t subevent_len;           /**< Duration for each subevent in
-                                        microseconds
-                                          - Range: 1250 μs to 4 s */
-  uint8_t  subevents_per_interval; /**< Number of subevents anchored off the
-                                        same ACL connection event
-                                          - Range: 1 to 16 */
-  uint16_t subevent_interval;      /**< Duration in microseconds between
-                                        consecutive ABR subevents anchored off
-                                        the same ACL connection event. Units:
-                                        0.625 ms. */
-  uint16_t event_interval;         /**< Number of ACL connection events between
-                                        consecutive ABR event anchor points */
-  uint16_t procedure_interval;     /**< Number of ACL connection events between
-                                        consecutive ABR procedure anchor points */
-  uint16_t procedure_count;        /**< Number of procedures to continue until
-                                        disabled. Maximum number of procedures
-                                        to be scheduled.
-                                          - Range: 0x01 to 0xFFFF. */
+  uint8_t  connection;          /**< Connection handle */
+  uint8_t  config_id;           /**< CS configuration identifier.
+                                       - <b>Range:</b> 0 to 3 */
+  uint16_t status;              /**< SL_STATUS_OK if successful. Error code
+                                     otherwise. */
+  uint8_t  state;               /**< Enum @ref sl_bt_cs_procedure_state_t. CS
+                                     procedure enabled or disabled Values:
+                                       - <b>sl_bt_cs_procedure_state_disabled
+                                         (0x0):</b> CS procedures are disabled
+                                       - <b>sl_bt_cs_procedure_state_enabled
+                                         (0x1):</b> CS procedures are enabled */
+  uint8_t  antenna_config;      /**< Antenna configuration index
+                                       - <b>Range:</b> 0 to 7 */
+  int8_t   tx_power;            /**< Transmit power level used in the
+                                     transmission. Units: dBm.
+                                       - <b>Range:</b> -127 to +20
+
+                                       - Value: 0x07F. Transmit power level is
+                                         unavailable */
+  uint32_t subevent_len;        /**< Duration for each subevent in microseconds
+                                       - <b>Range:</b> 1250 to 3999999
+
+                                       - Time range: 1250 us to 4s */
+  uint8_t  subevents_per_event; /**< Number of subevents anchored off the same
+                                     ACL connection event
+                                       - <b>Range:</b> 1 to 20 */
+  uint16_t subevent_interval;   /**< Duration in microseconds between
+                                     consecutive CS subevents anchored off the
+                                     same ACL connection event. Units: 0.625 ms. */
+  uint16_t event_interval;      /**< Number of ACL connection events between
+                                     consecutive CS event anchor points */
+  uint16_t procedure_interval;  /**< Number of ACL connection events between
+                                     consecutive CS procedure anchor points */
+  uint16_t procedure_count;     /**< Number of procedures to continue until
+                                     disabled. Maximum number of procedures to
+                                     be scheduled.
+                                       - <b>Range:</b> 1 to 65535 */
+  uint16_t max_procedure_len;   /**< Maximum duration for each measurement
+                                     procedure. Value in units of 0.625 ms.
+                                       - <b>Range:</b> 1 to 65535
+
+                                       - Time: N x 0.625ms. <b>N</b> being the
+                                         input.
+                                       - Time range: 0.625 ms to 40.959375 s. */
 });
 
 typedef struct sl_bt_evt_cs_procedure_enable_complete_s sl_bt_evt_cs_procedure_enable_complete_t;
@@ -12917,7 +12634,11 @@ typedef struct sl_bt_evt_cs_procedure_enable_complete_s sl_bt_evt_cs_procedure_e
 /**
  * @addtogroup sl_bt_evt_cs_result sl_bt_evt_cs_result
  * @{
- * @brief Reports results of every ABR subevent within the ABR procedure
+ * @brief Reports results of every CS subevent within the CS procedure
+ *
+ * When the number of steps exceeds the maximum HCI event size, the controller
+ * may report further results for the CS subevent using the @ref
+ * sl_bt_evt_cs_result_continue event.
  */
 
 /** @brief Identifier of the result event */
@@ -12932,20 +12653,29 @@ PACKSTRUCT( struct sl_bt_evt_cs_result_s
                                           SL_BT_INVALID_CONNECTION_HANDLE (0xFF)
                                           when triggered as a result of @ref
                                           sl_bt_cs_test_start command */
-  uint8_t    config_id;              /**< ABR configuration identifier
-                                            - Range: 0 to 3 */
+  uint8_t    config_id;              /**< CS configuration identifier. This
+                                          paremeter is ignored when triggered as
+                                          a result of @ref sl_bt_cs_test_start
+                                          command.
+                                            - <b>Range:</b> 0 to 3 */
   uint16_t   start_acl_conn_event;   /**< Starting an ACL connection event count
                                           for the results reported in the event.
                                           This is reported only in the first
                                           subevent in the procedure. For
                                           subsequent subevents, this value is
-                                          set to 0. */
-  uint16_t   procedure_counter;      /**< Indicates the associated ABR procedure
+                                          set to 0. This parameter is ignored
+                                          when triggered as a result of @ref
+                                          sl_bt_cs_test_start command. */
+  uint16_t   procedure_counter;      /**< Indicates the associated CS procedure
                                           count for the results reported in this
-                                          event */
+                                          event. This parameter is ignored when
+                                          triggered as a result of @ref
+                                          sl_bt_cs_test_start command. */
   int16_t    frequency_compensation; /**< Frequency compensation value. Units:
                                           0.01 ppm (15-bit signed integer).
-                                            - Range: -10000 to 10000
+                                            - <b>Range:</b> -100ppm (227680) to
+                                              +100ppm (10000)
+
                                             - Value: 0xC000. Frequency
                                               compensation value is not
                                               available or the role is not
@@ -12953,79 +12683,85 @@ PACKSTRUCT( struct sl_bt_evt_cs_result_s
                                               in the first subevent in the
                                               procedure. For subsequent
                                               subevents, this value is set to 0. */
-  uint8_t    procedure_done_status;  /**< Enum @ref sl_bt_cs_done_status_t.
-                                          Current status of the ABR procedure
-                                          Values:
-                                            - <b>sl_bt_cs_done_status_complete
-                                              (0x0):</b> All results complete
-                                              for the ABR procedure or subevent
-                                            - <b>sl_bt_cs_done_status_partial_results_continue
-                                              (0x1):</b> Partial results with
-                                              more to follow
-                                            - <b>sl_bt_cs_done_status_current_aborted
-                                              (0xfe):</b> Current ABR procedure
-                                              or subevent aborted
-                                            - <b>sl_bt_cs_done_status_all_aborted
-                                              (0xff):</b> Current and all
-                                              subsequent subevents in the
-                                              procedure aborted */
-  uint8_t    subevent_done_status;   /**< Enum @ref sl_bt_cs_done_status_t.
-                                          Current status of the ABR subevent
-                                          Values:
-                                            - <b>sl_bt_cs_done_status_complete
-                                              (0x0):</b> All results complete
-                                              for the ABR procedure or subevent
-                                            - <b>sl_bt_cs_done_status_partial_results_continue
-                                              (0x1):</b> Partial results with
-                                              more to follow
-                                            - <b>sl_bt_cs_done_status_current_aborted
-                                              (0xfe):</b> Current ABR procedure
-                                              or subevent aborted
-                                            - <b>sl_bt_cs_done_status_all_aborted
-                                              (0xff):</b> Current and all
-                                              subsequent subevents in the
-                                              procedure aborted */
-  uint8_t    abort_reason;           /**< Enum @ref sl_bt_cs_abort_reason_t.
-                                          Indicates the abort reason when the
-                                          procedure_done_status or
-                                          subevent_done_status is set to 0xF,
-                                          otherwise the default value is set to
-                                          zero. The first 4 bits are related to
-                                          the procedure abort reasons and the
-                                          last 4 bits are related to the
-                                          subevent done. Values:
-                                            - <b>sl_bt_cs_abort_reason_no_abort
-                                              (0x0):</b> Not aborted
-                                            - <b>sl_bt_cs_abort_reason_host_request
-                                              (0x1):</b> Local or remote host
-                                              request
-                                            - <b>sl_bt_cs_abort_reason_insufficient_channels
-                                              (0x2):</b> Filtered channel has
-                                              less than 15 channels
-                                            - <b>sl_bt_cs_abort_reason_no_map_update
-                                              (0x3):</b> Channel map update
-                                              instant has passed
-                                            - <b>sl_bt_cs_abort_reason_unspecified
-                                              (0xf):</b> Unspecified reasons for
-                                              abortion */
   int8_t     reference_power_level;  /**< Reference power level used by the
                                           transmission. Units: dBm.
-                                            - Range: -127 to 20
+                                            - <b>Range:</b> -127 to +20
+
                                             - Value: 0x07F. The reference power
                                               level is not applicable */
+  uint8_t    procedure_done_status;  /**< Enum @ref sl_bt_cs_done_status_t.
+                                          Current status of the CS procedure
+                                          Values:
+                                            - <b>sl_bt_cs_done_status_complete
+                                              (0x0):</b> All results complete
+                                              for the CS procedure or subevent
+                                            - <b>sl_bt_cs_done_status_partial_results_continue
+                                              (0x1):</b> Partial results with
+                                              more to follow
+                                            - <b>sl_bt_cs_done_status_aborted
+                                              (0xf):</b> Current procedure and
+                                              all subsequent subevents in the
+                                              procedure aborted or current
+                                              subevent aborted. */
+  uint8_t    subevent_done_status;   /**< Enum @ref sl_bt_cs_done_status_t.
+                                          Current status of the CS subevent
+                                          Values:
+                                            - <b>sl_bt_cs_done_status_complete
+                                              (0x0):</b> All results complete
+                                              for the CS procedure or subevent
+                                            - <b>sl_bt_cs_done_status_partial_results_continue
+                                              (0x1):</b> Partial results with
+                                              more to follow
+                                            - <b>sl_bt_cs_done_status_aborted
+                                              (0xf):</b> Current procedure and
+                                              all subsequent subevents in the
+                                              procedure aborted or current
+                                              subevent aborted. */
+  uint8_t    abort_reason;           /**< Indicates the abort reason when the @p
+                                          procedure_done_status or @p
+                                          subevent_done_status is set to 0xF,
+                                          otherwise the default value is set to
+                                          zero.
+
+                                          Bits 0-3 indicate the procedure abort
+                                          reasons:
+
+                                            - 0x0 = Report with no abort
+                                            - 0x1 = Abort because of local Host
+                                              or remote request
+                                            - 0x2 = Abort because filtered
+                                              channel map has less than 15
+                                              channels
+                                            - 0x3 = Abort because the channel
+                                              map update instant has passed
+                                            - 0xF = Abort because of unspecified
+                                              reasons
+
+                                          Bits 4-7 indicate the subevent done
+                                          reasons:
+
+                                            - 0x0 = Report with no abort
+                                            - 0x1 = Abort because of local Host
+                                              or remote request
+                                            - 0x2 = Abort because no CS_SYNC
+                                              (mode-0) received
+                                            - 0x3 = Abort because of scheduling
+                                              conflicts or limited resources
+                                            - 0xF = Abort because of unspecified
+                                              reasons */
   uint8_t    num_antenna_paths;      /**< Number of antenna paths supported by
-                                          the local controller for the ABR tone
-                                          exchanges.
-                                            - Range: 1 to 4. The number of
-                                              antenna paths used during the
-                                              phase measurement stage of the ABR
-                                              step
+                                          the local controller for the CS tone
+                                          exchanges. The number of antenna paths
+                                          used during the phase measurement
+                                          stage of the CS step.
+                                            - <b>Range:</b> 1 to 4
+
                                             - Value: 0. Phase measurement does
-                                              not occur during the ABR step,
+                                              not occur during the CS step,
                                               therefore ignored */
-  uint8_t    num_steps;              /**< Number of steps in the ABR subevent
-                                          for which results are reported.
-                                            - Range: 1 to 160 */
+  uint8_t    num_steps;              /**< Number of steps in the CS subevent for
+                                          which results are reported.
+                                            - <b>Range:</b> 1 to 160 */
   uint8array data;                   /**< The result data is structured as
                                           follows:
                                             - step_status: 1 octet for each
@@ -13051,16 +12787,370 @@ typedef struct sl_bt_evt_cs_result_s sl_bt_evt_cs_result_t;
 
 /** @} */ // end addtogroup sl_bt_evt_cs_result
 
+/**
+ * @addtogroup sl_bt_evt_cs_result_continue sl_bt_evt_cs_result_continue
+ * @{
+ * @brief Reports results when the number of steps exceeds the maximum HCI event
+ * size, of every CS subevent within the CS procedure
+ *
+ * This event is triggered after the @ref sl_bt_evt_cs_result event.
+ */
+
+/** @brief Identifier of the result_continue event */
+#define sl_bt_evt_cs_result_continue_id                              0x055900a0
+
+/***************************************************************************//**
+ * @brief Data structure of the result_continue event
+ ******************************************************************************/
+PACKSTRUCT( struct sl_bt_evt_cs_result_continue_s
+{
+  uint8_t    connection;            /**< Connection handle. Returns a
+                                         SL_BT_INVALID_CONNECTION_HANDLE (0xFF)
+                                         when triggered as a result of @ref
+                                         sl_bt_cs_test_start command */
+  uint8_t    config_id;             /**< CS configuration identifier. This
+                                         paremeter is ignored when the event is
+                                         triggered as a result of @ref
+                                         sl_bt_cs_test_start command.
+                                           - <b>Range:</b> 0 to 3 */
+  uint8_t    procedure_done_status; /**< Enum @ref sl_bt_cs_done_status_t.
+                                         Current status of the CS procedure
+                                         Values:
+                                           - <b>sl_bt_cs_done_status_complete
+                                             (0x0):</b> All results complete for
+                                             the CS procedure or subevent
+                                           - <b>sl_bt_cs_done_status_partial_results_continue
+                                             (0x1):</b> Partial results with
+                                             more to follow
+                                           - <b>sl_bt_cs_done_status_aborted
+                                             (0xf):</b> Current procedure and
+                                             all subsequent subevents in the
+                                             procedure aborted or current
+                                             subevent aborted. */
+  uint8_t    subevent_done_status;  /**< Enum @ref sl_bt_cs_done_status_t.
+                                         Current status of the CS subevent
+                                         Values:
+                                           - <b>sl_bt_cs_done_status_complete
+                                             (0x0):</b> All results complete for
+                                             the CS procedure or subevent
+                                           - <b>sl_bt_cs_done_status_partial_results_continue
+                                             (0x1):</b> Partial results with
+                                             more to follow
+                                           - <b>sl_bt_cs_done_status_aborted
+                                             (0xf):</b> Current procedure and
+                                             all subsequent subevents in the
+                                             procedure aborted or current
+                                             subevent aborted. */
+  uint8_t    abort_reason;          /**< Indicates the abort reason when the @p
+                                         procedure_done_status or @p
+                                         subevent_done_status is set to 0xF,
+                                         otherwise the default value is set to
+                                         zero.
+
+                                         Bits 0-3 indicate the procedure abort
+                                         reasons:
+
+                                           - 0x0 = Report with no abort
+                                           - 0x1 = Abort because of local Host
+                                             or remote request
+                                           - 0x2 = Abort because filtered
+                                             channel map has less than 15
+                                             channels
+                                           - 0x3 = Abort because the channel map
+                                             update instant has passed
+                                           - 0xF = Abort because of unspecified
+                                             reasons
+
+                                         Bits 4-7 indicate the subevent done
+                                         reasons:
+
+                                           - 0x0 = Report with no abort
+                                           - 0x1 = Abort because of local Host
+                                             or remote request
+                                           - 0x2 = Abort because no CS_SYNC
+                                             (mode-0) received
+                                           - 0x3 = Abort because of scheduling
+                                             conflicts or limited resources
+                                           - 0xF = Abort because of unspecified
+                                             reasons */
+  uint8_t    num_antenna_paths;     /**< Number of antenna paths supported by
+                                         the local controller for the CS tone
+                                         exchanges. The number of antenna paths
+                                         used during the phase measurement stage
+                                         of the CS step.
+                                           - <b>Range:</b> 1 to 4
+
+                                           - Value: 0. Phase measurement does
+                                             not occur during the CS step,
+                                             therefore ignored */
+  uint8_t    num_steps;             /**< Number of steps in the CS subevent for
+                                         which results are reported.
+                                           - <b>Range:</b> 1 to 160 */
+  uint8array data;                  /**< The result data is structured as
+                                         follows:
+                                           - step_mode: 1 octet for each
+                                             num_steps. Mode type. Range 0 to 3.
+                                           - step_channel: 1 octet for each
+                                             num_steps. Channel index. Range 1
+                                             to 78.
+                                           - step_data_length: 1 octet for each
+                                             num_steps. Length of mode and role
+                                             specific information being
+                                             reported. Range 0x00 to 0xFF.
+                                           - step_data: step_data_length octet
+                                             for each corresponding steps in
+                                             num_steps. */
+});
+
+typedef struct sl_bt_evt_cs_result_continue_s sl_bt_evt_cs_result_continue_t;
+
+/** @} */ // end addtogroup sl_bt_evt_cs_result_continue
+
+/**
+ * @addtogroup sl_bt_evt_cs_read_remote_supported_capabilities_complete sl_bt_evt_cs_read_remote_supported_capabilities_complete
+ * @{
+ * @brief Report the remote controller's supported capabilities as a result of
+ * calling the @ref sl_bt_cs_read_remote_supported_capabilities command
+ * previously
+ */
+
+/** @brief Identifier of the read_remote_supported_capabilities_complete event */
+#define sl_bt_evt_cs_read_remote_supported_capabilities_complete_id  0x045900a0
+
+/***************************************************************************//**
+ * @brief Data structure of the read_remote_supported_capabilities_complete event
+ ******************************************************************************/
+PACKSTRUCT( struct sl_bt_evt_cs_read_remote_supported_capabilities_complete_s
+{
+  uint8_t  connection;                 /**< Connection handle */
+  uint16_t status;                     /**< SL_STATUS_OK if successful. Error
+                                            code otherwise. */
+  uint8_t  num_config;                 /**< The number of CS configurations
+                                            supported per connection.
+                                              - <b>Range:</b> 1 to 4 */
+  uint16_t max_consecutive_procedures; /**< The maximum number of consecutive CS
+                                            procedures supported.
+                                              - <b>Range:</b> 1 to 65535
+
+                                              - <b>0x00:</b> Fixed number of
+                                                consecutive procedures and for
+                                                an indefinite number of
+                                                procedures until termination */
+  uint8_t  num_antennas;               /**< The number of antenna elements
+                                            available for CS tone exchanges.
+                                              - <b>Range:</b> 1 to 4 */
+  uint8_t  max_antenna_paths;          /**< The maximum number of antenna paths
+                                            supported.
+                                              - <b>Range:</b> 1 to 4 */
+  uint8_t  roles;                      /**< This value is a bitmask of flags to
+                                            indicate which CS roles are
+                                            supported by the controller. Flags:
+                                              - <b>0x01, bit 0:</b> Initiator
+                                                role
+                                              - <b>0x02, bit 1:</b> Reflector
+                                                role */
+  uint8_t  modes;                      /**< This value is a bitmask of flags to
+                                            indicate which optional CS modes are
+                                            supported. Flags:
+                                              - <b>0x02, bit 1:</b> Mode 3 is
+                                                supported */
+  uint8_t  rtt_capability;             /**< This value is a bitmask of flags to
+                                            indicate which Round Trip Time (RTT)
+                                            CS capabilities accuracy requirement
+                                            in @p rtt_aa_only_n, @p
+                                            rtt_sounding_n, and @p
+                                            rtt_random_payload. Flags:
+                                              - <b>0x01, bit 0:</b> 10 ns
+                                                time-of-flight (ToF) precision
+                                                requirement for @p rtt_aa_only
+                                                if set; otherwise 150 ns ToF
+                                              - <b>0x02, bit 1:</b> 10 ns ToF
+                                                precision requirement for @p
+                                                rtt_sounding if set; otherwise
+                                                150 ns ToF
+                                              - <b>0x04, bit 2:</b> 10 ns ToF
+                                                precision requirement for @p
+                                                rtt_random_payload if set;
+                                                otherwise 150 ns ToF */
+  uint8_t  rtt_aa_only;                /**< The support status of RTT Access
+                                            Address(AA) on the remote
+                                            controller. When supported it
+                                            establishes the number of SYNC
+                                            changes needed to satisfy the
+                                            precision requirements.
+                                              - <b>Range:</b> 1 to 255
+
+                                              - 0x00: RTT AA Only is not
+                                                supported */
+  uint8_t  rtt_sounding;               /**< The support status of RTT Sounding
+                                            is supported on the remote
+                                            controller. When supported it
+                                            establishes the number of SYNC
+                                            changes needed to satisfy the
+                                            precision requirements.
+                                              - <b>Range:</b> 1 to 255
+
+                                              - 0x00: RTT Sounding is not
+                                                supported */
+  uint8_t  rtt_random_payload;         /**< The support status of RTT Random
+                                            Payload on the remote controller.
+                                            When supported it establishes the
+                                            number of SYNC changes needed to
+                                            satisfy the precision requirements.
+                                              - <b>Range:</b> 1 to 255
+
+                                              - 0x00: RTT Random Payload is not
+                                                supported */
+  uint8_t  cs_sync_phys;               /**< This value is a bitmask of flags to
+                                            indicate which CS SYNC packages
+                                            supported in an specific PHY. Flags:
+                                              - <b>0x01, bit 0:</b> LE 2M PHY CS
+                                                SYNC packages are supported
+                                              - <b>0x02, bit 1:</b> LE 2M PHY
+                                                2BT CS SYNC packages are
+                                                supported */
+  uint16_t subfeatures;                /**< This value is a bitmask of flags to
+                                            indicate which CS subfeatures are
+                                            supported. Flags:
+                                              - <b>0x01, bit 0:</b> CS with zero
+                                                Frequency Actuation Error
+                                                relative to Mode 0 transmissions
+                                                in reflector role is supported
+                                              - <b>0x02, bit 1:</b> CS Channel
+                                                Selection Algorithm #3c is
+                                                supported
+                                              - <b>0x04, bit 2:</b> CS
+                                                phase-based ranging from a
+                                                sounding sequence is supported */
+  uint16_t t_ip1_times;                /**< This value is a bitmask of flags to
+                                            indicate which time durations of
+                                            Time for Interlude Period 1 (IP1)
+                                            are supported. Flags:
+                                              - <b>0x0001, bit 0:</b> Time
+                                                duration of 10 microseconds is
+                                                supported
+                                              - <b>0x0002, bit 1:</b> Time
+                                                duration of 20 microseconds is
+                                                supported
+                                              - <b>0x0004, bit 2:</b> Time
+                                                duration of 30 microseconds is
+                                                supported
+                                              - <b>0x0008, bit 3:</b> Time
+                                                duration of 40 microseconds is
+                                                supported
+                                              - <b>0x0010, bit 4:</b> Time
+                                                duration of 50 microseconds is
+                                                supported
+                                              - <b>0x0020, bit 5:</b> Time
+                                                duration of 60 microseconds is
+                                                supported
+                                              - <b>0x0040, bit 6:</b> Time
+                                                duration of 80 microseconds is
+                                                supported */
+  uint16_t t_ip2_times;                /**< This value is a bitmask of flags to
+                                            indicate which time durations of
+                                            Time for Interlude Period 2 (IP2)
+                                            are supported. Flags:
+                                              - <b>0x0001, bit 0:</b> Time
+                                                duration of 10 microseconds is
+                                                supported
+                                              - <b>0x0002, bit 1:</b> Time
+                                                duration of 20 microseconds is
+                                                supported
+                                              - <b>0x0004, bit 2:</b> Time
+                                                duration of 30 microseconds is
+                                                supported
+                                              - <b>0x0008, bit 3:</b> Time
+                                                duration of 40 microseconds is
+                                                supported
+                                              - <b>0x0010, bit 4:</b> Time
+                                                duration of 50 microseconds is
+                                                supported
+                                              - <b>0x0020, bit 5:</b> Time
+                                                duration of 60 microseconds is
+                                                supported
+                                              - <b>0x0040, bit 6:</b> Time
+                                                duration of 80 microseconds is
+                                                supported */
+  uint16_t t_fcs_times;                /**< This value is a bitmask of flags to
+                                            indicate which time durations of
+                                            Time for Frequency Change Spacing
+                                            (FCS) are supported. Flags:
+                                              - <b>0x0001, bit 0:</b> Time
+                                                duration of 10 microseconds is
+                                                supported
+                                              - <b>0x0002, bit 1:</b> Time
+                                                duration of 20 microseconds is
+                                                supported
+                                              - <b>0x0004, bit 2:</b> Time
+                                                duration of 30 microseconds is
+                                                supported
+                                              - <b>0x0008, bit 3:</b> Time
+                                                duration of 40 microseconds is
+                                                supported
+                                              - <b>0x0010, bit 4:</b> Time
+                                                duration of 50 microseconds is
+                                                supported
+                                              - <b>0x0020, bit 5:</b> Time
+                                                duration of 60 microseconds is
+                                                supported
+                                              - <b>0x0040, bit 6:</b> Time
+                                                duration of 80 microseconds is
+                                                supported
+                                              - <b>0x0080, bit 7:</b> Time
+                                                duration of 100 microseconds is
+                                                supported
+                                              - <b>0x0100, bit 8:</b> Time
+                                                duration of 120 microseconds is
+                                                supported */
+  uint16_t t_pm_times;                 /**< This value is a bitmask of flags to
+                                            indicate which time durations of
+                                            Time for Phase Measurement (PM) are
+                                            supported. Flags:
+                                              - <b>0x0001, bit 0:</b> Time
+                                                duration of 10 microseconds is
+                                                supported
+                                              - <b>0x0002, bit 1:</b> Time
+                                                duration of 20 microseconds is
+                                                supported */
+  uint8_t  t_sw_times;                 /**< Time in microseconds for the antenna
+                                            switch period of the CS tones.
+                                              - Values: 0x00, 0x01, 0x02, 0x04
+                                                and 0x0A */
+  uint8_t  tx_snr_capability;          /**< This value is a bitmask of flags to
+                                            indicate the supported SNR levels
+                                            used in RTT packets. Flags:
+                                              - <b>0x01, bit 0:</b> 18 dB
+                                                supported
+                                              - <b>0x02, bit 1:</b> 21 dB
+                                                supported
+                                              - <b>0x04, bit 2:</b> 24 dB
+                                                supported
+                                              - <b>0x08, bit 3:</b> 27 dB
+                                                supported
+                                              - <b>0x10, bit 4:</b> 30 dB
+                                                supported */
+});
+
+typedef struct sl_bt_evt_cs_read_remote_supported_capabilities_complete_s sl_bt_evt_cs_read_remote_supported_capabilities_complete_t;
+
+/** @} */ // end addtogroup sl_bt_evt_cs_read_remote_supported_capabilities_complete
+
 /***************************************************************************//**
  *
- * Start or restart ABR security start procedure for the specified connection.
+ * Start or restart CS security start procedure for the specified connection.
+ * This command returns SL_STATUS_BT_CTRL_INSUFFICIENT_SECURITY if the
+ * connection is not encrypted.
+ *
+ * This command returns SL_STATUS_BT_CTRL_COMMAND_DISALLOWED if the device is
+ * not the central in the connection.
  *
  * @param[in] connection Connection handle
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_cs_security_enable_complete - Triggered when ABR security
+ *   - @ref sl_bt_evt_cs_security_enable_complete - Triggered when CS security
  *     start procedure has completed.
  *
  ******************************************************************************/
@@ -13068,8 +13158,12 @@ sl_status_t sl_bt_cs_security_enable(uint8_t connection);
 
 /***************************************************************************//**
  *
- * Set the default ABR settings for the specified connection. By default, all
+ * Set the default CS settings for the specified connection. By default, all
  * roles are disabled and the antenna is set to 1.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INVALID_COMMAND_PARAMETERS if the
+ * device is trying to disable a role for which a valid CS configuration is
+ * present.
  *
  * @param[in] connection Connection handle
  * @param[in] initiator_status Enum @ref sl_bt_cs_role_status_t. Enable or
@@ -13080,12 +13174,12 @@ sl_status_t sl_bt_cs_security_enable(uint8_t connection);
  *   disable status of the Reflector role. Values:
  *     - <b>sl_bt_cs_role_status_disable (0x0):</b> The given role is disabled
  *     - <b>sl_bt_cs_role_status_enable (0x1):</b> The given role is enabled
- * @param[in] antenna_identifier Antenna identifier to be used for ABR sync
+ * @param[in] antenna_identifier Antenna identifier to be used for CS sync
  *   packets.
- *     - Range: 1 to 4
- * @param[in] max_tx_power Maximum transmit power level to be used in all ABR
+ *     - <b>Range:</b> 1 to 4
+ * @param[in] max_tx_power Maximum transmit power level to be used in all CS
  *   transmissions. Units: dBm.
- *     - Range: -127 to +20
+ *     - <b>Range:</b> -127 to +20
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -13098,17 +13192,28 @@ sl_status_t sl_bt_cs_set_default_settings(uint8_t connection,
 
 /***************************************************************************//**
  *
- * Create a new ABR configuration in the local and remote controller. The role
+ * Create a new CS configuration in the local and remote controller. The role
  * used in this command must be enabled prior to issuing this command using @ref
  * sl_bt_cs_set_default_settings command.
  *
+ * This command returns SL_STATUS_BT_CTRL_UNSUPPORTED_FEATURE_OR_PARAMETER_VALUE
+ * if the local or the remote controller does not support that CS feature.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INVALID_COMMAND_PARAMETERS if there is
+ * no valid CS configuration previously created for the specified connection.
+ * These are created with the @ref sl_bt_cs_set_default_settings.
+ *
+ * This command returns SL_STATUS_BT_CTRL_COMMAND_DISALLOWED if a previously
+ * created CS configuration is enabled or ongoing for the specified connection,
+ * by calling @ref sl_bt_cs_procedure_enable.
+ *
  * @param[in] connection The connection handle
- * @param[in] config_id ABR configuration identifier.
- *     - Range: 0 to 3
+ * @param[in] config_id CS configuration identifier.
+ *     - <b>Range:</b> 0 to 3
  * @param[in] create_context Defines in which device the created configuration
  *   will be written
- *     - Value: 0x00. Write ABR configuration in the local controller only
- *     - Value: 0x01. Write ABR configuration in both the local and remote
+ *     - Value: 0x00. Write CS configuration in the local controller only
+ *     - Value: 0x01. Write CS configuration in both the local and remote
  *       controller using a configuration procedure
  * @param[in] main_mode_type Enum @ref sl_bt_cs_mode_t. Main mode type. Values:
  *     - <b>sl_bt_cs_mode_rtt (0x1):</b> Round Trip Time (RTT) measurement
@@ -13120,55 +13225,65 @@ sl_status_t sl_bt_cs_set_default_settings(uint8_t connection,
  *     - <b>sl_bt_cs_mode_pbr (0x2):</b> Phase-Based Ranging (PBR) measurement
  *     - <b>sl_bt_cs_submode_disabled (0xff):</b> Submode disabled for the
  *       procedure.
- * @param[in] min_main_mode_steps Minimum number of ABR main mode steps to be
+ * @param[in] min_main_mode_steps Minimum number of CS main mode steps to be
  *   executed prior to a sub mode step.
- *     - Range: 1 to 160
- * @param[in] max_main_mode_steps Maximum number of ABR main mode steps to be
+ *     - <b>Range:</b> 2 to 255
+ * @param[in] max_main_mode_steps Maximum number of CS main mode steps to be
  *   executed prior to a sub mode step.
- *     - Range: 1 to 160
+ *     - <b>Range:</b> 2 to 255
  * @param[in] main_mode_repetition Number of main mode steps taken from the end
- *   of the last ABR subevent to be repeated at the beginning of the current ABR
+ *   of the last CS subevent to be repeated at the beginning of the current CS
  *   subevent directly after the value r last Mode 0 step of that event.
- *     - Range: 0 to 3
+ *     - <b>Range:</b> 0 to 3
  * @param[in] mode_calibration_steps Number of Mode 0 steps to be included at
- *   the beginning of the test ABR subevent
- *     - Range: 1 to 3
- * @param[in] role Enum @ref sl_bt_cs_role_t. Device's role during the ABR
+ *   the beginning of the test CS subevent
+ *     - <b>Range:</b> 1 to 3
+ * @param[in] role Enum @ref sl_bt_cs_role_t. Device's role during the CS
  *   procedure Values:
  *     - <b>sl_bt_cs_role_initiator (0x0):</b> The device will initiate the
  *       procedure
  *     - <b>sl_bt_cs_role_reflector (0x1):</b> The device will reciprocate
  *       transmission
  * @param[in] rtt_type Enum @ref sl_bt_cs_rtt_type_t. RTT payload type used in
- *   the ABR procedure Values:
- *     - <b>sl_bt_cs_rtt_type_coarse (0x0):</b> RTT Coarse
+ *   the CS procedure Values:
+ *     - <b>sl_bt_cs_rtt_type_aa_only (0x0):</b> RTT Access Address (AA) only
+ *     - <b>sl_bt_cs_rtt_type_fractional_32_bit_sounding (0x1):</b> RTT
+ *       Fractional with 32-bit Sounding Sequence
  *     - <b>sl_bt_cs_rtt_type_fractional_96_bit_sounding (0x2):</b> RTT
  *       Fractional with 96-bit Sounding Sequence
- * @param[in] cs_sync_phy Enum @ref sl_bt_gap_phy_t. Used PHY for ABR SYNC
+ *     - <b>sl_bt_cs_rtt_type_fractional_32_bit_random (0x3):</b> RTT Fractional
+ *       with 32-bit Random Sequence
+ *     - <b>sl_bt_cs_rtt_type_fractional_64_bit_random (0x4):</b> RTT Fractional
+ *       with 64-bit Random Sequence
+ *     - <b>sl_bt_cs_rtt_type_fractional_96_bit_random (0x5):</b> RTT Fractional
+ *       with 96-bit Random Sequence
+ *     - <b>sl_bt_cs_rtt_type_fractional_128_bit_random (0x6):</b> RTT
+ *       Fractional with 128-bit Random Sequence
+ * @param[in] cs_sync_phy Enum @ref sl_bt_gap_phy_t. Used PHY for CS SYNC
  *   exchanges during a procedure Values:
  *     - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
  * @param[in] channel_map @parblock
- *   A fixed length byte array of 10 bytes consisting of 79 1-bit fields.
+ *   A fixed length byte array of 10 bytes consisting of 80 1-bit fields.
  *
- *   The nth such field (in the range 0 to 78) contains the value for the ABR
+ *   The nth such field (in the range 0 to 78) contains the value for the CS
  *   channel index n.
  *
  *     - Bit value 0: Channel n is disabled
  *     - Bit value 1: Channel n is enabled
  *
- *   The rest of most significant bits are reserved for future use and must be
- *   set to 0. Channels n = 0, 1, 23, 24, 25, 77 and 78 shall be ignored and not
- *   used for ABR. At least 15 channels shall be marked as used.
+ *   The most significant bit (79) is reserved for future use and must be set to
+ *   0. Channels n = 0, 1, 23, 24, 25, 77 and 78 shall be ignored and not used
+ *   for CS. At least 15 channels shall be marked as used.
  *   @endparblock
  * @param[in] channel_map_repetition Number of times the channel_map field will
- *   be cycled through for non-Mode 0 steps within an ABR procedure.
- *     - Range: 0x01 to 0xFF
+ *   be cycled through for non-Mode 0 steps within an CS procedure.
+ *     - <b>Range:</b> 1 to 255
  * @param[in] channel_selection_type Enum @ref
  *   sl_bt_cs_channel_selection_algorithm_t. Channel selection algorithm Values:
  *     - <b>sl_bt_cs_channel_selection_algorithm_3b (0x0):</b> Use Channel
- *       Selection Algorithm #3b for non-mode 0 ABR steps
+ *       Selection Algorithm #3b for non-mode 0 CS steps
  *     - <b>sl_bt_cs_channel_selection_algorithm_3c (0x1):</b> Use Channel
- *       Selection Algorithm #3c for non-mode 0 ABR steps
+ *       Selection Algorithm #3c for non-mode 0 CS steps
  *     - <b>sl_bt_cs_channel_selection_algorithm_user_shape_interleaved
  *       (0x2):</b> Use Interleaved shape for user specified channel sequence
  * @param[in] ch3c_shape Enum @ref sl_bt_cs_ch3c_shape_t. Ch3c shape Values:
@@ -13178,19 +13293,13 @@ sl_status_t sl_bt_cs_set_default_settings(uint8_t connection,
  *       user specified channel sequence
  * @param[in] ch3c_jump Number of channels skipped in each rising and falling
  *   sequence.
- *     - Range: 2 to 8
- * @param[in] companion_signal_state Enum @ref
- *   sl_bt_cs_companion_signal_status_t. Companion device's signal status
- *   Values:
- *     - <b>sl_bt_cs_companion_signal_status_disable (0x0):</b> The companion
- *       signal is disabled
- *     - <b>sl_bt_cs_companion_signal_status_enable (0x1):</b> The companion
- *       signal is enabled
+ *     - <b>Range:</b> 2 to 8
+ * @param[in] reserved Reserved for future use.
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_cs_config_complete - Triggered when an ABR configuration
+ *   - @ref sl_bt_evt_cs_config_complete - Triggered when an CS configuration
  *     procedure completed
  *
  ******************************************************************************/
@@ -13211,20 +13320,26 @@ sl_status_t sl_bt_cs_create_config(uint8_t connection,
                                    uint8_t channel_selection_type,
                                    uint8_t ch3c_shape,
                                    uint8_t ch3c_jump,
-                                   uint8_t companion_signal_state);
+                                   uint8_t reserved);
 
 /***************************************************************************//**
  *
- * Remove an ABR configuration from the local controller.
+ * Remove an CS configuration from the local controller.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INVALID_COMMAND_PARAMETERS if the @p
+ * config_id does not exist .
+ *
+ * This command returns SL_STATUS_BT_CTRL_COMMAND_DISALLOWED if there is one or
+ * more CS procedures enabled with the @ref sl_bt_cs_procedure_enable command.
  *
  * @param[in] connection Connection handle
- * @param[in] config_id ABR configuration identifier
- *     - Range: 0 to 3
+ * @param[in] config_id CS configuration identifier
+ *     - <b>Range:</b> 0 to 3
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_cs_config_complete - Triggered when an ABR configuration
+ *   - @ref sl_bt_evt_cs_config_complete - Triggered when an CS configuration
  *     procedure is completed
  *
  ******************************************************************************/
@@ -13232,11 +13347,17 @@ sl_status_t sl_bt_cs_remove_config(uint8_t connection, uint8_t config_id);
 
 /***************************************************************************//**
  *
- * Update the channel classification for ABR. This classification persists until
+ * Update the channel classification for CS. This classification persists until
  * overwritten with a subsequent command or until the system is reset.
  *
+ * This command returns SL_STATUS_BT_CTRL_COMMAND_DISALLOWED if this command was
+ * issued after less than one second before.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INVALID_COMMAND_PARAMETERS if less
+ * than 15 channels are enabled.
+ *
  * @param[in] channel_map @parblock
- *   A fixed length byte array of 10 bytes consisting of 79 1-bit fields.
+ *   A fixed length byte array of 10 bytes consisting of 80 1-bit fields.
  *
  *   The nth field (in the range 0 to 78) contains the value for the link layer
  *   channel index n.
@@ -13244,9 +13365,9 @@ sl_status_t sl_bt_cs_remove_config(uint8_t connection, uint8_t config_id);
  *     - Bit value 0: Channel n is disabled.
  *     - Bit value 1: Channel n is enabled.
  *
- *   The rest of most significant bits are reserved for future use and must be
- *   set to 0. Channels n = 0, 1, 23, 24, 25, 77 and 78 shall be ignored and not
- *   used for ABR.
+ *   The most significant bit (79) is reserved for future use and must be set to
+ *   0. Channels n = 0, 1, 23, 24, 25, 77 and 78 shall be ignored and not used
+ *   for CS.
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -13256,52 +13377,91 @@ sl_status_t sl_bt_cs_set_channel_classification(const sl_bt_cs_channel_map_t *ch
 
 /***************************************************************************//**
  *
- * Set the parameters for scheduling ABR procedures with the remote device.
+ * Set the parameters for scheduling CS procedures with the remote device. The
+ * parameters set by this command become invalid after removing the @p config_id
+ * with @ref sl_bt_cs_remove_config.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INVALID_COMMAND_PARAMETERS if the @p
+ * config_id does not exists or was previously removed with @ref
+ * sl_bt_cs_remove_config
+ *
+ * This command returns SL_STATUS_BT_CTRL_INVALID_COMMAND_PARAMETERS if less
+ * than 15 channels are enabled.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INSUFFICIENT_CHANNELS if there are
+ * less than 15 channels available.
+ *
+ * This command returns SL_STATUS_BT_CTRL_COMMAND_DISALLOWED if the CS procedure
+ * has been previously enabled.
  *
  * @param[in] connection The connection handle
- * @param[in] config_id ABR configuration identifier.
- *     - Range: 0 to 3.
- * @param[in] max_procedure_len Maximum duration for each measurement procedure.
- *   Value in units of 0.625 ms.
- *     - Range: 0x0001 to 0xFFFF.
+ * @param[in] config_id CS configuration identifier.
+ *     - <b>Range:</b> 0 to 3
+ * @param[in] max_procedure_len @parblock
+ *   Maximum duration for each measurement procedure. Value in units of 0.625
+ *   ms.
+ *     - <b>Range:</b> 1 to 65535
+ *
  *     - Time: N x 0.625ms. <b>N</b> being the input.
  *     - Time range: 0.625 ms to 40.959375 s.
+ *   @endparblock
  * @param[in] min_procedure_interval Minimum duration in number of connection
  *   events between consecutive measurement procedure.
- *     - Range: 0x01 to 0xFFFF.
+ *     - <b>Range:</b> 1 to 65535
  * @param[in] max_procedure_interval Maximum duration in number of connection
  *   events between consecutive measurement procedure.
- *     - Range: 0x01 to 0xFFFF.
- * @param[in] max_procedure_count Maximum number of ABR procedures to be
- *   scheduled
- *     - Range: 0x01 to 0xFFFF: Maximum number of procedures to be scheduled.
+ *     - <b>Range:</b> 1 to 65535
+ * @param[in] max_procedure_count @parblock
+ *   Maximum number of CS procedures to be scheduled.
+ *     - <b>Range:</b> 1 to 65535
+ *
  *     - Value: 0x00. Procedures to continue until disabled.
- * @param[in] min_subevent_len Minimum suggested duration for each ABR subevent.
- *   Units: microseconds.
- *     - Range: 0x01 to 0xFFFFFF
+ *   @endparblock
+ * @param[in] min_subevent_len @parblock
+ *   Minimum suggested duration for each CS subevent. Units: microseconds.
+ *     - <b>Range:</b> 1250 to 3999999
+ *
  *     - Time range: 1250 us to 4s
- * @param[in] max_subevent_len Maximum suggested duration for each ABR subevent.
- *   Units: microseconds.
- *     - Range: 0x01 to 0xFFFFFF
+ *   @endparblock
+ * @param[in] max_subevent_len @parblock
+ *   Maximum suggested duration for each CS subevent. Units: microseconds.
+ *     - <b>Range:</b> 1250 to 3999999
+ *
  *     - Time range: 1250 us to 4s
+ *   @endparblock
  * @param[in] tone_antenna_config_selection Antenna configuration index
- *     - Range: 0 to 7
- * @param[in] phy Enum @ref sl_bt_gap_phy_t. PHY on which the ABR transmission
- *   will take place Values:
+ *     - <b>Range:</b> 0 to 7
+ * @param[in] phy Enum @ref sl_bt_gap_phy_t. PHY used by the controller to
+ *   determine the base transmit power for the CS procedure. The final transmit
+ *   power level will be the lesser of the configured maximum transmission power
+ *   for the PHY and the sum of the connection transmission power and the remote
+ *   controller's power delta. Values:
  *     - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
  *     - <b>sl_bt_gap_phy_2m (0x2):</b> 2M PHY
  *     - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY, 125k (S=8) or 500k (S=2)
  *     - <b>sl_bt_gap_phy_any (0xff):</b> Any PHYs the device supports
- * @param[in] tx_pwr_delta Transmit power delta. Units: dB.
+ * @param[in] tx_pwr_delta Indicates the recommended difference between the
+ *   remote controller's power level for the CS tones and RTT packets and the
+ *   power level for the PHY indicated by the PHY parameter. Units: dB.
  *     - Value: 0x80. Host does not have a recommendation for transmit power
  *       delta
  * @param[in] preferred_peer_antenna Preferred peer-ordered antenna elements to
  *   be used by the remote device for the antenna configuration denoted by the
  *   tone antenna config selection.
- *     - Bit 0: Use first ordered antenna element
- *     - Bit 1: Use second ordered antenna element
- *     - Bit 2: Use third ordered antenna element
- *     - Bit 3: Use fourth ordered antenna element
+ *     - 0x01, bit 0: Use first ordered antenna element
+ *     - 0x02, bit 1: Use second ordered antenna element
+ *     - 0x04, bit 2: Use third ordered antenna element
+ *     - 0x08, bit 3: Use fourth ordered antenna element
+ * @param[in] snr_control_initiator Enum @ref sl_bt_cs_snr_control_adjustment_t.
+ *   The Signal Noise Ratio (SNR) control adjustment for the CS_SYNC
+ *   transmissions of the initiator. Values:
+ *     - <b>sl_bt_cs_snr_control_adjustment_not_applied (0xff):</b> SNR control
+ *       adjustment not to be applied
+ * @param[in] snr_control_reflector Enum @ref sl_bt_cs_snr_control_adjustment_t.
+ *   The Signal Noise Ratio (SNR) control adjustment for the CS_SYNC
+ *   transmissions of the reflector. Values:
+ *     - <b>sl_bt_cs_snr_control_adjustment_not_applied (0xff):</b> SNR control
+ *       adjustment not to be applied
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -13317,28 +13477,44 @@ sl_status_t sl_bt_cs_set_procedure_parameters(uint8_t connection,
                                               uint8_t tone_antenna_config_selection,
                                               uint8_t phy,
                                               int8_t tx_pwr_delta,
-                                              uint8_t preferred_peer_antenna);
+                                              uint8_t preferred_peer_antenna,
+                                              uint8_t snr_control_initiator,
+                                              uint8_t snr_control_reflector);
 
 /***************************************************************************//**
  *
- * Enable or disable scheduling ABR procedures with the remote device.
+ * Enable or disable scheduling CS procedures with the remote device.
+ *
+ * This command returns SL_STATUS_BT_CTRL_COMMAND_DISALLOWED if the @ref
+ * sl_bt_cs_set_procedure_parameters has not been called previosly for that @p
+ * config_id.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INVALID_COMMAND_PARAMETERS if the @p
+ * config_id does not exists or was previously removed with @ref
+ * sl_bt_cs_remove_config.
+ *
+ * This command returns SL_STATUS_BT_CTRL_COMMAND_DISALLOWED if the CS procedure
+ * has been previously enabled by calling @ref sl_bt_cs_procedure_enable.
+ *
+ * This command returns SL_STATUS_BT_CTRL_INSUFFICIENT_CHANNELS if there are
+ * less than 15 channels available.
  *
  * @param[in] connection The connection handle
  * @param[in] enable Enum @ref sl_bt_cs_procedure_state_t. Enabled or disabled
- *   ABR procedure state. Values:
- *     - <b>sl_bt_cs_procedure_state_disabled (0x0):</b> ABR procedures are
+ *   CS procedure state. Values:
+ *     - <b>sl_bt_cs_procedure_state_disabled (0x0):</b> CS procedures are
  *       disabled
- *     - <b>sl_bt_cs_procedure_state_enabled (0x1):</b> ABR procedures are
+ *     - <b>sl_bt_cs_procedure_state_enabled (0x1):</b> CS procedures are
  *       enabled
- * @param[in] config_id ABR configuration identifier
+ * @param[in] config_id CS configuration identifier
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
  *   - @ref sl_bt_evt_cs_procedure_enable_complete - Triggered when local
- *     controller has scheduled or disabled an ABR procedure measurement
+ *     controller has scheduled or disabled an CS procedure measurement
  *   - @ref sl_bt_evt_cs_result - Triggered when local controller has results to
- *     report for every ABR event within the ABR procedure
+ *     report for every CS event within the CS procedure
  *
  ******************************************************************************/
 sl_status_t sl_bt_cs_procedure_enable(uint8_t connection,
@@ -13347,7 +13523,7 @@ sl_status_t sl_bt_cs_procedure_enable(uint8_t connection,
 
 /***************************************************************************//**
  *
- * Set the antenna configuration for the ABR feature.
+ * Set the antenna configuration for the CS feature.
  *
  * @param[in] antenna_element_offset_len Length of data in @p
  *   antenna_element_offset
@@ -13363,31 +13539,32 @@ sl_status_t sl_bt_cs_set_antenna_configuration(size_t antenna_element_offset_len
 
 /***************************************************************************//**
  *
- * Read the ABR capabilities of the local controller.
+ * Read the CS capabilities of the local controller.
  *
- * @param[out] num_config The number of ABR configurations supported per
+ * @param[out] num_config The number of CS configurations supported per
  *   connection.
- *     - Range: 0x01-0x04
- * @param[out] max_consecutive_procedures The maximum number of consecutive ABR
- *   procedures supported.
+ *     - <b>Range:</b> 1 to 4
+ * @param[out] max_consecutive_procedures @parblock
+ *   The maximum number of consecutive CS procedures supported.
+ *     - <b>Range:</b> 1 to 65535
+ *
  *     - <b>0x00:</b> Fixed number of consecutive procedures and for an
  *       indefinite number of procedures until termination
- *     - <b>0x0001-0xFFFF:</b> Maximum number of consecutive procedures
- *       supported
- * @param[out] num_antennas The number of antenna elements available for ABR
- *   tone exchanges.
- *     - Range: 0x01-0x04
+ *   @endparblock
+ * @param[out] num_antennas The number of antenna elements available for CS tone
+ *   exchanges.
+ *     - <b>Range:</b> 1 to 4
  * @param[out] max_antenna_paths The maximum number of antenna paths supported.
- *     - Range: 0x01-0x04
- * @param[out] roles This value is a bitmask of flags to indicate which ABR
- *   roles are supported by the controller. Flags:
+ *     - <b>Range:</b> 1 to 4
+ * @param[out] roles This value is a bitmask of flags to indicate which CS roles
+ *   are supported by the controller. Flags:
  *     - <b>0x01, bit 0:</b> Initiator role
  *     - <b>0x02, bit 1:</b> Reflector role
- * @param[out] optional_modes This value is a bitmask of flags to indicate which
- *   Optional ABR modes are supported. Flags:
- *     - <b>0x02, bit 0:</b> Mode 3 is supported
+ * @param[out] modes This value is a bitmask of flags to indicate which Optional
+ *   CS modes are supported. Flags:
+ *     - <b>0x01, bit 0:</b> Mode 3 is supported
  * @param[out] rtt_capability This value is a bitmask of flags to indicate which
- *   Round Trip Time (RTT) ABR capabilities accuracy requirement in @p
+ *   Round Trip Time (RTT) CS capabilities accuracy requirement in @p
  *   rtt_aa_only_n, @p rtt_sounding_n, and @p rtt_random_payload. Flags:
  *     - <b>0x01, bit 0:</b> 10 ns time-of-flight (ToF) precision requirement
  *       for @p rtt_aa_only if set; otherwise 150 ns ToF
@@ -13395,32 +13572,43 @@ sl_status_t sl_bt_cs_set_antenna_configuration(size_t antenna_element_offset_len
  *       if set; otherwise 150 ns ToF
  *     - <b>0x04, bit 2:</b> 10 ns ToF precision requirement for @p
  *       rtt_random_payload if set; otherwise 150 ns ToF
- * @param[out] rtt_aa_only RTT Access Address(AA) is supported by the controller
+ * @param[out] rtt_aa_only @parblock
+ *   The support status of RTT Access Address(AA) in the local controller. When
+ *   supported it establishes the number of SYNC changes needed to satisfy the
+ *   precision requirements.
+ *     - <b>Range:</b> 1 to 255
+ *
  *     - 0x00: RTT AA Only is not supported
- *     - 0x01-0xFF: Number of SYNC changes needed to satisfy the precision
- *       requirements
- * @param[out] rtt_sounding RTT Sounding is supported by the controller
+ *   @endparblock
+ * @param[out] rtt_sounding @parblock
+ *   The support status of RTT Sounding is supported in the local controller.
+ *   When supported it establishes the number of SYNC changes needed to satisfy
+ *   the precision requirements.
+ *     - <b>Range:</b> 1 to 255
+ *
  *     - 0x00: RTT Sounding is not supported
- *     - 0x01-0xFF: Number of SYNC changes needed to satisfy the precision
- *       requirements
- * @param[out] rtt_random_payload RTT Random Payload is supported by the
- *   controller
+ *   @endparblock
+ * @param[out] rtt_random_payload @parblock
+ *   The support status of RTT Random Payload in the local controller. When
+ *   supported it establishes the number of SYNC changes needed to satisfy the
+ *   precision requirements.
+ *     - <b>Range:</b> 1 to 255
+ *
  *     - 0x00: RTT Random Payload is not supported
- *     - 0x01-0xFF: Number of SYNC changes needed to satisfy the precision
- *       requirements
- * @param[out] optional_cs_sync_phys This value is a bitmask of flags to
- *   indicate which ABR SYNC packages supported in an specific PHY. Flags:
- *     - <b>0x02, bit 1:</b> LE 2M PHY ABR SYNC packages are supported
- * @param[out] optional_subfeatures This value is a bitmask of flags to indicate
- *   which Optional ABR subfeatures supported is supported. Flags:
- *     - <b>0x01, bit 0:</b> ABR Companion Signal is supported
- *     - <b>0x02, bit 1:</b> ABR with zero Frequency Actuation Error relative to
+ *   @endparblock
+ * @param[out] cs_sync_phys This value is a bitmask of flags to indicate which
+ *   CS_SYNC packages supported in an specific PHY. Flags:
+ *     - <b>0x02, bit 1:</b> LE 2M PHY CS_SYNC packages are supported
+ *     - <b>0x04, bit 2:</b> LE 2M 2BT PHY CS_SYNC packages are supported
+ * @param[out] subfeatures This value is a bitmask of flags to indicate which
+ *   optional CS subfeatures are supported. Flags:
+ *     - <b>0x01, bit 0:</b> CS with zero Frequency Actuation Error relative to
  *       Mode 0 transmissions in reflector role is supported
- *     - <b>0x04, bit 2:</b> ABR Channel Selection Algorithm #3c is supported
- *     - <b>0x08, bit 3:</b> ABR phase-based ranging from a sounding sequence is
+ *     - <b>0x02, bit 1:</b> CS Channel Selection Algorithm #3c is supported
+ *     - <b>0x04, bit 2:</b> CS phase-based ranging from a sounding sequence is
  *       supported
- * @param[out] optional_t_ip1_times This value is a bitmask of flags to indicate
- *   which Time for Interlude Period 1 (IP1) supported is supported. Flags:
+ * @param[out] t_ip1_times This value is a bitmask of flags to indicate which
+ *   time durations of Time for Interlude Period 1 (IP1) are supported. Flags:
  *     - <b>0x0001, bit 0:</b> Time durantion of 10 microseconds is supported
  *     - <b>0x0002, bit 1:</b> Time durantion of 20 microseconds is supported
  *     - <b>0x0004, bit 2:</b> Time durantion of 30 microseconds is supported
@@ -13428,8 +13616,8 @@ sl_status_t sl_bt_cs_set_antenna_configuration(size_t antenna_element_offset_len
  *     - <b>0x0010, bit 4:</b> Time durantion of 50 microseconds is supported
  *     - <b>0x0020, bit 5:</b> Time durantion of 60 microseconds is supported
  *     - <b>0x0040, bit 6:</b> Time durantion of 80 microseconds is supported
- * @param[out] optional_t_ip2_times This value is a bitmask of flags to indicate
- *   which Time for Interlude Period 2 (IP2) supported is supported. Flags:
+ * @param[out] t_ip2_times This value is a bitmask of flags to indicate which
+ *   time durations of Time for Interlude Period 2 (IP2) are supported. Flags:
  *     - <b>0x0001, bit 0:</b> Time duration of 10 microseconds is supported
  *     - <b>0x0002, bit 1:</b> Time duration of 20 microseconds is supported
  *     - <b>0x0004, bit 2:</b> Time duration of 30 microseconds is supported
@@ -13437,8 +13625,8 @@ sl_status_t sl_bt_cs_set_antenna_configuration(size_t antenna_element_offset_len
  *     - <b>0x0010, bit 4:</b> Time duration of 50 microseconds is supported
  *     - <b>0x0020, bit 5:</b> Time duration of 60 microseconds is supported
  *     - <b>0x0040, bit 6:</b> Time duration of 80 microseconds is supported
- * @param[out] optional_t_fcs_times This value is a bitmask of flags to indicate
- *   which Time for Frequency Change Spaceing (FCS) is supported. Flags:
+ * @param[out] t_fcs_times This value is a bitmask of flags to indicate which
+ *   durations of Time for Frequency Change Spacing (FCS) are supported. Flags:
  *     - <b>0x0001, bit 0:</b> Time duration of 10 microseconds is supported
  *     - <b>0x0002, bit 1:</b> Time duration of 20 microseconds is supported
  *     - <b>0x0004, bit 2:</b> Time duration of 30 microseconds is supported
@@ -13448,13 +13636,20 @@ sl_status_t sl_bt_cs_set_antenna_configuration(size_t antenna_element_offset_len
  *     - <b>0x0040, bit 6:</b> Time duration of 80 microseconds is supported
  *     - <b>0x0100, bit 7:</b> Time duration of 100 microseconds is supported
  *     - <b>0x0200, bit 8:</b> Time duration of 120 microseconds is supported
- * @param[out] optional_t_pm_times This value is a bitmask of flags to indicate
- *   which Time for Phase Measurement (PM) supported is supported. Flags:
+ * @param[out] t_pm_times This value is a bitmask of flags to indicate which
+ *   time durations of Time for Phase Measurement (PM) are supported. Flags:
  *     - <b>0x0001, bit 0:</b> Time duration of 10 microseconds is supported
  *     - <b>0x0002, bit 1:</b> Time duration of 20 microseconds is supported
  * @param[out] t_sw_times Time in microseconds for the antenna switch period of
- *   the ABR tones.
- *     - Values: 0x02, 0x02, 0x04 and 0x0A
+ *   the CS tones.
+ *     - Values: 0x00, 0x01, 0x02, 0x04 and 0x0A
+ * @param[out] tx_snr_capability This value is a bitmask of flags to indicate
+ *   the supported SNR levels used in RTT packets. Flags:
+ *     - <b>0x01, bit 0:</b> 18 dB supported
+ *     - <b>0x02, bit 1:</b> 21 dB supported
+ *     - <b>0x04, bit 2:</b> 24 dB supported
+ *     - <b>0x08, bit 3:</b> 27 dB supported
+ *     - <b>0x10, bit 4:</b> 30 dB supported
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
@@ -13464,37 +13659,56 @@ sl_status_t sl_bt_cs_read_local_supported_capabilities(uint8_t *num_config,
                                                        uint8_t *num_antennas,
                                                        uint8_t *max_antenna_paths,
                                                        uint8_t *roles,
-                                                       uint8_t *optional_modes,
+                                                       uint8_t *modes,
                                                        uint8_t *rtt_capability,
                                                        uint8_t *rtt_aa_only,
                                                        uint8_t *rtt_sounding,
                                                        uint8_t *rtt_random_payload,
-                                                       uint8_t *optional_cs_sync_phys,
-                                                       uint16_t *optional_subfeatures,
-                                                       uint16_t *optional_t_ip1_times,
-                                                       uint16_t *optional_t_ip2_times,
-                                                       uint16_t *optional_t_fcs_times,
-                                                       uint16_t *optional_t_pm_times,
-                                                       uint8_t *t_sw_times);
+                                                       uint8_t *cs_sync_phys,
+                                                       uint16_t *subfeatures,
+                                                       uint16_t *t_ip1_times,
+                                                       uint16_t *t_ip2_times,
+                                                       uint16_t *t_fcs_times,
+                                                       uint16_t *t_pm_times,
+                                                       uint8_t *t_sw_times,
+                                                       uint8_t *tx_snr_capability);
+
+/***************************************************************************//**
+ *
+ * Read the Channel Sounding (CS) capabilities of the remote controller.
+ *
+ * @param[in] connection Connection handle
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ * @b Events
+ *   - @ref sl_bt_evt_cs_read_remote_supported_capabilities_complete - Triggered
+ *     when local controller has the requested supported capabilities of the
+ *     remote controller.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_cs_read_remote_supported_capabilities(uint8_t connection);
 
 /** @} */ // end addtogroup sl_bt_cs
 
 /**
- * @addtogroup sl_bt_cs_test Accurate Bluetooth Ranging Test
+ * @addtogroup sl_bt_cs_test Channel Sounding Test
  * @{
  *
- * @brief Accurate Bluetooth Ranging Test
+ * @brief Channel Sounding Test
  *
- * This class provides optional test commands and events for ABR between
+ * This class provides optional test commands and events for CS between
  * Bluetooth devices.
  */
 
 /* Command and Response IDs */
 #define sl_bt_cmd_cs_test_start_id                                   0x005a0020
+#define sl_bt_cmd_cs_test_end_id                                     0x015a0020
 #define sl_bt_rsp_cs_test_start_id                                   0x005a0020
+#define sl_bt_rsp_cs_test_end_id                                     0x015a0020
 
 /**
- * @brief Defines tone extension for ABR test
+ * @brief Defines tone extension for CS test
  */
 typedef enum
 {
@@ -13520,7 +13734,7 @@ typedef enum
 } sl_bt_cs_test_tone_extension_t;
 
 /**
- * @brief This defines sounding sequence marker for ABR test
+ * @brief This defines sounding sequence marker for CS test
  */
 typedef enum
 {
@@ -13537,11 +13751,33 @@ typedef enum
                                                                  and 0b1100 */
 } sl_bt_cs_test_sounding_sequence_marker_t;
 
+/**
+ * @addtogroup sl_bt_evt_cs_test_end_completed sl_bt_evt_cs_test_end_completed
+ * @{
+ * @brief This event is generated when the local controller stops the ongoing CS
+ * test as the result of calling the @ref sl_bt_cs_test_end command
+ */
+
+/** @brief Identifier of the end_completed event */
+#define sl_bt_evt_cs_test_end_completed_id                           0x005a00a0
+
+/***************************************************************************//**
+ * @brief Data structure of the end_completed event
+ ******************************************************************************/
+PACKSTRUCT( struct sl_bt_evt_cs_test_end_completed_s
+{
+  uint16_t status; /**< SL_STATUS_OK if successful. Error code otherwise. */
+});
+
+typedef struct sl_bt_evt_cs_test_end_completed_s sl_bt_evt_cs_test_end_completed_t;
+
+/** @} */ // end addtogroup sl_bt_evt_cs_test_end_completed
+
 /***************************************************************************//**
  *
- * Start a single ABR procedure using the given configuration. The reflector
- * must be initialized before starting the initiator. To stop an ongoing test,
- * use the @ref sl_bt_test_dtm_end command.
+ * Start a single CS procedure using the given configuration. The reflector must
+ * be initialized before starting the initiator. To stop an ongoing test, use
+ * the @ref sl_bt_test_dtm_end command.
  *
  * @param[in] main_mode_type Enum @ref sl_bt_cs_mode_t. Main mode type. Values :
  *     - <b>sl_bt_cs_mode_rtt (0x1):</b> Round Trip Time (RTT) measurement
@@ -13554,105 +13790,112 @@ typedef enum
  *     - <b>sl_bt_cs_submode_disabled (0xff):</b> Submode disabled for the
  *       procedure.
  * @param[in] main_mode_repetition Number of main mode steps taken from the end
- *   of the last ABR subevent to be repeated at the beginning of the current ABR
+ *   of the last CS subevent to be repeated at the beginning of the current CS
  *   subevent directly after the last Mode 0 step of that event.
- *     - Range: 0 to 3
+ *     - <b>Range:</b> 0 to 3
  * @param[in] mode_calibration_steps Number of calibration mode steps to be
- *   included at the beginning of the test ABR subevent
- *     - Range: 1 to 3
- * @param[in] role Enum @ref sl_bt_cs_role_t. Role during ABR procedure Values:
+ *   included at the beginning of the test CS subevent
+ *     - <b>Range:</b> 1 to 3
+ * @param[in] role Enum @ref sl_bt_cs_role_t. Role during CS procedure Values:
  *     - <b>sl_bt_cs_role_initiator (0x0):</b> The device will initiate the
  *       procedure
  *     - <b>sl_bt_cs_role_reflector (0x1):</b> The device will reciprocate
  *       transmission
  * @param[in] rtt_type Enum @ref sl_bt_cs_rtt_type_t. RTT payload type used in
- *   the ABR procedure Values:
- *     - <b>sl_bt_cs_rtt_type_coarse (0x0):</b> RTT Coarse
+ *   the CS procedure Values:
+ *     - <b>sl_bt_cs_rtt_type_aa_only (0x0):</b> RTT Access Address (AA) only
+ *     - <b>sl_bt_cs_rtt_type_fractional_32_bit_sounding (0x1):</b> RTT
+ *       Fractional with 32-bit Sounding Sequence
  *     - <b>sl_bt_cs_rtt_type_fractional_96_bit_sounding (0x2):</b> RTT
  *       Fractional with 96-bit Sounding Sequence
- * @param[in] cs_sync_phy Enum @ref sl_bt_gap_phy_t. Used PHY for ABR SYNC
+ *     - <b>sl_bt_cs_rtt_type_fractional_32_bit_random (0x3):</b> RTT Fractional
+ *       with 32-bit Random Sequence
+ *     - <b>sl_bt_cs_rtt_type_fractional_64_bit_random (0x4):</b> RTT Fractional
+ *       with 64-bit Random Sequence
+ *     - <b>sl_bt_cs_rtt_type_fractional_96_bit_random (0x5):</b> RTT Fractional
+ *       with 96-bit Random Sequence
+ *     - <b>sl_bt_cs_rtt_type_fractional_128_bit_random (0x6):</b> RTT
+ *       Fractional with 128-bit Random Sequence
+ * @param[in] cs_sync_phy Enum @ref sl_bt_gap_phy_t. Used PHY for CS_SYNC
  *   exchanges during a procedure Values:
  *     - <b>sl_bt_gap_phy_1m (0x1):</b> 1M PHY
  *     - <b>sl_bt_gap_phy_2m (0x2):</b> 2M PHY
  *     - <b>sl_bt_gap_phy_coded (0x4):</b> Coded PHY, 125k (S=8) or 500k (S=2)
  *     - <b>sl_bt_gap_phy_any (0xff):</b> Any PHYs the device supports
- * @param[in] antenna_selection Antenna Identifier to be used for RTT packets
- *     - Range: 1 to 4
- * @param[in] subevent_len ABR subevent length in units of microseconds.
- * @param[in] subevent_interval Interval between the start of two consecutive
- *   ABR events. Units: 0.625 ms.
- *     - Value: 0x0000. Single ABR subevent
- * @param[in] tx_power Transmit power level for the transmission. Units: dBm.
- *     - Range: -127 to +20
+ * @param[in] antenna_selection @parblock
+ *   Antenna Identifier to be used for RTT packets
+ *     - <b>Range:</b> 1 to 4
+ *
+ *     - Value: 0xFE. Use antennas in repetitive order from 0x01 to 0x04
+ *   @endparblock
+ * @param[in] subevent_len @parblock
+ *   CS subevent length in units of microseconds.
+ *     - <b>Range:</b> 1250 to 3999999
+ *
+ *     - Time range: 1250 us to 4s
+ *   @endparblock
+ * @param[in] subevent_interval Interval between the start of two consecutive CS
+ *   events. Units: 0.625 ms.
+ *     - Value: 0x0000. Single CS subevent
+ * @param[in] max_num_subevents @parblock
+ *   The maximum allowed number of subevents in the procedure.
+ *     - Value: 0x00. This parameter is ignored when determining the number of
+ *       subevents in the procedure
+ *
+ *     - <b>Range:</b> 1 to 32
+ *   @endparblock
+ * @param[in] tx_power @parblock
+ *   Transmit power level for the transmission. Units: dBm.
+ *     - <b>Range:</b> -127 to +20
+ *
  *     - Value: 0x7E. Set transmitter to minimum transmit power level
  *     - Value: 0x7F. Set transmitter to maximum transmit power level
+ *   @endparblock
  * @param[in] t_ip1_time Idle time in microseconds between the RTT packets
  *     - Values: 10, 20, 30, 40, 50, 60, 80 or 145
- * @param[in] t_ip2_time Interlude time in microseconds between the ABR tones
+ * @param[in] t_ip2_time Interlude time in microseconds between the CS tones
  *     - Values: 10, 20, 30, 40, 50, 60, 80 or 145
  * @param[in] t_fcs_time Time in microseconds for frequency changes
  *     - Values: 15, 20, 30, 40, 50, 60, 80, 100, 120 or 150
  * @param[in] t_pm_time Time in microseconds for the phase measurement period of
- *   the ABR tones
+ *   the CS tones
  *     - Values: 10, 20 or 40
  * @param[in] t_sw_time Time in microseconds for the antenna switch period of
- *   the ABR tones
+ *   the CS tones
  *     - Values: 0, 1, 2, 4 or 10
  * @param[in] tone_antenna_config Antenna Configuration Index used during
  *   antenna switching
- *     - Range: 0 to 7
- * @param[in] companion_signal_state Enum @ref
- *   sl_bt_cs_companion_signal_status_t. Enable or disable status of the
- *   companion signal. Values:
- *     - <b>sl_bt_cs_companion_signal_status_disable (0x0):</b> The companion
- *       signal is disabled
- *     - <b>sl_bt_cs_companion_signal_status_enable (0x1):</b> The companion
- *       signal is enabled
- * @param[in] drbg_nonce Antenna Configuration Index used during antenna
- *   switching
- *     - Range: 0 to 7
+ *     - <b>Range:</b> 0 to 7
+ * @param[in] reserved Reserved for future use.
+ * @param[in] snr_control_initiator Enum @ref sl_bt_cs_snr_control_adjustment_t.
+ *   The Signal Noise Ratio (SNR) control adjustment for the CS_SYNC
+ *   transmissions of the initiator. Values:
+ *     - <b>sl_bt_cs_snr_control_adjustment_not_applied (0xff):</b> SNR control
+ *       adjustment not to be applied
+ * @param[in] snr_control_reflector Enum @ref sl_bt_cs_snr_control_adjustment_t.
+ *   The Signal Noise Ratio (SNR) control adjustment for the CS_SYNC
+ *   transmissions of the reflector. Values:
+ *     - <b>sl_bt_cs_snr_control_adjustment_not_applied (0xff):</b> SNR control
+ *       adjustment not to be applied
+ * @param[in] drbg_nonce The DRBG_Nonce value determines octets 14 and 15 of the
+ *   initial value of the DRBG nonce.
+ * @param[in] channel_map_repetition Number of times the channel_map field will
+ *   be cycled through for non-Mode 0 steps within an CS procedure.
+ *     - <b>Range:</b> 1 to 255
  * @param[in] override_config Configuration of the parameters in
- *   override_parameters
- *     - Bit 0: The channel sequence for the subevent is determined by the
- *       values of channel map repetition, channel length, and channel
- *       parameters.
- *     - Bit 2: The number of main mode ABR steps to be executed before a sub
- *       mode ABR step during the ABR procedure is determined by the value of
- *       main mode steps parameter.
- *     - Bit 3: The transmission of tone extensions within each Mode 2 or Mode 3
- *       step is determined by the value of T_PM_Tone_Ext parameter.
- *     - Bit 4: The Tone antenna permutation index for each Mode 2 or Mode 3
- *       step is determined by the value of Tone_Antenna_Permutation parameter.
- *     - Bit 5: The ABR Access Address of all packets sent by the initiator is
- *       determined by ABR_SYNC_AA_Initiator parameter. The ABR Access Address
- *       of all packets sent by the reflector is determined by
- *       ABR_SYNC_AA_Reflector parameter.
- *   B
- *     - Bit 6: The Marker positions for each ABR SYNC packet with a marker is
- *       determined by the value of SS_Marker1_Position and SS_Marker2_Position
- *       parameters.
- *     - Bit 7: The Marker value for each marker within a ABR SYNC packet is
- *       determined by SS_Marker_Value parameter.
- *     - Bit 8: The payload of the ABR SYNC packet is determined by the value of
- *       ABR_SYNC_Payload_Pattern parameter.
- *     - Bit 10: Stable Phase test
+ *   override_parameters. Please refer to the Bluetooth Specification document
+ *   on the HCI_CS_Test comamnd for more information on the override
+ *   configuration details.
  * @param[in] override_parameters_len Length of data in @p override_parameters
- * @param[in] override_parameters Variable set of parameters which are present
- *   dependent on the bits set in the override config parameter.
- *     - Bit 0: channel_map_repetition, channel_length and channel
- *     - Bit 2: main_mode_steps
- *     - Bit 3: t_pm_tone_ext
- *     - Bit 4: tone_antenna_permutation
- *     - Bit 5: aa_initiator and aa_reflector
- *     - Bit 6: ss_marker1_position and ss_marker2_position
- *     - Bit 7: ss_marker_value
- *     - Bit 8: ABR_SYNC_Payload_Pattern and ABR_SYNC_User_Payload
+ * @param[in] override_parameters Variable set of parameters. Please refer to
+ *   the Bluetooth Specification document on the HCI_CS_Test comamnd for more
+ *   information on the override parameters details.
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
  *   - @ref sl_bt_evt_cs_result - Triggered when local controller has results to
- *     report for every ABR subevent within the ABR procedure
+ *     report for every CS subevent within the CS procedure
  *
  ******************************************************************************/
 sl_status_t sl_bt_cs_test_start(uint8_t main_mode_type,
@@ -13665,6 +13908,7 @@ sl_status_t sl_bt_cs_test_start(uint8_t main_mode_type,
                                 uint8_t antenna_selection,
                                 const sl_bt_cs_subevent_length_t *subevent_len,
                                 uint16_t subevent_interval,
+                                uint8_t max_num_subevents,
                                 int8_t tx_power,
                                 uint8_t t_ip1_time,
                                 uint8_t t_ip2_time,
@@ -13672,11 +13916,31 @@ sl_status_t sl_bt_cs_test_start(uint8_t main_mode_type,
                                 uint8_t t_pm_time,
                                 uint8_t t_sw_time,
                                 uint8_t tone_antenna_config,
-                                uint8_t companion_signal_state,
+                                uint8_t reserved,
+                                uint8_t snr_control_initiator,
+                                uint8_t snr_control_reflector,
                                 uint16_t drbg_nonce,
+                                uint8_t channel_map_repetition,
                                 uint16_t override_config,
                                 size_t override_parameters_len,
                                 const uint8_t* override_parameters);
+
+/***************************************************************************//**
+ *
+ * Stops any ongoing CS test. When the local controller has sent all the
+ * remaining subevents for the ongoing procedure it will generate an @ref
+ * sl_bt_evt_cs_test_end_completed event.
+ *
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ * @b Events
+ *   - @ref sl_bt_evt_cs_test_end_completed - Triggered when local controller
+ *     has stopped the CS procedure started with the @ref sl_bt_cs_test_start
+ *     command.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_cs_test_end();
 
 /** @} */ // end addtogroup sl_bt_cs_test
 
@@ -13690,10 +13954,11 @@ sl_status_t sl_bt_cs_test_start(uint8_t main_mode_type,
  * Adaptation Protocol (L2CAP) credit-based logical channels.
  *
  * An L2CAP credit-based logical channel is a logical link identified by a
- * channel identifier (the @p cid parameter in the commands and events of this
- * API class). These channels use a credit-based flow control mechanism. The
- * credit can be configured at the channel opening and later dynamically updated
- * on the channel.
+ * channel identifier in the assigned name space 0x40-0x7F for LE-U logical
+ * links (the @p cid parameter in the commands and events of this API class).
+ * These channels use a credit-based flow control mechanism. The credit can be
+ * configured at the channel opening and later dynamically updated on the
+ * channel.
  *
  * The Simplified Protocol/Service Multiplexer (SPSM) of a channel specifies the
  * protocol or services the channel implements. It can be a value for a fixed
@@ -13988,7 +14253,7 @@ PACKSTRUCT( struct sl_bt_evt_l2cap_channel_closed_s
 {
   uint8_t  connection; /**< The connection handle */
   uint16_t cid;        /**< The channel identifier */
-  uint16_t reason;     /**< The disconnection reason */
+  uint16_t reason;     /**< An sl_status_t code describing disconnection reason */
 });
 
 typedef struct sl_bt_evt_l2cap_channel_closed_s sl_bt_evt_l2cap_channel_closed_t;
@@ -14039,12 +14304,12 @@ typedef struct sl_bt_evt_l2cap_command_rejected_s sl_bt_evt_l2cap_command_reject
  * @param[in] max_sdu @parblock
  *   The Maximum Service Data Unit size the local channel endpoint can accept
  *
- *   Range: 23 to 65533.
+ *     - <b>Range:</b> 23 to 65533
  *   @endparblock
  * @param[in] max_pdu @parblock
  *   The maximum PDU payload size the local channel endpoint can accept
  *
- *   Range: 23 to 252.
+ *     - <b>Range:</b> 23 to 252
  *   @endparblock
  * @param[in] credit The initial credit value of the local channel endpoint,
  *   i.e., number of PDUs the peer channel endpoint can send
@@ -14097,12 +14362,12 @@ sl_status_t sl_bt_l2cap_open_le_channel(uint8_t connection,
  * @param[in] max_sdu @parblock
  *   The Maximum Service Data Unit size the local channel endpoint can accept
  *
- *   Range: 23 to 65533.
+ *     - <b>Range:</b> 23 to 65533
  *   @endparblock
  * @param[in] max_pdu @parblock
  *   The maximum PDU payload size the local channel endpoint can accept
  *
- *   Range:23 to 252.
+ *     - <b>Range:</b> 23 to 252
  *   @endparblock
  * @param[in] credit The initial credit value of the local channel endpoint,
  *   i.e., number of PDUs that the peer channel endpoint can send
@@ -14158,7 +14423,7 @@ sl_status_t sl_bt_l2cap_channel_send_data(uint8_t connection,
  *   The credit value, i.e., the additional number of PDUs the peer channel
  *   endpoint can send
  *
- *   Range: 1 to 65535.
+ *     - <b>Range:</b> 1 to 65535
  *   @endparblock
  *
  * @return SL_STATUS_OK if successful. Error code otherwise.
@@ -14302,9 +14567,12 @@ sl_status_t sl_bt_cte_transmitter_disable_connection_cte(uint8_t connection);
  * prior to this command.
  *
  * @param[in] handle Periodic advertising handle
- * @param[in] cte_length CTE length in 8 us units.
- *     - Range: 0x02 to 0x14
+ * @param[in] cte_length @parblock
+ *   CTE length in 8 us units.
+ *     - <b>Range:</b> 2 to 20
+ *
  *     - Time Range: 16 us to 160 us
+ *   @endparblock
  * @param[in] cte_type CTE type
  *     - <b>0:</b> AoA CTE
  *     - <b>1:</b> AoD CTE with 1 us slots
@@ -14344,9 +14612,12 @@ sl_status_t sl_bt_cte_transmitter_disable_connectionless_cte(uint8_t handle);
  * prior this command.
  *
  * @param[in] handle Advertising handle
- * @param[in] cte_length CTE length in 8 us units.
- *     - Range: 0x02 to 0x14
+ * @param[in] cte_length @parblock
+ *   CTE length in 8 us units.
+ *     - <b>Range:</b> 2 to 20
+ *
  *     - Time Range: 16 us to 160 us
+ *   @endparblock
  * @param[in] cte_type CTE type
  *     - <b>0:</b> AoA CTE
  *     - <b>1:</b> AoD CTE with 1 us slots
@@ -14745,6 +15016,9 @@ sl_status_t sl_bt_cte_receiver_set_sync_cte_type(uint8_t sync_cte_type);
  * sl_bt_cte_receiver_set_sync_receive_parameters after the connection is
  * opened.
  *
+ * Irrespective of the value of the @p skip parameter, the Controller stops
+ * skipping packets if the skipping would cause a timeout.
+ *
  * This command is relevant and available only when the application has included
  * the bluetooth_feature_past_receiver component into the build. If the PAST
  * receiver component is not included, this command returns the error
@@ -14767,16 +15041,23 @@ sl_status_t sl_bt_cte_receiver_set_sync_cte_type(uint8_t sync_cte_type);
  *   Default: @ref sl_bt_past_receiver_mode_ignore (No attempt is made to
  *   synchronize)
  *   @endparblock
- * @param[in] skip The maximum number of periodic advertising packets that can
- *   be skipped after a successful receive.
- *     - Range: 0x0000 to 0x01F3
- *     - Default value: 0
- * @param[in] timeout The maximum permitted time between successful receives. If
- *   this time is exceeded, synchronization is lost. Unit: 10 ms.
- *     - Range: 0x0A to 0x4000
+ * @param[in] skip @parblock
+ *   The maximum number of periodic advertising packets that can be skipped
+ *   after a successful receive.
+ *     - <b>Range:</b> 0 to 499
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] timeout @parblock
+ *   The maximum permitted time between successful receives. If this time is
+ *   exceeded, synchronization is lost. Unit: 10 ms.
+ *     - <b>Range:</b> 10 to 16384
+ *
  *     - Unit: 10 ms
  *     - Time range: 100 ms to 163.84 s
- *     - Default value: 1000 ms
+ *     -
+ *         - <b>Default</b> : 1000 ms
+ *   @endparblock
  * @param[in] sync_cte_type @parblock
  *   Sync CTE type flags to limit what types of periodic advertising trains to
  *   sync to when receiving sync transfers. This value can be a bitmask of
@@ -14808,16 +15089,9 @@ sl_status_t sl_bt_cte_receiver_set_sync_cte_type(uint8_t sync_cte_type);
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_sync_transfer_received - Triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots. This event is used only when the application
- *     does not include bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync components.
- *   - @ref sl_bt_evt_periodic_sync_transfer_received - If the application
- *     includes the bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync component, triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots.
+ *   - @ref sl_bt_evt_periodic_sync_transfer_received - Triggered after
+ *     synchronization transfer is received for a periodic advertising train
+ *     that does not have subevents or response slots.
  *   - @ref sl_bt_evt_pawr_sync_transfer_received - If the application includes
  *     the bluetooth_feature_pawr_sync component, triggered after
  *     synchronization transfer is received for a Periodic Advertising with
@@ -14836,6 +15110,9 @@ sl_status_t sl_bt_cte_receiver_set_default_sync_receive_parameters(uint8_t mode,
  * Advertising Synchronization Transfers (PAST) over the specified connection.
  * The parameters do not affect periodic advertising trains that the device has
  * already synchronized to.
+ *
+ * Irrespective of the value of the @p skip parameter, the Controller stops
+ * skipping packets if the skipping would cause a timeout.
  *
  * This command is relevant and available only when the application has included
  * the bluetooth_feature_past_receiver component into the build. If the PAST
@@ -14860,16 +15137,23 @@ sl_status_t sl_bt_cte_receiver_set_default_sync_receive_parameters(uint8_t mode,
  *   Default: @ref sl_bt_past_receiver_mode_ignore (Do not attempt to
  *   synchronize)
  *   @endparblock
- * @param[in] skip The maximum number of periodic advertising packets that can
- *   be skipped after a successful receive.
- *     - Range: 0x0000 to 0x01F3
- *     - Default value: 0
- * @param[in] timeout The maximum permitted time between successful receives. If
- *   this time is exceeded, synchronization is lost. Unit: 10 ms.
- *     - Range: 0x0A to 0x4000
+ * @param[in] skip @parblock
+ *   The maximum number of periodic advertising packets that can be skipped
+ *   after a successful receive.
+ *     - <b>Range:</b> 0 to 499
+ *
+ *     - <b>Default</b> : 0
+ *   @endparblock
+ * @param[in] timeout @parblock
+ *   The maximum permitted time between successful receives. If this time is
+ *   exceeded, synchronization is lost. Unit: 10 ms.
+ *     - <b>Range:</b> 10 to 16384
+ *
  *     - Unit: 10 ms
  *     - Time range: 100 ms to 163.84 s
- *     - Default value: 1000 ms
+ *
+ *     - <b>Default</b> : 1000 ms
+ *   @endparblock
  * @param[in] sync_cte_type @parblock
  *   Sync CTE type flags to limit what types of periodic advertising trains to
  *   sync to when receiving sync transfers. This value can be a bitmask of
@@ -14901,16 +15185,9 @@ sl_status_t sl_bt_cte_receiver_set_default_sync_receive_parameters(uint8_t mode,
  * @return SL_STATUS_OK if successful. Error code otherwise.
  *
  * @b Events
- *   - @ref sl_bt_evt_sync_transfer_received - Triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots. This event is used only when the application
- *     does not include bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync components.
- *   - @ref sl_bt_evt_periodic_sync_transfer_received - If the application
- *     includes the bluetooth_feature_periodic_sync or
- *     bluetooth_feature_pawr_sync component, triggered after synchronization
- *     transfer is received for a periodic advertising train that does not have
- *     subevents or response slots.
+ *   - @ref sl_bt_evt_periodic_sync_transfer_received - Triggered after
+ *     synchronization transfer is received for a periodic advertising train
+ *     that does not have subevents or response slots.
  *   - @ref sl_bt_evt_pawr_sync_transfer_received - If the application includes
  *     the bluetooth_feature_pawr_sync component, triggered after
  *     synchronization transfer is received for a Periodic Advertising with
@@ -14959,9 +15236,12 @@ sl_status_t sl_bt_cte_receiver_configure(uint8_t flags);
  *     - <b>0:</b> No interval. The request is initiated only once.
  *     - <b>Other values N:</b> Initiate the request every N-th connection
  *       events
- * @param[in] cte_length Minimum CTE length requested in 8 us units.
- *     - Range: 0x02 to 0x14
+ * @param[in] cte_length @parblock
+ *   Minimum CTE length requested in 8 us units.
+ *     - <b>Range:</b> 2 to 20
+ *
  *     - Time Range: 16 us to 160 us
+ *   @endparblock
  * @param[in] cte_type Requested CTE type
  *     - <b>0:</b> AoA CTE
  *     - <b>1:</b> AoD CTE with 1 us slots
@@ -15127,11 +15407,11 @@ PACKSTRUCT( struct sl_bt_evt_connection_analyzer_report_s
 {
   uint8_t analyzer;        /**< The handle of the connection analyzer */
   int8_t  central_rssi;    /**< RSSI measurement of the packet transmitted by
-                                the Central device. Units: dBm. Range: -127 to
-                                +20. */
+                                the Central device. Units: dBm.
+                                  - <b>Range:</b> -127 to +20 */
   int8_t  peripheral_rssi; /**< RSSI measurement of the packet transmitted by
-                                the Peripheral device. Units: dBm. Range: -127
-                                to +20. */
+                                the Peripheral device. Units: dBm.
+                                  - <b>Range:</b> -127 to +20 */
 });
 
 typedef struct sl_bt_evt_connection_analyzer_report_s sl_bt_evt_connection_analyzer_report_t;
@@ -15153,7 +15433,8 @@ typedef struct sl_bt_evt_connection_analyzer_report_s sl_bt_evt_connection_analy
 PACKSTRUCT( struct sl_bt_evt_connection_analyzer_completed_s
 {
   uint8_t  analyzer; /**< The handle of the connection analyzer */
-  uint16_t reason;   /**< The reason of stopping the operation */
+  uint16_t reason;   /**< An sl_status_t code describing the reason of stopping
+                          the operation */
 });
 
 typedef struct sl_bt_evt_connection_analyzer_completed_s sl_bt_evt_connection_analyzer_completed_t;
@@ -15212,6 +15493,7 @@ typedef struct sl_bt_evt_connection_analyzer_completed_s sl_bt_evt_connection_an
  *   microseconds. The semantics depend on whether the configuration flag
  *   SL_BT_CONNECTION_ANALYZER_RELATIVE_TIME is set in parameter @p flags:
  *     - When the flag is set, the value is a time relative to the current time.
+ *       A negative value means that the start time was in the past.
  *     - When the flag is not set, the value is an absolute time converted from
  *       the PROTIMER tick.
  * @param[in] flags Configuration flags. This value is a bitmask of @ref
@@ -15241,7 +15523,7 @@ sl_status_t sl_bt_connection_analyzer_start(uint32_t access_address,
                                             const sl_bt_connection_channel_map_t *channel_map,
                                             uint8_t channel,
                                             uint16_t event_counter,
-                                            uint32_t start_time_us,
+                                            int32_t start_time_us,
                                             uint32_t flags,
                                             uint8_t *analyzer);
 
@@ -15269,17 +15551,19 @@ sl_status_t sl_bt_connection_analyzer_stop(uint8_t analyzer);
  * This class provides commands and events, which can be used by a NCP host and
  * target to implement a communication mechanism with a custom proprietary
  * protocol. An application must decide whether and how the command and event
- * are used. The stack does not produce or consume any messages belonging to
- * this class.
+ * are used. The Bluetooth host stack does not produce or consume any messages
+ * belonging to this class.
  */
 
 /* Command and Response IDs */
 #define sl_bt_cmd_user_message_to_target_id                          0x00ff0020
 #define sl_bt_cmd_user_manage_event_filter_id                        0x01ff0020
 #define sl_bt_cmd_user_reset_to_dfu_id                               0x02ff0020
+#define sl_bt_cmd_user_cs_service_message_to_target_id               0x03ff0020
 #define sl_bt_rsp_user_message_to_target_id                          0x00ff0020
 #define sl_bt_rsp_user_manage_event_filter_id                        0x01ff0020
 #define sl_bt_rsp_user_reset_to_dfu_id                               0x02ff0020
+#define sl_bt_rsp_user_cs_service_message_to_target_id               0x03ff0020
 
 /**
  * @addtogroup sl_bt_evt_user_message_to_host sl_bt_evt_user_message_to_host
@@ -15304,6 +15588,28 @@ PACKSTRUCT( struct sl_bt_evt_user_message_to_host_s
 typedef struct sl_bt_evt_user_message_to_host_s sl_bt_evt_user_message_to_host_t;
 
 /** @} */ // end addtogroup sl_bt_evt_user_message_to_host
+
+/**
+ * @addtogroup sl_bt_evt_user_cs_service_message_to_host sl_bt_evt_user_cs_service_message_to_host
+ * @{
+ * @brief Used by the Channel Sounding service component on target device to
+ * send a message, e.g., a distance measurement, to the NCP host
+ */
+
+/** @brief Identifier of the cs_service_message_to_host event */
+#define sl_bt_evt_user_cs_service_message_to_host_id                 0x01ff00a0
+
+/***************************************************************************//**
+ * @brief Data structure of the cs_service_message_to_host event
+ ******************************************************************************/
+PACKSTRUCT( struct sl_bt_evt_user_cs_service_message_to_host_s
+{
+  uint8array message; /**< The message */
+});
+
+typedef struct sl_bt_evt_user_cs_service_message_to_host_s sl_bt_evt_user_cs_service_message_to_host_t;
+
+/** @} */ // end addtogroup sl_bt_evt_user_cs_service_message_to_host
 
 /***************************************************************************//**
  *
@@ -15356,6 +15662,29 @@ sl_status_t sl_bt_user_manage_event_filter(size_t data_len,
  ******************************************************************************/
 void sl_bt_user_reset_to_dfu();
 
+/***************************************************************************//**
+ *
+ * Used by an NCP host to send a message to the Channel Sounding service
+ * component on target device. The Channel Sounding service on target device
+ * must send the response with @ref
+ * sl_bt_send_rsp_user_cs_service_message_to_target.
+ *
+ * @param[in] data_len Length of data in @p data
+ * @param[in] data The message
+ * @param[in] max_response_size Size of output buffer passed in @p response
+ * @param[out] response_len On return, set to the length of output data written
+ *   to @p response
+ * @param[out] response The response message
+ *
+ * @return SL_STATUS_OK if successful. Error code otherwise.
+ *
+ ******************************************************************************/
+sl_status_t sl_bt_user_cs_service_message_to_target(size_t data_len,
+                                                    const uint8_t* data,
+                                                    size_t max_response_size,
+                                                    size_t *response_len,
+                                                    uint8_t *response);
+
 /** @} */ // end addtogroup sl_bt_user
 
 
@@ -15379,7 +15708,6 @@ PACKSTRUCT( struct sl_bt_msg {
     sl_bt_evt_dfu_boot_failure_t                                 evt_dfu_boot_failure; /**< Data field for dfu boot_failure event*/
     sl_bt_evt_system_boot_t                                      evt_system_boot; /**< Data field for system boot event*/
     sl_bt_evt_system_error_t                                     evt_system_error; /**< Data field for system error event*/
-    sl_bt_evt_system_hardware_error_t                            evt_system_hardware_error; /**< Data field for system hardware_error event*/
     sl_bt_evt_system_resource_exhausted_t                        evt_system_resource_exhausted; /**< Data field for system resource_exhausted event*/
     sl_bt_evt_system_external_signal_t                           evt_system_external_signal; /**< Data field for system external_signal event*/
     sl_bt_evt_system_soft_timer_t                                evt_system_soft_timer; /**< Data field for system soft_timer event*/
@@ -15389,10 +15717,6 @@ PACKSTRUCT( struct sl_bt_msg {
     sl_bt_evt_periodic_advertiser_status_t                       evt_periodic_advertiser_status; /**< Data field for periodic_advertiser status event*/
     sl_bt_evt_scanner_legacy_advertisement_report_t              evt_scanner_legacy_advertisement_report; /**< Data field for scanner legacy_advertisement_report event*/
     sl_bt_evt_scanner_extended_advertisement_report_t            evt_scanner_extended_advertisement_report; /**< Data field for scanner extended_advertisement_report event*/
-    sl_bt_evt_scanner_scan_report_t                              evt_scanner_scan_report; /**< Data field for scanner scan_report event*/
-    sl_bt_evt_sync_opened_t                                      evt_sync_opened; /**< Data field for sync opened event*/
-    sl_bt_evt_sync_transfer_received_t                           evt_sync_transfer_received; /**< Data field for sync transfer_received event*/
-    sl_bt_evt_sync_data_t                                        evt_sync_data; /**< Data field for sync data event*/
     sl_bt_evt_sync_closed_t                                      evt_sync_closed; /**< Data field for sync closed event*/
     sl_bt_evt_periodic_sync_opened_t                             evt_periodic_sync_opened; /**< Data field for periodic_sync opened event*/
     sl_bt_evt_periodic_sync_transfer_received_t                  evt_periodic_sync_transfer_received; /**< Data field for periodic_sync transfer_received event*/
@@ -15413,8 +15737,9 @@ PACKSTRUCT( struct sl_bt_msg {
     sl_bt_evt_connection_remote_used_features_t                  evt_connection_remote_used_features; /**< Data field for connection remote_used_features event*/
     sl_bt_evt_connection_data_length_t                           evt_connection_data_length; /**< Data field for connection data_length event*/
     sl_bt_evt_connection_statistics_t                            evt_connection_statistics; /**< Data field for connection statistics event*/
+    sl_bt_evt_connection_request_subrate_failed_t                evt_connection_request_subrate_failed; /**< Data field for connection request_subrate_failed event*/
+    sl_bt_evt_connection_subrate_changed_t                       evt_connection_subrate_changed; /**< Data field for connection subrate_changed event*/
     sl_bt_evt_connection_closed_t                                evt_connection_closed; /**< Data field for connection closed event*/
-    sl_bt_evt_connection_rssi_t                                  evt_connection_rssi; /**< Data field for connection rssi event*/
     sl_bt_evt_gatt_mtu_exchanged_t                               evt_gatt_mtu_exchanged; /**< Data field for gatt mtu_exchanged event*/
     sl_bt_evt_gatt_service_t                                     evt_gatt_service; /**< Data field for gatt service event*/
     sl_bt_evt_gatt_characteristic_t                              evt_gatt_characteristic; /**< Data field for gatt characteristic event*/
@@ -15443,6 +15768,9 @@ PACKSTRUCT( struct sl_bt_msg {
     sl_bt_evt_cs_config_complete_t                               evt_cs_config_complete; /**< Data field for cs config_complete event*/
     sl_bt_evt_cs_procedure_enable_complete_t                     evt_cs_procedure_enable_complete; /**< Data field for cs procedure_enable_complete event*/
     sl_bt_evt_cs_result_t                                        evt_cs_result; /**< Data field for cs result event*/
+    sl_bt_evt_cs_result_continue_t                               evt_cs_result_continue; /**< Data field for cs result_continue event*/
+    sl_bt_evt_cs_read_remote_supported_capabilities_complete_t   evt_cs_read_remote_supported_capabilities_complete; /**< Data field for cs read_remote_supported_capabilities_complete event*/
+    sl_bt_evt_cs_test_end_completed_t                            evt_cs_test_end_completed; /**< Data field for cs_test end_completed event*/
     sl_bt_evt_l2cap_le_channel_open_request_t                    evt_l2cap_le_channel_open_request; /**< Data field for l2cap le_channel_open_request event*/
     sl_bt_evt_l2cap_le_channel_open_response_t                   evt_l2cap_le_channel_open_response; /**< Data field for l2cap le_channel_open_response event*/
     sl_bt_evt_l2cap_channel_data_t                               evt_l2cap_channel_data; /**< Data field for l2cap channel_data event*/
@@ -15456,6 +15784,7 @@ PACKSTRUCT( struct sl_bt_msg {
     sl_bt_evt_connection_analyzer_report_t                       evt_connection_analyzer_report; /**< Data field for connection_analyzer report event*/
     sl_bt_evt_connection_analyzer_completed_t                    evt_connection_analyzer_completed; /**< Data field for connection_analyzer completed event*/
     sl_bt_evt_user_message_to_host_t                             evt_user_message_to_host; /**< Data field for user message_to_host event*/
+    sl_bt_evt_user_cs_service_message_to_host_t                  evt_user_cs_service_message_to_host; /**< Data field for user cs_service_message_to_host event*/
     uint8_t payload[SL_BGAPI_MAX_PAYLOAD_SIZE];
   } data;
 });
@@ -15620,6 +15949,24 @@ void sl_bt_send_evt_user_message_to_host(uint8_t data_len, uint8_t *data);
  * filter. Do not use it in SoC mode.
  */
 void sl_bt_send_rsp_user_manage_event_filter(uint16_t result);
+
+/**
+ * Sends the NCP host a message whose SL_BT_MSG_ID is
+ * gecko_rsp_user_cs_service_message_to_target_id.
+ *
+ * This a utility helping a NCP host and target application to exchange user
+ * data. Do not use it in SoC mode.
+ */
+void sl_bt_send_rsp_user_cs_service_message_to_target(uint16_t result, uint8_t data_len, uint8_t *data);
+
+/**
+ * Sends the NCP host a message whose SL_BT_MSG_ID is
+ * gecko_evt_user_cs_service_message_to_host_id.
+ *
+ * This a utility helping a NCP host and target application to exchange user
+ * data. Do not use it in SoC mode.
+ */
+void sl_bt_send_evt_user_cs_service_message_to_host(uint8_t data_len, uint8_t *data);
 
 
 /** @} */ // end addtogroup sl_bt_utility_functions

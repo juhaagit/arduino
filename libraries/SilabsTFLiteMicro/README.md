@@ -3,14 +3,17 @@
 This library enables the creation of applications that use TensorFlow Lite for Microcontrollers on Arduino Silabs boards. TensorFlow Lite for Microcontrollers is a framework that provides tools for running neural network inference on microcontrollers.
 
 ## Hardware-accelerated Kernel
-Silicon Labs integrates TensorFlow Lite for Microcontrollers with the Gecko SDK, providing the full framework and automatically selecting the most optimal kernel implementation for the target board. 
+Silicon Labs integrates TensorFlow Lite for Microcontrollers with the Gecko SDK, providing the full framework and automatically selecting the most optimal kernel implementation for the target board.
 
-The **Arduino Nano Matter**, based on the *Silicon Labs MGM240 module*, utilizes MVP hardware-accelerated kernels. The MVP accelerator is a co-processor designed for matrix and vector operations, enhancing inference performance.
+Select Silicon Labs microcontrollers utilize MVP hardware-accelerated kernels. The MVP accelerator is a co-processor designed for matrix and vector operations, enhancing inference performance.
 
-## Compatibility 
-This library is currently compatible only with the:
+## Compatibility
+This library is currently compatible with the following boards:
 
-Arduino Nano Matter - Protocol stack: None/No Radio
+ - Arduino Nano Matter
+ - Seeed Studio XIAO MG24
+ - Silicon Labs xG24 Explorer Kit
+ - Silicon Labs xG24 Dev Kit
 
 ## Importing a TensorFlow Lite Model into the Library
 
@@ -90,5 +93,5 @@ To use the library in your project, follow these steps:
 
 ## Examples
 
-- `magic_wand_nano_matter`: Gesture recognition using Arduino Nano Matter and IMU sensor, leveraging hardware acceleration with the Silabs TFLite Micro library.
-- `imu_capture_nano_matter`: Captures and logs motion data using the Arduino Nano Matter and IMU sensor in CSV format.
+- `magic_wand`: Gesture recognition using an IMU sensor, leveraging hardware acceleration with the Silabs TFLite Micro library.
+- `magic_wand_imu_capture`: Captures and logs motion data using the IMU sensor in CSV format.

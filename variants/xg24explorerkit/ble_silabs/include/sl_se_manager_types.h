@@ -38,7 +38,7 @@
 /// @{
 
 #include "sl_se_manager_defines.h"
-#include "em_se.h"
+#include "sli_se_manager_mailbox.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -138,14 +138,12 @@ typedef struct {
  *   sl_se_set_yield().
  ******************************************************************************/
 typedef struct sl_se_command_context_t {
-  SE_Command_t  command;             ///< SE mailbox command struct
-#if defined(SL_SE_MANAGER_YIELD_WHILE_WAITING_FOR_COMMAND_COMPLETION)
-  bool          yield;               ///< If true, yield the CPU core while
+  sli_se_mailbox_command_t  command; ///< SE mailbox command struct
+  bool                      yield;   ///< If true, yield the CPU core while
                                      ///< waiting for the SE mailbox command
                                      ///< to complete. If false, busy-wait, by
                                      ///< polling the SE mailbox response
                                      ///< register.
-#endif // SL_SE_MANAGER_YIELD_WHILE_WAITING_FOR_COMMAND_COMPLETION
 } sl_se_command_context_t;
 
 /// @} (end addtogroup sl_se_manager_core)
@@ -214,8 +212,9 @@ typedef uint32_t sl_se_key_type_t;
 
 /// Key storage method. Can have one of @ref SL_SE_KEY_STORAGE_EXTERNAL_PLAINTEXT,
 /// @ref SL_SE_KEY_STORAGE_EXTERNAL_WRAPPED,
-/// @ref SL_SE_KEY_STORAGE_INTERNAL_VOLATILE or
-/// @ref SL_SE_KEY_STORAGE_INTERNAL_IMMUTABLE.
+/// @ref SL_SE_KEY_STORAGE_INTERNAL_VOLATILE,
+/// @ref SL_SE_KEY_STORAGE_INTERNAL_IMMUTABLE or
+/// @ref SL_SE_KEY_STORAGE_INTERNAL_KSU.
 typedef uint32_t sl_se_storage_method_t;
 
 /// Internal SE key slot
@@ -227,6 +226,16 @@ typedef struct {
   uint32_t size;    ///< Size of buffer.
 } sl_se_buffer_t;
 
+/// KSU Metadata
+#if defined(_SILICON_LABS_32B_SERIES_3)
+typedef struct {
+  uint8_t keyslot;            ///< Keyslot to store key at in KSU
+  uint8_t id;                 ///< KSU instance to store key
+  uint8_t crypto_engine_id;   ///< Which Crypto Engine to use this key
+  uint8_t allowed_key_users;  ///< Allowed key users
+} sl_se_ksu_metadata_t;
+#endif
+
 /// Describes the storage location of keys
 typedef struct {
   /// Key storage method. Sets meaning of data in location.
@@ -236,9 +245,13 @@ typedef struct {
   /// @ref SL_SE_KEY_STORAGE_EXTERNAL_WRAPPED, while @ref sl_se_key_slot_t is
   /// used for @ref SL_SE_KEY_STORAGE_INTERNAL_VOLATILE or
   /// @ref SL_SE_KEY_STORAGE_INTERNAL_IMMUTABLE.
+  /// @ref ksu is used for @ref SL_SE_KEY_STORAGE_INTERNAL_KSU
   union {
     sl_se_buffer_t buffer;
     sl_se_key_slot_t slot;
+#if defined(_SILICON_LABS_32B_SERIES_3)
+    sl_se_ksu_metadata_t ksu;
+#endif
   } location;
 } sl_se_key_storage_t;
 
@@ -318,6 +331,12 @@ typedef struct {
   uint32_t tamper_status;
   /// Currently active tamper sources.
   uint32_t tamper_status_raw;
+#if defined(_SILICON_LABS_32B_SERIES_3)
+  uint8_t rom_revision;
+  /// ROM revision
+  uint8_t otp_patch_sequence;
+  /// OTP patch sequence
+#endif
 } sl_se_status_t;
 
 /// @} (end addtogroup sl_se_manager_util)
@@ -356,7 +375,7 @@ typedef struct {
   union {
     uint8_t tagbuf[16];             ///< Tag
     uint8_t final_data[16];         ///< Input data saved for finish operation
-  } mode_specific_buffer;
+  } mode_specific_buffer;           ///< Buffer containing Tag and input data saved for finish operation
   #endif
   uint8_t final_data_length;        ///< Length of data saved
 } sl_se_ccm_multipart_context_t;

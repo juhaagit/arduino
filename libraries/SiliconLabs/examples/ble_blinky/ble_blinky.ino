@@ -7,13 +7,13 @@
    it will accept any incoming connection. The device offers a GATT service and characteristic
    for controlling the onboard LED and reporting the state of an onboard button. The demo will work
    on boards without a built-in button however the button state reporting feature will be disabled.
-   With the EFR Connect app you can test this functionality by going to the "Demo" tab and selecting "Blinky".
+   With the Simplicity Connect app you can test this functionality by going to the "Demo" tab and selecting "Blinky".
 
    Find out more on the API usage at: https://docs.silabs.com/bluetooth/latest/bluetooth-stack-api/
 
    This example only works with the 'BLE (Silabs)' protocol stack variant.
 
-   Get the EFR Connect app:
+   Get the Simplicity Connect app:
     - https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo
     - https://apps.apple.com/us/app/efr-connect-ble-mobile-app/id1030932759
 
@@ -88,6 +88,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     // Do not call any stack command before receiving this boot event!
     case sl_bt_evt_system_boot_id:
     {
+      Serial.begin(115200);
       Serial.println("BLE stack booted");
 
       // Initialize the application specific GATT table
@@ -343,6 +344,6 @@ static void ble_initialize_gatt_db()
   app_assert_status(sc);
 }
 
-#ifndef BLE_STACK_SILABS
+#ifndef ARDUINO_SILABS_STACK_BLE_SILABS
   #error "This example is only compatible with the Silicon Labs BLE stack. Please select 'BLE (Silabs)' in 'Tools > Protocol stack'."
 #endif

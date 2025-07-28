@@ -3,7 +3,6 @@
 # This script assumes that you have 'arduino-cli' installed and the core being developed/tested is also installed
 
 import sys
-import signal
 import subprocess
 import time
 
@@ -122,6 +121,21 @@ all_matter = [
 
 all_ai_ml = [
    ["nano_matter", "none"],
+   ["nano_matter", "ble_arduino"],
+   ["nano_matter", "ble_silabs"],
+   ["nano_matter", "matter"],
+   ["xiao_mg24", "none"],
+   ["xiao_mg24", "ble_arduino"],
+   ["xiao_mg24", "ble_silabs"],
+   ["xiao_mg24", "matter"],
+   ["xg24explorerkit", "none"],
+   ["xg24explorerkit", "ble_arduino"],
+   ["xg24explorerkit", "ble_silabs"],
+   ["xg24explorerkit", "matter"],
+   ["xg24devkit", "none"],
+   ["xg24devkit", "ble_arduino"],
+   ["xg24devkit", "ble_silabs"],
+   ["xg24devkit", "matter"],
 ]
 
 nano_matter_matter = [
@@ -144,9 +158,11 @@ testlist_common = {
     "../../libraries/SiliconLabs/examples/ble_lightswitch_server/ble_lightswitch_server.ino":                          all_ble_silabs,
     "../../libraries/SiliconLabs/examples/ble_minimal/ble_minimal.ino":                                                all_ble_silabs,
     "../../libraries/SiliconLabs/examples/ble_scan/ble_scan.ino":                                                      all_ble_silabs,
+    "../../libraries/SiliconLabs/examples/ble_spp/ble_spp.ino":                                                        all_ble_silabs,
     "../../libraries/SiliconLabs/examples/ble_thingplus_battery_gauge/ble_thingplus_battery_gauge.ino":                thingplusmatter_ble_silabs,
     "../../libraries/SiliconLabs/examples/ble_xg27_devkit_sensors/ble_xg27_devkit_sensors.ino":                        xg27devkit_ble_silabs,
     "../../libraries/SiliconLabs/examples/dac_sawtooth/dac_sawtooth.ino":                                              boards_with_dac,
+    "../../libraries/SiliconLabs/examples/hwinfo/hwinfo.ino":                                                          all_variants,
     "../../libraries/SiliconLabs/examples/xg27devkit_sensors/xg27devkit_sensors.ino":                                  xg27devkit_ble_silabs,
     "../../libraries/SiliconLabs/examples/thingplusmatter_debug_unix/thingplusmatter_debug_unix.ino":                  all_ble_silabs,
     "../../libraries/SiliconLabs/examples/thingplusmatter_debug_win/thingplusmatter_debug_win.ino":                    all_ble_silabs,
@@ -160,6 +176,10 @@ testlist_common = {
     "../../libraries/ezWS2812/examples/blink_all/blink_all.ino":                                                       all_variants,
     "../../libraries/ezWS2812/examples/colors/colors.ino":                                                             all_variants,
     "../../libraries/ezWS2812/examples/individual_leds/individual_leds.ino":                                           all_variants,
+    # OneWire
+    "../../libraries/OneWire/examples/DS18x20_Temperature/DS18x20_Temperature.ino":                                    all_variants,
+    "../../libraries/OneWire/examples/DS250x_PROM/DS250x_PROM.ino":                                                    all_variants,
+    "../../libraries/OneWire/examples/DS2408_Switch/DS2408_Switch.ino":                                                all_variants,
     # Si7210Hall
     "../../libraries/Si7210_hall/examples/Si7210_hall_measure/Si7210_hall_measure.ino":                                all_variants,
     # SilabsMicrophoneAnalog
@@ -176,12 +196,15 @@ testlist_common = {
     "../../libraries/WatchdogTimer/examples/watchdog_timer_interrupt/watchdog_timer_interrupt.ino":                    all_variants,
     "../../libraries/WatchdogTimer/examples/watchdog_timer_reset/watchdog_timer_reset.ino":                            all_variants,
     # SilabsTFLiteMicro
-    "../../libraries/SilabsTFLiteMicro/examples/imu_capture_nano_matter/imu_capture_nano_matter.ino":                  all_ai_ml,
-    "../../libraries/SilabsTFLiteMicro/examples/magic_wand_nano_matter/magic_wand_nano_matter.ino":                    all_ai_ml,
+    "../../libraries/SilabsTFLiteMicro/examples/magic_wand_imu_capture/magic_wand_imu_capture.ino":                    all_ai_ml,
+    "../../libraries/SilabsTFLiteMicro/examples/magic_wand/magic_wand.ino":                                            all_ai_ml,
 }
 
 testlist_matter = {
+    "../../libraries/Matter/examples/matter_air_purifier/matter_air_purifier.ino":                                     all_matter,
     "../../libraries/Matter/examples/matter_air_quality_sensor/matter_air_quality_sensor.ino":                         all_matter,
+    "../../libraries/Matter/examples/matter_ble_blinky/matter_ble_blinky.ino":                                         all_matter,
+    "../../libraries/Matter/examples/matter_ble_minimal/matter_ble_minimal.ino":                                       all_matter,
     "../../libraries/Matter/examples/matter_contact_sensor/matter_contact_sensor.ino":                                 all_matter,
     "../../libraries/Matter/examples/matter_decommission/matter_decommission.ino":                                     all_matter,
     "../../libraries/Matter/examples/matter_door_lock/matter_door_lock.ino":                                           all_matter,
@@ -214,7 +237,6 @@ testlist_matter = {
 
 def main():
     print("Silabs Arduino Core build test")
-    signal.signal(signal.SIGINT, sigint_handler)
 
     test_config = get_config_from_arguments()
     testlist = testlist_quick
@@ -236,28 +258,42 @@ def main():
     successful_builds = 0
     failed_build_names = []
     builds_with_warnings = []
-    # Go through each testcase on the testlist
-    for sketch_to_test in testlist:
-        # Determine the variants to be used in the current test
-        test_variants = testlist[sketch_to_test]
+    build_in_progress = False
+    test_interrupted = False
 
-        # Build the sketch for the specified variants
-        for variant in test_variants:
-            total_builds += 1
-            board = variant[0]
-            protocol_stack = variant[1]
-            success, warnings = arduino_cli_build(board, protocol_stack, sketch_to_test, total_builds, testcase_count)
-            if success:
-                successful_builds += 1
-            else:
-                failed_build_names.append(sketch_to_test + " on '" + board + "' with '" + protocol_stack + "'")
-            if warnings:
-                builds_with_warnings.append(sketch_to_test + " on '" + board + "' with '" + protocol_stack + "'")
+    try:
+        # Go through each testcase on the testlist
+        for sketch_to_test in testlist:
+            # Determine the variants to be used in the current test
+            test_variants = testlist[sketch_to_test]
+
+            # Build the sketch for the specified variants
+            for variant in test_variants:
+                build_in_progress = True
+                total_builds += 1
+                board = variant[0]
+                protocol_stack = variant[1]
+                success, warnings = arduino_cli_build(board, protocol_stack, sketch_to_test, total_builds, testcase_count)
+                if success:
+                    successful_builds += 1
+                else:
+                    failed_build_names.append(sketch_to_test + " on '" + board + "' with '" + protocol_stack + "'")
+                if warnings:
+                    builds_with_warnings.append(sketch_to_test + " on '" + board + "' with '" + protocol_stack + "'")
+                build_in_progress = False
+    except KeyboardInterrupt:
+        test_interrupted = True
+        print("\nTest execution interrupted by user!")
+        if build_in_progress:
+            total_builds -= 1
+            print("Last build was not completed, removing it from the total count")
 
     # Calculate and display results
     failed_builds = total_builds - successful_builds
     print("-"*30)
     print(f"Test finished. {successful_builds} out of {total_builds} builds were successful!")
+    if test_interrupted:
+        print(f"{testcase_count-total_builds} builds have been skipped due to interruption")
     test_run_time = int(time.time() - start_time)
     print(f"Total time: {test_run_time // 60}m {test_run_time % 60}s")
     print()
@@ -346,11 +382,6 @@ def get_config_from_arguments():
         print("Running Matter tests only")
         return "matter"
     return "all"
-
-
-def sigint_handler(sig, frame):
-    print("\nExiting...")
-    sys.exit(100)
 
 
 if __name__ == "__main__":

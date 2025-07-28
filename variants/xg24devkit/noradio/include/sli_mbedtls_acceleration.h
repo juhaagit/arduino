@@ -36,25 +36,8 @@
 // used on the NS side of TrustZone-enabled applications.
 #if !defined(NO_CRYPTO_ACCELERATION)
 
-#if defined(SEMAILBOX_PRESENT)
-  #include "em_se.h"
-#endif
-
 // -----------------------------------------------------------------------------
 // Acceleration enabling defines
-
-/** \def MBEDTLS_PSA_CRYPTO_DRIVERS
- *
- * Enable support for the experimental PSA crypto driver interface.
- *
- * Requires: \ref MBEDTLS_PSA_CRYPTO_C.
- *
- * \warning This interface is experimental and may change or be removed
- * without notice.
- */
-#if defined(MBEDTLS_PSA_CRYPTO_C)
-  #define MBEDTLS_PSA_CRYPTO_DRIVERS
-#endif
 
 /**
  * \def MBEDTLS_AES_ALT
@@ -87,14 +70,12 @@
  * Module:  sl_mbedtls_support/src/mbedtls_ccm.c for all devices, plus:
  *          - sl_psa_driver/src/sli_se_transparent_driver_aead.c and sl_psa_driver/src/sli_se_driver_aead.c for devices with HSE,
  *          - sl_psa_driver/src/sli_cryptoacc_transparent_driver_aead.c for devices with CRYPTOACC
- *          - sl_psa_driver/src/sli_crypto_transparent_driver_aead.c for devices with CRYPTO
  *
  * Requires: \ref MBEDTLS_AES_C and \ref MBEDTLS_CCM_C (CRYPTOACC_PRESENT or SEMAILBOX_PRESENT)
  *
  * See MBEDTLS_CCM_C for more information.
  */
-#if defined(CRYPTO_PRESENT) || defined(CRYPTOACC_PRESENT) \
-  || (defined(SEMAILBOX_PRESENT) && defined(SE_COMMAND_AES_CCM_ENCRYPT) && defined(SE_COMMAND_AES_CCM_DECRYPT) )
+#if defined(CRYPTOACC_PRESENT) || defined(SEMAILBOX_PRESENT)
 // Remove this when full multipart support is present in the CCM ALT driver
 // Todo: remove guard when [PSEC-1954][PSEC-2109][PSEC-3133] are done
   #if !(defined(MBEDTLS_PSA_CRYPTO_DRIVERS))
@@ -115,8 +96,7 @@
  *
  * See MBEDTLS_CMAC_C for more information.
  */
-#if defined(CRYPTO_PRESENT) || defined(CRYPTOACC_PRESENT) \
-  || (defined(SEMAILBOX_PRESENT) && defined(SE_COMMAND_AES_CMAC))
+#if defined(CRYPTOACC_PRESENT) || defined(SEMAILBOX_PRESENT)
   #define MBEDTLS_CMAC_ALT
 #endif
 
@@ -132,8 +112,7 @@
  *
  * See MBEDTLS_GCM_C for more information.
  */
-#if defined(CRYPTO_PRESENT) || defined(CRYPTOACC_PRESENT) \
-  || (defined(SEMAILBOX_PRESENT) && defined(SE_COMMAND_AES_GCM_ENCRYPT) && defined(SE_COMMAND_AES_GCM_ENCRYPT) )
+#if defined(CRYPTOACC_PRESENT) || (defined(SEMAILBOX_PRESENT))
   #define MBEDTLS_GCM_ALT
 #endif
 
@@ -144,7 +123,6 @@
  * through the mbed TLS APIs.
  *
  * Module:  sl_mbedtls_support/src/mbedtls_sha.c for all devices, plus:
- *          - sl_psa_driver/src/sli_crypto_transparent_driver_hash.c for devices with CRYPTO,
  *          - sl_psa_driver/src/sli_se_transparent_driver_hash.c for devices with HSE,
  *          - sl_psa_driver/src/sli_cryptoacc_transparent_driver_hash.c for devices with CRYPTOACC
  *
@@ -158,8 +136,7 @@
  *
  * See MBEDTLS_SHA1_C for more information.
  */
-#if defined(CRYPTO_PRESENT) || defined(CRYPTOACC_PRESENT) \
-  || (defined(SEMAILBOX_PRESENT) && defined(SE_COMMAND_OPTION_HASH_SHA1))
+#if defined(CRYPTOACC_PRESENT) || defined(SEMAILBOX_PRESENT)
   #define MBEDTLS_SHA1_ALT
 #endif
 
@@ -170,7 +147,6 @@
  * hash algorithms through the mbed TLS APIs.
  *
  * Module:  sl_mbedtls_support/src/mbedtls_sha.c for all devices, plus:
- *          - sl_psa_driver/src/sli_crypto_transparent_driver_hash.c for devices with CRYPTO,
  *          - sl_psa_driver/src/sli_se_transparent_driver_hash.c for devices with HSE,
  *          - sl_psa_driver/src/sli_cryptoacc_transparent_driver_hash.c for devices with CRYPTOACC
  *
@@ -184,9 +160,7 @@
  *
  * See MBEDTLS_SHA256_C for more information.
  */
-#if defined(CRYPTO_PRESENT) || defined(CRYPTOACC_PRESENT) \
-  || (defined(SEMAILBOX_PRESENT)                          \
-  && (defined(SE_COMMAND_OPTION_HASH_SHA256) || defined(SE_COMMAND_OPTION_HASH_SHA224) ) )
+#if defined(CRYPTOACC_PRESENT) || defined(SEMAILBOX_PRESENT)
   #define MBEDTLS_SHA256_ALT
 #endif
 
@@ -204,7 +178,7 @@
  * See MBEDTLS_SHA512_C for more information.
  */
 #if defined(SEMAILBOX_PRESENT) \
-  && (defined(SE_COMMAND_OPTION_HASH_SHA512) || defined(SE_COMMAND_OPTION_HASH_SHA384) )
+  && (_SILICON_LABS_SECURITY_FEATURE == _SILICON_LABS_SECURITY_FEATURE_VAULT)
   #define MBEDTLS_SHA512_ALT
 #endif
 
@@ -304,33 +278,22 @@
   #if !( (_SILICON_LABS_SECURITY_FEATURE == _SILICON_LABS_SECURITY_FEATURE_SE) \
   && (defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)                                \
   || defined(MBEDTLS_ECP_DP_SECP521R1_ENABLED)))
-    #if defined(SE_COMMAND_CREATE_KEY)
-      #define MBEDTLS_ECDH_GEN_PUBLIC_ALT
-    #endif
-    #if defined(SE_COMMAND_DH)
-      #define MBEDTLS_ECDH_COMPUTE_SHARED_ALT
-    #endif
+    #define MBEDTLS_ECDH_GEN_PUBLIC_ALT
+    #define MBEDTLS_ECDH_COMPUTE_SHARED_ALT
   #endif
 
   #if !( (_SILICON_LABS_SECURITY_FEATURE == _SILICON_LABS_SECURITY_FEATURE_SE) \
   && (defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)                                \
   || defined(MBEDTLS_ECP_DP_SECP521R1_ENABLED)  ) )
-    #if defined(SE_COMMAND_CREATE_KEY)
-      #define MBEDTLS_ECDSA_GENKEY_ALT
+    #define MBEDTLS_ECDSA_GENKEY_ALT
+    #if !defined(MBEDTLS_ECDSA_DETERMINISTIC)
+      #define MBEDTLS_ECDSA_SIGN_ALT
     #endif
-    #if defined(SE_COMMAND_SIGNATURE_SIGN)
-      #if !defined(MBEDTLS_ECDSA_DETERMINISTIC)
-        #define MBEDTLS_ECDSA_SIGN_ALT
-      #endif
-    #endif
-    #if defined(SE_COMMAND_SIGNATURE_VERIFY)
-      #define MBEDTLS_ECDSA_VERIFY_ALT
-    #endif
+    #define MBEDTLS_ECDSA_VERIFY_ALT
   #endif
 
 #endif // #if !defined(MBEDTLS_ECP_DP_XXXX_ENABLED) && ...
 
-#if defined(SE_COMMAND_JPAKE_GEN_SESSIONKEY)
 /**
  * \def MBEDTLS_ECJPAKE_ALT
  *
@@ -343,7 +306,6 @@
  * See \ref MBEDTLS_ECJPAKE_C for more information.
  */
 #define MBEDTLS_ECJPAKE_ALT
-#endif
 
 #endif /* SEMAILBOX_PRESENT */
 

@@ -30,13 +30,14 @@
 #ifndef CCM_ALT_H
 #define CCM_ALT_H
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 /***************************************************************************//**
- * \addtogroup sl_crypto
+ * \addtogroup sl_mbedtls_plugins
  * \{
  ******************************************************************************/
 
 /***************************************************************************//**
- * \addtogroup sl_crypto_ccm Accelerated AES-CCM AEAD Cipher
+ * \addtogroup sl_mbedtls_plugins_ccm Accelerated AES-CCM AEAD Cipher
  * \brief Accelerated AES-CCM AEAD cipher for the mbed TLS API using the CRYPTOACC
  *         or SE peripheral
  *
@@ -64,7 +65,8 @@ mbedtls_ccm_context;
 
 #endif /* MBEDTLS_CCM_ALT */
 
-/** \} (end addtogroup sl_crypto_ccm) */
-/** \} (end addtogroup sl_crypto) */
+/** \} (end addtogroup sl_mbedtls_plugins_ccm) */
+/** \} (end addtogroup sl_mbedtls_plugins) */
+/// @endcond
 
 #endif /* CCM_ALT_H */

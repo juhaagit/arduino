@@ -5,7 +5,7 @@ print("Setting up the development environment...")
 
 subprocess.run(["git", "submodule", "update", "--init", "--recursive"], check=True)
 
-api_path = "../cores/silabs/api"
+api_path = "../cores/gecko/api"
 if os.path.islink(api_path) or os.path.exists(api_path):
     os.remove(api_path)
 

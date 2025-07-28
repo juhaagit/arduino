@@ -24,17 +24,24 @@ Supported Thread Border Routers:
 | Amazon Alexa                          | Echo Gen4                     |
 | Raspberry Pi OTBR                     | Raspberry Pi                  |
 
-Read more on setting up your Raspberry Pi as an OTBR [here](https://docs.silabs.com/matter/2.2.0/matter-thread/raspi-img).
+Read more on setting up your Raspberry Pi as an OTBR [here](https://docs.silabs.com/matter/latest/matter-thread/raspi-img).
 
-### Nano Matter OpenThread RCP
+### OpenThread RCP firmware
 
-The *Arduino Nano Matter* can also be used as an USB-OpenThread bridge (RCP - Radio Co-Processor) with a Raspberry Pi OTBR.
+Supported boards can also be used as a USB-OpenThread bridge (RCP - Radio Co-Processor) with a Raspberry Pi OTBR.
 
-To set up your Nano Matter as an OpenThread RCP do the following:
+Boards supporting OpenThread RCP:
+ - Arduino Nano Matter
+ - Seeed Studio XIAO MG24 (Sense)
+ - SparkFun Thing Plus Matter MGM240P
+
+To set up your board as an OpenThread RCP do the following:
  - Flash the bootloader on your device
- - Flash *'extra/openthread_rcp_nano_matter.hex'* on your device
- - Plug in your Nano Matter into your Raspberry Pi via USB
+ - Flash *'extra/openthread_rcp/openthread_rcp_\<boardname>.hex'* on your device
+ - Plug the board into your Raspberry Pi via USB
  - Follow the steps in the Raspberry Pi OTBR guide
+
+Read more and get the Raspberry Pi OTBR image [here](https://docs.silabs.com/matter/latest/matter-prerequisites/matter-artifacts).
 
 ## Supported Matter devices
 
@@ -101,6 +108,19 @@ See the [Arduino Matter Provision Tool](../../extra/arduino_matter_provision/rea
 
 You can also refer to Arduino's [Matter setup guide](https://docs.arduino.cc/tutorials/nano-matter/user-manual/#matter) for the *Nano Matter* to get started with your Matter setup. The guide is for the *Nano Matter* - but most of the contents are applicable to all boards supporting Matter.
 
+## Matter with BLE
+
+You can use the Silicon Labs BLE stack simultaneously with Matter/Thread to communicate with BLE devices.
+
+There are some limitations compared to using a BLE only radio stack:
+
+ - Make sure you're not interfering with the BLE stack before the Matter commissioning finishes
+ - After Matter commissioning finished the BLE stack is freely usable with all features
+ - The Matter commissioning GATT services can be disabled after commissioning
+ - Most BLE examples can work alongside with Matter with some small modifications
+
+For detailed usage - see the provided Matter+BLE examples in the Matter library's *example* folder.
+
 # API documentation
 
 ## class Matter
@@ -126,6 +146,9 @@ Returns whether the device has been commissioned to a Matter network.
 
 ```bool isDeviceThreadConnected();```
 Returns whether the device is connected to the Thread network.
+
+```void decommission();```
+Decommissions the device from its paired network by erasing the stored network keys, then performs a reboot.
 
 ## Appliance classes
 
@@ -157,6 +180,20 @@ Sets the model/product name of the device.
 
 ```void set_serial_number(const char* serial_number);```
 Sets the serial number of the device.
+
+## class MatterAirPurifier
+
+```void set_air_quality(MatterAirQuality::AirQuality_t value);```
+
+```MatterAirQuality::AirQuality_t get_air_quality();```
+
+```void set_fan_onoff(bool value);```
+
+```bool get_fan_onoff();```
+
+```void set_fan_percent(uint8_t percent);```
+
+```uint8_t get_fan_percent();```
 
 ## class MatterAirQuality
 
@@ -191,6 +228,10 @@ Class for creating and controlling a Matter Fan appliance.
 ```void set_percent(uint8_t percent);```
 
 ```uint8_t get_percent();```
+
+```void set_mode(DeviceFan::fan_mode_t fan_mode);```
+
+```DeviceFan::fan_mode_t get_mode();```
 
 ## class MatterFlow
 

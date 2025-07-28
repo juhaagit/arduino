@@ -45,54 +45,61 @@
 // Device Agnostic Values
 
 /***************************************************************************//**
- * \addtogroup sl_psa_drivers
- * \{
+ * \addtogroup sl_psa_crypto
+ * @{
+ ******************************************************************************/
+
+/***************************************************************************//**
+ * \addtogroup sl_psa_key_management Key Management
+ * \brief PSA Crypto key management on Silicon Labs devices
+ *
+ * @section built_in_keys Built-in Keys
+ * The PSA Crypto API provides a mechanism for accessing keys that are stored
+ * in the hardware. Available built-in key IDs vary for different family of devices.
+ * For devices vith a Virtual Secure Engine see
+ * \ref sl_psa_drivers_cryptoacc_builtin_keys , and for devices with a Hardware
+ * Secure Engine see \ref sl_psa_drivers_se_builtin_keys .
+ *
+ * Refer to AN1311 for more information on the
+ *        usage of builtin keys through PSA Crypto.
+ * @{
  ******************************************************************************/
 
 /// Location value for keys to be stored encrypted with the device-unique secret.
-/// Available on Vault-High devices.
+/// Wrapped key locations are vailable on Secure Vault High devices.
 #define SL_PSA_KEY_LOCATION_WRAPPED ((psa_key_location_t)0x000001UL)
 
 /// Location value for usage of built-in keys.
-/// Available on Vault-Mid (and higher) devices with PUF-key support.
+/// Built-in key locations are available on Secure Vault Mid (and higher) devices
+/// with PUF-key support.
 // Identical to SL_PSA_KEY_LOCATION_WRAPPED for implementation-related reasons.
 #define SL_PSA_KEY_LOCATION_BUILTIN ((psa_key_location_t)0x000001UL)
 
 // #define SLE_PSA_KEY_LOCATION_SE_VOLATILE ((psa_key_location_t)0x800000UL)
 // #define SLE_PSA_KEY_LOCATION_KSU ((psa_key_location_t)0x800001UL)
 
-/** \} (end addtogroup sl_psa_drivers) */
-
 //------------------------------------------------------------------------------
 // Hardware Secure Engine
 
 #if defined(SLI_MBEDTLS_DEVICE_HSE)
 
-/***************************************************************************//**
- * \addtogroup sl_psa_drivers
- * \{
- ******************************************************************************/
-
-/***************************************************************************//**
- * \addtogroup sl_psa_drivers_se Values for devices with a Hardware Secure Engine
- * \{
- ******************************************************************************/
-
 /// Location value for keys to be stored encrypted with the device-unique secret,
-/// or for accessing the built-in keys on Vault-High devices.
+/// or for accessing the built-in keys on Vault-High devices. Users should use
+/// SL_PSA_KEY_LOCATION_WRAPPED or SL_PSA_KEY_LOCATION_BUILTIN instead.
 #define PSA_KEY_LOCATION_SL_SE_OPAQUE (SL_PSA_KEY_LOCATION_WRAPPED)
 
 #if defined(SLI_PSA_DRIVER_FEATURE_BUILTIN_KEYS) || defined(SL_TRUSTZONE_NONSECURE)
 
 /***************************************************************************//**
- * \addtogroup sl_psa_drivers_se_builtin_keys Builtin keys on devices with Secure Engine
- * \brief These key ID values belong to the builtin range of PSA, and allow access
- *        to the keys which respectively are and can be preprovisioned in Secure Engine
- *        devices. Refer to \ref psa_builtin_keys or AN1311 for more information on the
- *        usage of builtin keys through PSA Crypto.
- * \{
+ * \addtogroup sl_psa_drivers_se_builtin_keys Built-in keys on devices with a HSE
+ * \brief These key ID values allow access to the keys which respectively are and
+ *  can be preprovisioned in Secure Engine (HSE) devices.
+ *
+ *  The key IDs are within the the builtin range of PSA [MBEDTLS_PSA_KEY_ID_BUILTIN_MIN,
+ *  MBEDLTS_PSA_KEY_ID_BUILTIN_MAX].
+ *
+ * @{
  ******************************************************************************/
-
 #if defined(SLI_PSA_DRIVER_FEATURE_ATTESTATION)
   #ifndef SL_SE_BUILTIN_KEY_APPLICATION_ATTESTATION_ID
 /// Vendor Key ID for the built-in application identity key on Vault High devices.
@@ -131,12 +138,9 @@
   #define SL_SE_BUILTIN_KEY_AES128_ALG  (SL_SE_BUILTIN_KEY_AES128_ALG_CONFIG)
 #endif
 
-/** \} (end addtogroup sl_psa_drivers_se_builtin_keys) */
+/** @} (end addtogroup sl_psa_drivers_se_builtin_keys) */
 
 #endif // SLI_PSA_DRIVER_FEATURE_BUILTIN_KEYS || SL_TRUSTZONE_NONSECURE
-
-/** \} (end addtogroup sl_psa_drivers_se) */
-/** \} (end addtogroup sl_psa_drivers) */
 
 #endif // SLI_MBEDTLS_DEVICE_HSE
 
@@ -145,28 +149,20 @@
 
 #if defined(SLI_PSA_DRIVER_FEATURE_PUF_KEY)
 
-/***************************************************************************//**
- * \addtogroup sl_psa_drivers
- * \{
- ******************************************************************************/
-
-/***************************************************************************//**
- * \addtogroup sl_psa_drivers_cryptoacc Values for devices with a Virtual Secure Engine
- * \{
- ******************************************************************************/
-
 /// Location value for built-in keys on VSE archtectures
+/// Users should use \ref SL_PSA_KEY_LOCATION_BUILTIN instead
 #define PSA_KEY_LOCATION_SL_CRYPTOACC_OPAQUE  (SL_PSA_KEY_LOCATION_BUILTIN)
 
 #if defined(SLI_PSA_DRIVER_FEATURE_BUILTIN_KEYS) || defined(SL_TRUSTZONE_NONSECURE)
 
 /***************************************************************************//**
- * \addtogroup sl_psa_drivers_cryptoacc_builtin_keys Builtin keys on devices with a VSE
- * \brief These key ID values belong to the builtin range of PSA, and allow access
- *        to the keys which respectively are and can be preprovisioned in (Virtual)
- *        Secure Engine devices. Refer to \ref psa_builtin_keys or AN1311 for more
- *        information on the usage of builtin keys through PSA Crypto.
- * \{
+ * \addtogroup sl_psa_drivers_cryptoacc_builtin_keys Built-in keys on devices with a VSE
+ * \brief These key ID values allow access to the keys which respectively are and
+ *  can be preprovisioned in Virtual Secure Engine (VSE) devices.
+ *
+ *  The key ID's are within the the builtin range of PSA [MBEDTLS_PSA_KEY_ID_BUILTIN_MIN,
+ *  MBEDLTS_PSA_KEY_ID_BUILTIN_MAX].
+ * @{
  ******************************************************************************/
 
 #ifndef SL_CRYPTOACC_BUILTIN_KEY_PUF_ID
@@ -174,22 +170,22 @@
   #define SL_CRYPTOACC_BUILTIN_KEY_PUF_ID (MBEDTLS_PSA_KEY_ID_BUILTIN_MIN + 1)
 #endif
 
+/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
+
 /// Internal ID for PUF-derived key.
 #define SLI_CRYPTOACC_BUILTIN_KEY_PUF_SLOT  (SL_CRYPTOACC_BUILTIN_KEY_PUF_ID && 0xFF)
-
-/** \} (end addtogroup sl_psa_drivers_se_builtin_keys) */
-
-/// @cond DO_NOT_INCLUDE_WITH_DOXYGEN
 
 /// Version of opaque header struct.
 #define SLI_CRYPTOACC_OPAQUE_KEY_CONTEXT_VERSION (0x00)
 
 /// @endcond
 
+/** @} (end addtogroup sl_psa_drivers_cryptoacc) */
+
 #endif // SLI_PSA_DRIVER_FEATURE_BUILTIN_KEYS || SL_TRUSTZONE_NONSECURE
 
-/** \} (end addtogroup sl_psa_drivers_cryptoacc) */
-/** \} (end addtogroup sl_psa_drivers) */
+/** @} (end addtogroup sl_psa_key_management) */
+/** @} (end addtogroup sl_psa_drivers) */
 
 #endif // SLI_PSA_DRIVER_FEATURE_PUF_KEY
 
